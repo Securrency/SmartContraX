@@ -1,3 +1,6 @@
+## Project architecture and relations beetwen components
+<img src="docs/images/architecture-and-relations.jpg" width="850">
+
 ## Package version requirements for your machine:
 
 - node v8.10.0
@@ -35,7 +38,7 @@ To test the code simply run:
 $ truffle test
 ```
 
-## Testing
+## Deploying
 
 To deploy the code simply run:
 
