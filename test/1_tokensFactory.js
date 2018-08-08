@@ -1,5 +1,6 @@
 
 var TF = artifacts.require("./TokensFactory.sol");
+var SR = artifacts.require("./services/SymbolRegistry.sol");
 var SLS20S = artifacts.require("./tokens-strategy/SLS20Strategy.sol");
 var TSMock = artifacts.require("./mocks/TokenStrategyMock.sol");
 var DSToken = artifacts.require("./tokens/SLS20Token.sol");
@@ -31,7 +32,15 @@ contract('TokensFactory', accounts => {
     let zeroAddress = "0x0000000000000000000000000000000000000000";
 
     before(async() => {
-        TokensFactory = await TF.new();
+        symbolRegistry = await SR.new();
+
+        assert.notEqual(
+            symbolRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "SymbolRegistry contract was not deployed"
+        );
+
+        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -167,8 +176,11 @@ contract('TokensFactory', accounts => {
 
         it("Should deploy a new token", async() => {
             let standard = await SLS20Strategy.getTokenStandard();
-            
-            let tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
+
+            let hexSymbol = web3.toHex(symbol);
+            await symbolRegistry.registerSymbol(hexSymbol, { from : token_owner });
+
+            tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
 
             deployedTokenAddress = tx.logs[0].args.tokenAddress;
 
@@ -188,6 +200,10 @@ contract('TokensFactory', accounts => {
             let standard = await SLS20Strategy.getTokenStandard();
             
             let symbol2 = "TES";
+            let hexSymbol = web3.toHex(symbol2);
+
+            await symbolRegistry.registerSymbol(hexSymbol, { from : token_owner });
+
             let tx = await TokensFactory.createToken(name, symbol2, decimals, totalSupply, standard, { from : token_owner });
 
             assert.notEqual(

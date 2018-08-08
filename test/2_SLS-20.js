@@ -1,6 +1,7 @@
 const sleep = require('sleep');
 
 var TF = artifacts.require("./TokensFactory.sol");
+var SR = artifacts.require("./services/SymbolRegistry.sol");
 var SLS20S = artifacts.require("./tokens-strategy/SLS20Strategy.sol");
 var DSToken = artifacts.require("./tokens/SLS20Token.sol");
 
@@ -29,7 +30,15 @@ contract("SLS20Token", accounts => {
     let txForCancellation;
 
     before(async() => {
-        TokensFactory = await TF.new();
+        symbolRegistry = await SR.new();
+
+        assert.notEqual(
+            symbolRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "SymbolRegistry contract was not deployed"
+        );
+
+        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), { from: token_owner });
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -49,6 +58,9 @@ contract("SLS20Token", accounts => {
         assert.equal(tx.logs[0].args.strategy, SLS20Strategy.address);
 
         let standard = await SLS20Strategy.getTokenStandard();
+
+        let hexSymbol = web3.toHex(symbol);
+        await symbolRegistry.registerSymbol(hexSymbol, { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
 

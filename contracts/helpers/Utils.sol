@@ -6,7 +6,16 @@ contract Utils {
     * @param base String to change
     */
     function toUpper(string base) internal pure returns (string) {
-        bytes memory baseBytes = bytes(base);
+        bytes memory baseBytes = toUpperBytes(bytes(base));
+        
+        return string(baseBytes);
+    }
+
+    /**
+    * @notice Change bytes to upper case
+    * @notice baseBytes
+    */
+    function toUpperBytes(bytes baseBytes) internal pure returns (bytes) {
         for (uint i = 0; i < baseBytes.length; i++) {
             bytes1 b1 = baseBytes[i];
             if (b1 >= 0x61 && b1 <= 0x7A) {
@@ -14,16 +23,15 @@ contract Utils {
             }
             baseBytes[i] = b1;
         }
-        return string(baseBytes);
+        return baseBytes;
     }
 
     /**
-    * @notice Convert symbol from type "string memory" to "bytes6"
-    * @param symbol Symbol 
+    * @notice Convert from type "bytes memory" to "bytes6"
     */
-    function convertSymbolToBytes(string memory symbol) internal pure returns (bytes32 result) {
+    function convertBytesToBytes6(bytes memory inBytes) internal pure returns (bytes6 outBytes) {
         assembly {
-            result := mload(add(symbol, 8))
+            outBytes := mload(add(inBytes, 32))
         }
     }
 

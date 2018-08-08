@@ -44,9 +44,4 @@ contract ITokensFactory {
     * @notice Return an array of supported tokens standards
     */
     function getSupportedStandards() public view returns (bytes32[]);
-
-    /**
-    * @notice Checks symbol in system 
-    */
-    function symbolIsAvailable(string symbol) public view returns (bool);
 }

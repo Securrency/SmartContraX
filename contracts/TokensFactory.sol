@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 
+import "./interfaces/ISymbolRegistry.sol";
 import "./interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenStrategy.sol";
 import "./helpers/Utils.sol";
@@ -8,6 +9,9 @@ import "./helpers/Utils.sol";
 * @title Factory of the tokens
 */
 contract TokensFactory is ITokensFactory, Utils {
+    // Symbol Registry address
+    address symbolRegistry;
+
     // Initialize the storage which will store supported tokens tandards
     bytes32[] internal supportedStandards;
 
@@ -19,9 +23,6 @@ contract TokensFactory is ITokensFactory, Utils {
 
     // Declare storge for tokens strategies
     mapping(bytes32 => TokenStrategy) internal tokensStrategies;
-
-    // Declare storage for registered tokens symbols
-    mapping(bytes32 => bool) internal registeredSymbols;
 
     // Emit when added new token strategy
     event StrategyAdded(bytes32 standard, address strategy);
@@ -47,6 +48,13 @@ contract TokensFactory is ITokensFactory, Utils {
     );
 
     /**
+    * @notice Add symbol registry
+    */
+    constructor(address _symbolRegistry) public {
+        symbolRegistry = _symbolRegistry;
+    }
+
+    /**
     * @notice This function create new token depending on his standard
     * @param name Name of the future token
     * @param symbol Symbol of the future token
@@ -68,7 +76,6 @@ contract TokensFactory is ITokensFactory, Utils {
         require(bytes(name).length > 0, "Name length should always greater 0.");
         require(strategy != address(0), "Token strategy not found.");
         require(totalSupply > 0, "Total supply should always greater 0.");
-        require(symbolIsAvailable(symbol), "Token with the same symbol is already registered.");
         
         symbol = toUpper(symbol);
         
@@ -80,6 +87,12 @@ contract TokensFactory is ITokensFactory, Utils {
             msg.sender
         );
         
+        ISymbolRegistry(symbolRegistry).registerTokenToTheSymbol(
+            msg.sender,
+            bytes(symbol),
+            token
+        );
+
         emit CreatedToken(
             name,
             symbol,
@@ -88,12 +101,6 @@ contract TokensFactory is ITokensFactory, Utils {
             tokenStandard,
             token
         );
-
-        bytes32 bytesSymbol = convertSymbolToBytes(symbol);
-
-        registeredSymbols[bytesSymbol] = true;
-
-        require(token != address(0), "The token has not been created.");
     }
 
     /**
@@ -157,21 +164,6 @@ contract TokensFactory is ITokensFactory, Utils {
         tokensStrategies[standard].strategyAddress = tokenStrategyNew;
 
         emit StrategyUpdated(standard, tokenStrategyNew, tokenStrategyNew);
-    }
-
-    /**
-    * @notice Checks symbol in system 
-    */
-    function symbolIsAvailable(string symbol) public view returns (bool) {
-        require(
-            bytes(symbol).length > 0 && bytes(symbol).length <= 5, 
-            "Symbol length should always between 0 & 6"
-        );
-
-        symbol = toUpper(symbol);
-        bytes32 bytesSymbol = convertSymbolToBytes(symbol);
-        
-        return !registeredSymbols[bytesSymbol];
     }
 
     /**
