@@ -224,6 +224,22 @@ contract('TokensFactory', accounts => {
             assert.equal(standard, result);
         });
 
+        it("Should return 'true' for a supported standard", async() => {
+            let standard = await SLS20Strategy.getTokenStandard();
+
+            let result = await TokensFactory.isSupported(standard, { from : token_owner });
+
+            assert.equal(true, result);
+        });
+
+        it("Should return 'false' for a not supported standard", async() => {
+            let standard = web3.toHex("SLS-0x00");
+
+            let result = await TokensFactory.isSupported(standard, { from : token_owner });
+
+            assert.equal(false, result);
+        });
+
         it("Should fail to create a new token with an empty name", async() => {
             let standard = await SLS20Strategy.getTokenStandard();
             let errorThrown = false;

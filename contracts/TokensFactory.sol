@@ -185,4 +185,12 @@ contract TokensFactory is ITokensFactory, Utils {
     function getTokenStandard(address tokenAddress) public view returns (bytes32) {
         return registeredTokens[tokenAddress];
     }
+
+    /**
+    * @notice Verify if is supported requested standard
+    * @param standard A standard for verification
+    */
+    function isSupported(bytes32 standard) public view returns (bool) {
+        return tokensStrategies[standard].strategyAddress != address(0);
+    }
 }

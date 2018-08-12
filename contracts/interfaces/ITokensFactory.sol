@@ -50,4 +50,10 @@ contract ITokensFactory {
     * @param tokenAddress Address of registered token
     */
     function getTokenStandard(address tokenAddress) public view returns (bytes32);
+
+    /**
+    * @notice Verification of the supported tokens standards in the tokens factory
+    * @param standard A standard for verification
+    */
+    function isSupported(bytes32 standard) public view returns (bool);
 }
