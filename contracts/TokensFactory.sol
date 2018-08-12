@@ -24,6 +24,9 @@ contract TokensFactory is ITokensFactory, Utils {
     // Declare storge for tokens strategies
     mapping(bytes32 => TokenStrategy) internal tokensStrategies;
 
+    // Declare storage for registered tokens
+    mapping(address => bytes32) internal registeredTokens;
+
     // Emit when added new token strategy
     event StrategyAdded(bytes32 standard, address strategy);
 
@@ -92,6 +95,8 @@ contract TokensFactory is ITokensFactory, Utils {
             bytes(symbol),
             token
         );
+
+        registeredTokens[token] = tokenStandard;
 
         emit CreatedToken(
             name,
@@ -171,5 +176,13 @@ contract TokensFactory is ITokensFactory, Utils {
     */
     function getSupportedStandards() public view returns (bytes32[]) {
         return supportedStandards;
+    }
+
+    /**
+    * @notice Returns standard of the registered token 
+    * @param tokenAddress Address of registered token
+    */
+    function getTokenStandard(address tokenAddress) public view returns (bytes32) {
+        return registeredTokens[tokenAddress];
     }
 }

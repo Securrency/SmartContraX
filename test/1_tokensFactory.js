@@ -216,6 +216,14 @@ contract('TokensFactory', accounts => {
             assert.equal(tx.logs[0].args.symbol, symbol2);
         });
 
+        it("Should returns registered token standard", async() => {
+            let standard = await SLS20Strategy.getTokenStandard();
+
+            let result = await TokensFactory.getTokenStandard(SLS20Token.address, { from : token_owner });
+
+            assert.equal(standard, result);
+        });
+
         it("Should fail to create a new token with an empty name", async() => {
             let standard = await SLS20Strategy.getTokenStandard();
             let errorThrown = false;

@@ -44,4 +44,10 @@ contract ITokensFactory {
     * @notice Return an array of supported tokens standards
     */
     function getSupportedStandards() public view returns (bytes32[]);
+
+    /**
+    * @notice Returns standard of the registered token 
+    * @param tokenAddress Address of registered token
+    */
+    function getTokenStandard(address tokenAddress) public view returns (bytes32);
 }
