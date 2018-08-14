@@ -1,5 +1,5 @@
 ## Project architecture and relations beetwen components
-<img src="docs/images/architecture-and-relations.jpg" width="850">
+<img src="docs/images/architecture-and-relations.jpg" width="895">
 
 ## Package version requirements for your machine:
 
