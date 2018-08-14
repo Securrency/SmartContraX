@@ -4,9 +4,12 @@ import "../tokens-strategies/TokenStrategy.sol";
 import "../tokens/SLS20Token.sol";
 
 contract TokenStrategyMock is TokenStrategy {
+    // Address of the Transfer module
+    address transferModule;
+    
     // Token standard
     bytes32 public constant TOKEN_STANDARD = "SLS-00";
-
+    
     /**
     * @notice This function create new token depending on his standard
     * @param name Name of the future token
@@ -29,7 +32,8 @@ contract TokenStrategyMock is TokenStrategy {
             symbol,
             decimals,
             totalSupply,
-            tokenOwner
+            tokenOwner,
+            transferModule
         );
 
         emit CreatedToken(
@@ -48,5 +52,12 @@ contract TokenStrategyMock is TokenStrategy {
     */
     function getTokenStandard() public view returns (bytes32) {
         return TOKEN_STANDARD;
+    }
+
+    /**
+    * @notice Set transfer module to the strategy
+    */
+    function setTransferModule(address _transferModule) public {
+        transferModule = _transferModule;
     }
 }

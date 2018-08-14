@@ -12,11 +12,13 @@ contract SLS20Token is SecuritiesStandardToken, DetailedERC20 {
         string _symbol,
         uint8 _decimals,
         uint256 _totalSupply,
-        address _issuer
+        address _issuer,
+        address _transferModule
     ) 
         public
         DetailedERC20(_name, _symbol, _decimals)
         SecuritiesToken(_issuer)
+        SecuritiesStandardToken(_transferModule)
     {
         totalSupply_ = _totalSupply;
         balances[_issuer] = totalSupply_;

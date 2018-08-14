@@ -1,12 +1,23 @@
 pragma solidity 0.4.24;
 
 import "./SecuritiesToken.sol";
+import "../interfaces/ITransferModule.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
 /**
 * @title Securities Standart Token
 */
 contract SecuritiesStandardToken is SecuritiesToken, StandardToken {
+    // // Address of the Transfer module
+    address public transferModule;
+    
+    /**
+    * @notice Set Transfer module address to the token
+    */
+    constructor(address _transferModule) public {
+        transferModule = _transferModule;
+    }
+    
     /**
     * @notice Allows create rollback transaction for ERC-20 tokens
     * @notice tokens will be send back to the old owner, will be emited "RollbackTransaction" event
@@ -78,6 +89,14 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken {
     * @param value the amount of tokens to be transferred
     */
     function transfer(address to, uint256 value) public returns (bool) {
+        bool allowed = ITransferModule(transferModule).verifyTransfer(
+            msg.sender,
+            to,
+            msg.sender,
+            value
+        );
+
+        require(allowed, "Transfer was declined.");
         createCheckpoint(msg.sender, to, value, msg.sender);
 
         return super.transfer(to, value);

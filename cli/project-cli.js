@@ -5,6 +5,7 @@ var program = require('commander');
 var tokensGenerator = require('./commands/tokensGenerator.js');
 var tokenInteraction = require('./commands/tokenInteraction.js');
 var symbolRegistry = require('./commands/symbolRegistry.js');
+var whiteList = require('./commands/whiteList.js');
 
 program
   .version('0.0.1')
@@ -32,6 +33,14 @@ program
   .description('Functions for interaction with symbol registry')
   .action(() => {
     symbolRegistry.run();
+  });
+
+program
+  .command('whiteList')
+  .alias('WL')
+  .description('Functions for interaction with whitelist')
+  .action(() => {
+    whiteList.run();
   });
 
 program.parse(process.argv);
