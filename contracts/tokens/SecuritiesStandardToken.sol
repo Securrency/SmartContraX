@@ -47,6 +47,8 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken {
         balances[from] -= tokens;
         balances[to] += tokens;
 
+        emit Transfer(from, to, tokens);
+        
         return true;
     }
 
@@ -78,6 +80,8 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken {
     {
         balances[from] -= tokens;
         balances[to] += tokens;
+
+        emit Transfer(from, to, tokens);
 
         return true;
     }
