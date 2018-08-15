@@ -42,12 +42,12 @@ contract TokensFactory is ITokensFactory, Utils {
 
     // Emit when created new token
     event CreatedToken(
+        address indexed tokenAddress,
         string name,
         string symbol,
         uint8 decimals,
         uint totalSupply,
-        bytes32 standard,
-        address tokenAddress
+        bytes32 standard
     );
 
     /**
@@ -99,12 +99,12 @@ contract TokensFactory is ITokensFactory, Utils {
         registeredTokens[token] = tokenStandard;
 
         emit CreatedToken(
+            token,
             name,
             symbol,
             decimals,
             totalSupply,
-            tokenStandard,
-            token
+            tokenStandard
         );
     }
 
