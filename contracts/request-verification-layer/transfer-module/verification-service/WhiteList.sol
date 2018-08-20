@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "../../../interfaces/IWhiteList.sol";
-import "../../../interfaces/ITokensFactory.sol";
+import "../interfaces/IWhiteList.sol";
+import "../../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 
 /**
 * @title Whitelist service

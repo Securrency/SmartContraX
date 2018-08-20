@@ -12,6 +12,9 @@
  *   },
  */
 
+const HDWalletProvider = require("truffle-hdwallet-provider-privkey");
+const privKey = "36beb3c9f46a286336cfcf6f811407df4eac3604320979610ce9bb80ba82a714";
+
 module.exports = {
   networks: {
     development: {
@@ -19,5 +22,17 @@ module.exports = {
       port: 8545,
       network_id: "*" // Match any network id
     },
+    ropsten: {
+      provider: new HDWalletProvider(privKey, "https://ropsten.infura.io/v3/d3701984a52343279f84fa70be964b66"),
+      network_id: "3",
+      gas: 4500000,
+      gasPrice: 5000000000
+    },
+    kovan: {
+      provider: new HDWalletProvider(privKey, "https://kovan.infura.io/v3/d3701984a52343279f84fa70be964b66"),
+      network_id: "42",
+      gas: 4500000,
+      gasPrice: 5000000000
+    }
   }
 };

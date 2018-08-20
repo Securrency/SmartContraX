@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
-import "../tokens-strategies/TokenStrategy.sol";
-import "../tokens/SLS20Token.sol";
+import "../registry-layer/tokens-factory/deployment-strategies/TokenDeploymentStrategy.sol";
+import "../registry-layer/tokens-factory/tokens/SLS20Token.sol";
 
-contract TokenStrategyMock is TokenStrategy {
+contract TokenStrategyMock is TokenDeploymentStrategy {
     // Address of the Transfer module
     address transferModule;
     

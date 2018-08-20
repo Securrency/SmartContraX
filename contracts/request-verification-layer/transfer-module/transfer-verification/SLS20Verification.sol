@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
-import "../../../interfaces/ITransferVerification.sol";
-import "../transfer-verification/WhiteList.sol";
+import "../interfaces/ITransferVerification.sol";
+import "../verification-service/WhiteList.sol";
 
 /**
 * @title Transfer verification of the SLS-20 token standard
@@ -23,14 +23,13 @@ contract SLS20Verification is ITransferVerification {
     * @param from The address transfer from
     * @param to The address transfer to
     * @param tokenAddress Address ot the token
-    * @param tokens The amount of tokens to be transferred 
     */
     function verifyTransfer(
         address from,
         address to,
         address sender,
         address tokenAddress,
-        uint tokens
+        uint //tokens
     )
         public
         view

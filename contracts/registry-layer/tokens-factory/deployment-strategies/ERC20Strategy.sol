@@ -1,17 +1,14 @@
 pragma solidity ^0.4.24;
 
-import "./TokenStrategy.sol";
-import "../tokens/SLS20Token.sol";
+import "./TokenDeploymentStrategy.sol";
+import "../tokens/ERC20Token.sol";
 
 /**
-* @title SLS-20 token strategy
+* @title ERC-20 token deployment strategy
 */
-contract SLS20Strategy is TokenStrategy  {
-    // Address of the Transfer module
-    address transferModule;
-
+contract ERC20Strategy is TokenDeploymentStrategy  {
     // Token standard
-    bytes32 public constant TOKEN_STANDARD = "SLS-20";
+    bytes32 public constant TOKEN_STANDARD = "ERC-20";
 
     /**
     * @notice This function create new token depending on his standard
@@ -30,13 +27,12 @@ contract SLS20Strategy is TokenStrategy  {
         public 
         returns (address)
     {
-        address token = new SLS20Token(
+        address token = new ERC20Token(
             name,
             symbol,
             decimals,
             totalSupply,
-            tokenOwner,
-            transferModule
+            tokenOwner
         );
 
         emit CreatedToken(
@@ -55,12 +51,5 @@ contract SLS20Strategy is TokenStrategy  {
     */
     function getTokenStandard() public view returns (bytes32) {
         return TOKEN_STANDARD;
-    }
-
-    /**
-    * @notice Set transfer module to the strategy
-    */
-    function setTransferModule(address _transferModule) public {
-        transferModule = _transferModule;
     }
 }

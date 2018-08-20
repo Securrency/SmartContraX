@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "../interfaces/ISecuritiesToken.sol";
-import "../services/TxCheckpoints.sol";
+import "./services/TxCheckpoints.sol";
 
 /**
 * @title Securities Token

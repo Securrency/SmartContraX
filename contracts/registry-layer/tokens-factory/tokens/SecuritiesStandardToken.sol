@@ -1,7 +1,7 @@
 pragma solidity 0.4.24;
 
+import "../../../request-verification-layer/transfer-module/interfaces/ITransferModule.sol";
 import "./SecuritiesToken.sol";
-import "../interfaces/ITransferModule.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
 /**

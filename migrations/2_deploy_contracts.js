@@ -1,11 +1,11 @@
-var SymbolRegistry = artifacts.require("./services/SymbolRegistry.sol");
-var TokensFactory = artifacts.require("./TokensFactory.sol");
-var SLS20Strategy = artifacts.require("./tokens-strategies/SLS20Strategy.sol");
-var ERC20Strategy = artifacts.require("./tokens-strategies/ERC20Strategy.sol");
+var SymbolRegistry = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
+var TokensFactory = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
+var SLS20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
+var ERC20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/ERC20Strategy.sol");
 
-var TransferModule = artifacts.require("./modules/transfer/TransferModule.sol");
-var WhiteList = artifacts.require("./modules/transfer/transfer-verification/WhiteList.sol");
-var SLS20Verification = artifacts.require("./modules/transfer/verification-service/SLS20Verification.sol");
+var TransferModule = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
+var WhiteList = artifacts.require("./request-verification-layer/transfer-module/transfer-service/WhiteList.sol");
+var SLS20Verification = artifacts.require("./request-verification-layer/transfer-module/verification-service/SLS20Verification.sol");
 
 module.exports = function(deployer) {
   var tokensFactoryDeployed;

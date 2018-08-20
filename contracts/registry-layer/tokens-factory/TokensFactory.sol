@@ -1,9 +1,9 @@
 pragma solidity ^0.4.24;
 
-import "./interfaces/ISymbolRegistry.sol";
 import "./interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenStrategy.sol";
-import "./helpers/Utils.sol";
+import "../symbol-registry/interfaces/ISymbolRegistry.sol";
+import "../../helpers/Utils.sol";
 
 /**
 * @title Factory of the tokens

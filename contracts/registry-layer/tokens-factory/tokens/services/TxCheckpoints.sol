@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
-import "../interfaces/ITxCheckpoints.sol";
-import "../helpers/Utils.sol";
+import "../../interfaces/ITxCheckpoints.sol";
+import "../../../../helpers/Utils.sol";
 
 /**
 * @title Transactions checkpoints

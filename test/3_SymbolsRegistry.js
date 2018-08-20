@@ -1,6 +1,6 @@
 const sleep = require('sleep');
 
-var SR = artifacts.require("./services/SymbolRegistry.sol");
+var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 
 function isException(error) {
     let strError = error.toString();

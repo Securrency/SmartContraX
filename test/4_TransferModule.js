@@ -1,11 +1,11 @@
-var TM = artifacts.require("./modules/transfer/TransferModule.sol");
-var WL = artifacts.require("./modules/transfer/transfer-verification/WhiteList.sol");
-var SLS20V = artifacts.require("./modules/transfer/verification-service/SLS20Verification.sol");
+var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
+var WL = artifacts.require("./request-verification-layer/transfer-module/verification-service/WhiteList.sol");
+var SLS20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/SLS20Verification.sol");
 
-var TF = artifacts.require("./TokensFactory.sol");
-var SR = artifacts.require("./services/SymbolRegistry.sol");
-var SLS20S = artifacts.require("./tokens-strategy/SLS20Strategy.sol");
-var DSToken = artifacts.require("./tokens/SLS20Token.sol");
+var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
+var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
+var SLS20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/SLS20Token.sol");
 
 function isException(error) {
     let strError = error.toString();
@@ -123,7 +123,7 @@ contract('TransferModule', accounts => {
             let tx = await transferModule.addVerificationLogic(SLS20Verification.address.valueOf(), standard);
 
             assert.equal(tx.logs[0].args.standard, standard);
-            assert.equal(tx.logs[0].args.logicAddress, SLS20Verification.address.valueOf());
+            assert.equal(tx.logs[0].args.tvAddress, SLS20Verification.address.valueOf());
         });
 
         it("Should add account to the whitelist", async() => {

@@ -1,8 +1,8 @@
 pragma solidity 0.4.24;
 
-import "../../interfaces/ITransferModule.sol";
-import "../../interfaces/ITokensFactory.sol";
-import "../../interfaces/ITransferVerification.sol";
+import "./interfaces/ITransferModule.sol";
+import "./interfaces/ITransferVerification.sol";
+import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 
 /**
 * @title Transfer Module
@@ -11,15 +11,15 @@ contract TransferModule is ITransferModule {
     // Address of the tokens factory
     address public tokenFactory;
 
-    // Declare storage for a verification logics
-    mapping(bytes32 => address) logics;
+    // Declare storage for a transfer verification logics
+    mapping(bytes32 => address) transferVerifications;
 
     /**
-    * @notice Emit when new verification logic was added
+    * @notice Emit when new transfer verification logic was added
     * @param standard Token standard
-    * @param logicAddress Address of the verification logic
+    * @param tvAddress Address of the transfer verification logic
     */
-    event Logic(bytes32 standard, address logicAddress);
+    event TransferVerification(bytes32 standard, address tvAddress);
 
     /**
     * @notice Setting address of the tokens factory
@@ -49,7 +49,7 @@ contract TransferModule is ITransferModule {
         bytes32 standard = ITokensFactory(tokenFactory).getTokenStandard(msg.sender);
         require(standard != 0x00, "Token is not registered in the tokens factory.");
 
-        address verification = logics[standard];
+        address verification = transferVerifications[standard];
 
         if(verification == address(0)) {
             return true;
@@ -66,16 +66,16 @@ contract TransferModule is ITransferModule {
 
     /**
     * @notice Add verification logic to the Transfer module
-    * @param logicAddress Transfer verification logic address
+    * @param tvAddress Transfer verification logic address
     * @param standard Token standard related to this logic
     */
-    function addVerificationLogic(address logicAddress, bytes32 standard) public {
-        require(logicAddress != address(0), "Invalid address of the verification logic.");
-        require(logics[standard] == address(0), "Verification logic for this standard already present.");
+    function addVerificationLogic(address tvAddress, bytes32 standard) public {
+        require(tvAddress != address(0), "Invalid address of the transfer verification logic.");
+        require(transferVerifications[standard] == address(0), "Transfer verification logic for this standard already present.");
         require(ITokensFactory(tokenFactory).isSupported(standard), "Standard didn't supports by tokens factory.");
 
-        logics[standard] = logicAddress;
+        transferVerifications[standard] = tvAddress;
 
-        emit Logic(standard, logicAddress);
+        emit TransferVerification(standard, tvAddress);
     }
 }

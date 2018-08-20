@@ -3,9 +3,9 @@ pragma solidity ^0.4.24;
 import "../interfaces/ITokenStrategy.sol";
 
 /**
-* @title Token Strategy
+* @title Token deployment Strategy
 */
-contract TokenStrategy is ITokenStrategy {
+contract TokenDeploymentStrategy is ITokenStrategy {
     // Emit when created new token
     event CreatedToken(
         string name,
