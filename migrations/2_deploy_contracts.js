@@ -7,6 +7,8 @@ var TransferModule = artifacts.require("./request-verification-layer/transfer-mo
 var WhiteList = artifacts.require("./request-verification-layer/transfer-module/transfer-service/WhiteList.sol");
 var SLS20Verification = artifacts.require("./request-verification-layer/transfer-module/verification-service/SLS20Verification.sol");
 
+var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
+
 module.exports = function(deployer) {
   var tokensFactoryDeployed;
   var SLS20StrategyDeployed;
@@ -15,11 +17,16 @@ module.exports = function(deployer) {
   var TransferModuleDeployed;
   var WhiteListDeployed;
   var SLS20VerificationDeployed;
+  var PermissionModuleDeployed;
   
-  deployer.deploy(SymbolRegistry, {gas: 1800000})
+  deployer.deploy(PermissionModule, {gas: 5200000})
   .then((instance) => {
-    SymbolRegistryDeployed = instance;
-    return deployer.deploy(TokensFactory, SymbolRegistryDeployed.address, {gas: 1600000})
+    PermissionModuleDeployed = instance;
+    return deployer.deploy(SymbolRegistry, {gas: 1800000})
+    .then((instance) => {
+      SymbolRegistryDeployed = instance;
+      return deployer.deploy(TokensFactory, SymbolRegistryDeployed.address, {gas: 1600000})
+    })
     .then((instance) => {
       tokensFactoryDeployed = instance;
       return deployer.deploy(WhiteList, tokensFactoryDeployed.address, {gas: 800000});
