@@ -58,7 +58,7 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
     * @notice Verify role
     */
     modifier validRole(bytes32 role) {
-        require(role != 0x00 && roles[role] != 0x00, "Invalid role.");
+        require((role != 0x00 && roles[role] != 0x00) || role == ownerRole, "Invalid role.");
         _;
     }
 
