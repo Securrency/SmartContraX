@@ -18,14 +18,14 @@ contract WhiteList is IWhiteList {
     * @param tokenAddress Address of the token
     * @param who An address which was added to the Whitelist
     */
-    event Added(address who, address tokenAddress);
+    event Added(address indexed who, address indexed tokenAddress);
 
     /**
     * @notice Write info to the log when someone was removed from the whitelist
     * @param tokenAddress Address of the token
     * @param who An address which was removed from the Whitelist
     */
-    event Removed(address who, address tokenAddress);
+    event Removed(address indexed who, address indexed tokenAddress);
 
     /**
     * @notice Setting address of the tokens factory
