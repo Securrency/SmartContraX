@@ -2,11 +2,12 @@ pragma solidity 0.4.24;
 
 import "./interfaces/ISymbolRegistry.sol";
 import "../../helpers/Utils.sol";
+import "../../request-verification-layer/permission-module/Protected.sol";
 
 /**
 * @title Symbol Registry
 */
-contract SymbolRegistry is ISymbolRegistry, Utils {
+contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     // Interval for symbol expiration
     uint public exprationInterval = 604800;
 
@@ -69,10 +70,19 @@ contract SymbolRegistry is ISymbolRegistry, Utils {
     }
 
     /**
+    * @notice Initialize contract
+    */
+    constructor(address permissionModule) public Protected(permissionModule) {} 
+
+    /**
     * @notice Register new symbol in the registry
     * @param symbol Symbol
     */
-    function registerSymbol(bytes symbol) public verifySymbol(symbol) {
+    function registerSymbol(bytes symbol) 
+        public 
+        verifySymbol(symbol) 
+        verifyPermission(msg.sig, msg.sender) 
+    {
         symbol = toUpperBytes(symbol);
 
         require(
@@ -154,7 +164,10 @@ contract SymbolRegistry is ISymbolRegistry, Utils {
     * @notice Update symbols expiration interval
     * @param interval New expiration interval
     */
-    function updateExpirationInterval(uint interval) public {
+    function updateExpirationInterval(uint interval) 
+        public 
+        verifyPermission(msg.sig, msg.sender)
+    {
         require(interval != 0, "Invalid expiration interval.");
 
         exprationInterval = interval;

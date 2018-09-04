@@ -9,6 +9,18 @@ var TM = artifacts.require("./request-verification-layer/transfer-module/Transfe
 var WL = artifacts.require("./request-verification-layer/transfer-module/verification-service/WhiteList.sol");
 var SLS20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/SLS20Verification.sol");
 
+var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
+
+function createId(signature) {
+    let hash = web3.sha3(signature);
+
+    return hash.substring(0, 10);
+}
+
+function bytes32ToString(bytes32) {
+    return web3.toAscii(bytes32).replace(/\0/g, '')
+}
+
 function isException(error) {
     let strError = error.toString();
     return strError.includes('invalid opcode') || strError.includes('invalid JUMP') || strError.includes('revert');
@@ -33,6 +45,7 @@ contract('TokensFactory', accounts => {
     let transferModule;
     let SLS20Verification;
     let SLS20Strategy;
+    let permissionModule;
 
     let invalidTokenStandard = "ST-JGAqabJmEZsm1PXh3DmN";
 
@@ -40,7 +53,62 @@ contract('TokensFactory', accounts => {
     let zeroAddress = "0x0000000000000000000000000000000000000000";
 
     before(async() => {
-        symbolRegistry = await SR.new();
+        permissionModule = await PM.new();
+
+        assert.notEqual(
+            permissionModule.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "PermissionModule contract was not deployed"
+        );
+
+        let ownerRoleName = "Owner";
+        let systemRoleName = "System";
+        let registrationRoleName = "Registration";
+        let issuerRoleName = "Issuer";
+
+        let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        tx = await permissionModule.createRole(registrationRoleName, systemRoleName, {from: accounts[0]});
+
+        assert.equal(registrationRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        tx = await permissionModule.createRole(issuerRoleName, systemRoleName, {from: accounts[0]});
+
+        assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        let regSymbolId = createId("registerSymbol(bytes)");
+        tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, regSymbolId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        let createTokenId = createId("createToken(string,string,uint8,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(createTokenId, issuerRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, createTokenId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], issuerRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+
+        symbolRegistry = await SR.new(permissionModule.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             symbolRegistry.address.valueOf(),
@@ -106,6 +174,7 @@ contract('TokensFactory', accounts => {
         // Printing all the contract addresses
         console.log(`
             Tokens factory core:\n
+            PermissionModule: ${permissionModule.address}
             TokensFactory: ${TokensFactory.address}
             SLS20Strategy: ${SLS20Strategy.address}
             TokenStrategyMock1:${TokenStrategyMock.address}

@@ -2,6 +2,18 @@ const sleep = require('sleep');
 
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 
+var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
+
+function createId(signature) {
+    let hash = web3.sha3(signature);
+
+    return hash.substring(0, 10);
+}
+
+function bytes32ToString(bytes32) {
+    return web3.toAscii(bytes32).replace(/\0/g, '')
+}
+
 function isException(error) {
     let strError = error.toString();
     return strError.includes('invalid opcode') || strError.includes('invalid JUMP') || strError.includes('revert');
@@ -9,10 +21,60 @@ function isException(error) {
 
 contract('SymbolsRegistry', accounts => {
     let symbolRegistry;
+    let permissionModule;
     let symbol = "TEST";
     let hexSymbol;
     before(async() => {
-        symbolRegistry = await SR.new();
+        permissionModule = await PM.new();
+
+        assert.notEqual(
+            permissionModule.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "PermissionModule contract was not deployed"
+        );
+
+        let ownerRoleName = "Owner";
+        let systemRoleName = "System";
+        let registrationRoleName = "Registration";
+
+        let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        tx = await permissionModule.createRole(registrationRoleName, systemRoleName, {from: accounts[0]});
+
+        assert.equal(registrationRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        let regSymbolId = createId("registerSymbol(bytes)");
+        tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, regSymbolId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        let updateExpIntId = createId("updateExpirationInterval(uint256)");
+        tx = await permissionModule.addMethodToTheRole(updateExpIntId, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, updateExpIntId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[1], registrationRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[1]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        symbolRegistry = await SR.new(permissionModule.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             symbolRegistry.address.valueOf(),
