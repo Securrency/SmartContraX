@@ -43,21 +43,13 @@ async function run() {
     // roles methods
     let systemMethods = [
         "updateExpirationInterval(uint256)",
-        "addTokenStrategy(address)",
         "removeTokenStrategy(bytes32)",
         "updateTokenStrategy(bytes32, address)",
         "addVerificationLogic(address, bytes32)",
         "setTransferModule(address)"
     ];
 
-    let ownerMethods = [
-        "createRole(bytes32, bytes32)",
-        "deactivateRole(bytes32)",
-        "activateRole(bytes32)",
-        "addMethodToTheRole(bytes4, bytes32)",
-        "removeMethodFromTheRole(bytes4, bytes32)",
-        "transferOwnership(address)"
-    ];
+    let ownerMethods = [];
     
     let registrationMethods = [
         "registerSymbol(bytes)",
@@ -85,7 +77,7 @@ async function run() {
     
     for (let i = 0; i < rolesData.length; i++) {
         console.log("\x1b[2m", `Role: ${rolesData[i].role} - ${rolesData[i].account}`);
-        if (i > 0) {
+        if (i > 1) {
             let action = pm.methods.createRole(web3.utils.toHex(rolesData[i].role), web3.utils.toHex(rolesData[i].parent));
             let GAS = await web3Helper.estimateGas(action, accounts[0], 1.2);
             let GAS_PRICE = await web3.eth.getGasPrice();
