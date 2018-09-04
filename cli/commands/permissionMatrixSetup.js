@@ -93,6 +93,14 @@ async function run() {
                 return receipt.valueOf();
             });
             console.log("\x1b[2m", `Create role ${rolesData[i].role} ${result.transactionHash}`);
+
+            action = pm.methods.addRoleToTheWallet(rolesData[i].account, web3.utils.toHex(rolesData[i].role));
+            GAS = await web3Helper.estimateGas(action, accounts[0], 1.2);
+            GAS_PRICE = await web3.eth.getGasPrice();
+            result = await action.send({ from: accounts[0], gas: GAS, gasPrice:GAS_PRICE}).then((receipt) => {
+                return receipt.valueOf();
+            });
+            console.log("\x1b[2m", `Add role ${rolesData[i].role} ${result.transactionHash}`);
         } 
         
         console.log("\x1b[2m", "Methods:");
