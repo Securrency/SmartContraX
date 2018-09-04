@@ -4,11 +4,12 @@ import "./interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenStrategy.sol";
 import "../symbol-registry/interfaces/ISymbolRegistry.sol";
 import "../../helpers/Utils.sol";
+import "../../request-verification-layer/permission-module/Protected.sol";
 
 /**
 * @title Factory of the tokens
 */
-contract TokensFactory is ITokensFactory, Utils {
+contract TokensFactory is ITokensFactory, Utils, Protected {
     // Symbol Registry address
     address symbolRegistry;
 
@@ -53,7 +54,10 @@ contract TokensFactory is ITokensFactory, Utils {
     /**
     * @notice Add symbol registry
     */
-    constructor(address _symbolRegistry) public {
+    constructor(address _symbolRegistry, address _permissionModule) 
+        public 
+        Protected(_permissionModule) 
+    {
         symbolRegistry = _symbolRegistry;
     }
 
@@ -73,6 +77,7 @@ contract TokensFactory is ITokensFactory, Utils {
         bytes32 tokenStandard
     ) 
         public
+        verifyPermission(msg.sig, msg.sender)
     {
         address strategy = tokensStrategies[tokenStandard].strategyAddress;
 
@@ -112,7 +117,10 @@ contract TokensFactory is ITokensFactory, Utils {
     * @notice This function loads new strategy to the tokens factory
     * @param tokenStrategy Address of the strategy contract
     */
-    function addTokenStrategy(address tokenStrategy) public {
+    function addTokenStrategy(address tokenStrategy)
+        public
+        verifyPermission(msg.sig, msg.sender)
+    {
         bytes32 standard = ITokenStrategy(tokenStrategy).getTokenStandard();
 
         require(standard != bytes32(""), "Invalid tokens strategy.");
@@ -136,7 +144,10 @@ contract TokensFactory is ITokensFactory, Utils {
     * @notice Remove strategy from tokens factory
     * @param standard Token standard which will be removed
     */
-    function removeTokenStrategy(bytes32 standard) public {
+    function removeTokenStrategy(bytes32 standard) 
+        public
+        verifyPermission(msg.sig, msg.sender) 
+    {
         require(tokensStrategies[standard].strategyAddress != address(0), "Strategy not found.");
 
         uint index = tokensStrategies[standard].index;
@@ -162,7 +173,10 @@ contract TokensFactory is ITokensFactory, Utils {
     * @param standard Token standard which will be updated on the new strategy
     * @param tokenStrategyNew New strategy
     */
-    function updateTokenStrategy(bytes32 standard, address tokenStrategyNew) public {
+    function updateTokenStrategy(bytes32 standard, address tokenStrategyNew) 
+        public 
+        verifyPermission(msg.sig, msg.sender) 
+    {
         require(tokenStrategyNew != address(0), "Invalid address of the new token strategy.");
         require(tokensStrategies[standard].strategyAddress != address(0), "Strategy not found.");
         

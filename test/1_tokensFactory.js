@@ -93,6 +93,24 @@ contract('TokensFactory', accounts => {
         assert.equal(tx.logs[0].args.methodId, createTokenId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
 
+        let addStrategyId = createId("addTokenStrategy(address)");
+        tx = await permissionModule.addMethodToTheRole(addStrategyId, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addStrategyId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        let removeStrategyId = createId("removeTokenStrategy(bytes32)");
+        tx = await permissionModule.addMethodToTheRole(removeStrategyId, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, removeStrategyId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        let updateStrategyId = createId("updateTokenStrategy(bytes32,address)");
+        tx = await permissionModule.addMethodToTheRole(updateStrategyId, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, updateStrategyId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
             
         assert.equal(tx.logs[0].args.wallet, accounts[0]);
@@ -116,7 +134,7 @@ contract('TokensFactory', accounts => {
             "SymbolRegistry contract was not deployed"
         );
 
-        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), {from: accounts[0]});
+        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), permissionModule.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             TokensFactory.address.valueOf(),

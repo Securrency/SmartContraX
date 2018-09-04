@@ -81,6 +81,12 @@ contract('TransferModule', accounts => {
 
         assert.equal(complianceRoleName, bytes32ToString(tx.logs[0].args.name))
         assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.parent));
+        
+        let addStrategyId = createId("addTokenStrategy(address)");
+        tx = await permissionModule.addMethodToTheRole(addStrategyId, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addStrategyId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
         let regSymbolId = createId("registerSymbol(bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
@@ -128,7 +134,7 @@ contract('TransferModule', accounts => {
             "SymbolRegistry contract was not deployed"
         );
 
-        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), { from: token_owner });
+        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
 
         assert.notEqual(
             TokensFactory.address.valueOf(),

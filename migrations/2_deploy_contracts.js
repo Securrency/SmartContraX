@@ -9,7 +9,13 @@ var SLS20Verification = artifacts.require("./request-verification-layer/transfer
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
-module.exports = function(deployer) {
+function createId(signature) {
+  let hash = web3.sha3(signature);
+
+  return hash.substring(0, 10);
+}
+
+module.exports = function(deployer, network, accounts) {
   var tokensFactoryDeployed;
   var SLS20StrategyDeployed;
   var ERC20StrategyDeployed;
@@ -25,7 +31,7 @@ module.exports = function(deployer) {
     return deployer.deploy(SymbolRegistry, PermissionModuleDeployed.address, {gas: 2100000})
     .then((instance) => {
       SymbolRegistryDeployed = instance;
-      return deployer.deploy(TokensFactory, SymbolRegistryDeployed.address, {gas: 1600000})
+      return deployer.deploy(TokensFactory, SymbolRegistryDeployed.address, PermissionModuleDeployed.address, {gas: 3100000})
     })
     .then((instance) => {
       tokensFactoryDeployed = instance;
@@ -49,9 +55,20 @@ module.exports = function(deployer) {
     })
     .then((instance) => {
       ERC20StrategyDeployed = instance;
+    })
+    .then(() => {
+      return PermissionModuleDeployed.createRole("System", "Owner", {gas: 300000});
+    })
+    .then(() => {
+      return PermissionModuleDeployed.addMethodToTheRole(createId("addTokenStrategy(address)"), "System", {gas: 500000});
+    })
+    .then(() => {
+      return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], "System", {gas:300000});
+    })
+    .then(() => {
       return tokensFactoryDeployed.addTokenStrategy(SLS20StrategyDeployed.address, {gas: 120000});
     })
-    .then((instance) => {
+    .then(() => {
       return tokensFactoryDeployed.addTokenStrategy(ERC20StrategyDeployed.address, {gas: 120000});
     })
     .then(() => {
