@@ -31,23 +31,6 @@ contract SecuritiesToken is TxCheckpoints, ISecuritiesToken {
     );
 
     /**
-    * @notice Describe event of the "cancel transaction" and write info to the log
-    * @param from Address from which we write off tokens
-    * @param to Tokens owner
-    * @param tokens Quantity of the tokens that will be transfered in "cancel transaction"
-    * @param checkpointId Checkpoint identifier
-    * @param originalTxHash Hash of the original transaction which maked a tokens transfer
-    */
-    event CancelTransaction(
-        address from,
-        address to,
-        uint tokens,
-        uint checkpointId,
-        string originalTxHash
-
-    );
-
-    /**
     * @notice Modifier for securities tokens rollback functions
     * @param from Address from which we rollback tokens
     * @param to Tokens owner
@@ -77,42 +60,6 @@ contract SecuritiesToken is TxCheckpoints, ISecuritiesToken {
         _;
 
         emit RollbackTransaction(
-            from,
-            to,
-            tokens,
-            checkpointId,
-            originalTxHash
-        );
-    }
-
-    /**
-    * @notice Modifier for securities tokens cancellation functions
-    * @param from Address from which we write off tokens
-    * @param to Tokens owner
-    * @param tokens Quantity of the tokens that will be rollbacked
-    * @param checkpointId Checkpoint identifier
-    * @param originalTxHash Hash of the original transaction which maked a tokens transfer
-    */
-    modifier txCancellation(
-        address from,
-        address to,
-        uint tokens,
-        address sender,
-        uint checkpointId,
-        string originalTxHash
-    ) {
-         processCheckpoint(
-            from,
-            to,
-            tokens,
-            sender,
-            checkpointId,
-            originalTxHash
-        );
-
-        _;
-
-        emit CancelTransaction(
             from,
             to,
             tokens,

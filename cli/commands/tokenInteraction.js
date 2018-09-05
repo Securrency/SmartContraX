@@ -90,10 +90,6 @@ async function startInteraction() {
         case '--rollbackTx':
             txRollBack();
             break;
-        case '--c':
-        case '--cancelTx':
-            txCancellation();
-            break;
         case '--txh':
         case '--txHistory':
             readTxHistory();
@@ -101,10 +97,6 @@ async function startInteraction() {
         case '--txr':
         case '--txRollbacksHistory':
             readRollbacksHistory();
-            break;
-        case '--txc':
-        case '--txCancellationsHistory':
-            readCancellationHistory();
             break;
         case '--cp':
         case '--capTable':
@@ -150,14 +142,8 @@ function getCapTable() {
 
     readCapTableFromTxH(holders)
     .then((holders) => {
-        readCapTableFromTxR(holders)
-        .then((holders) => {
-            readCapTableFromTxC(holders)
-            .then(holders => {
-                showCapTable(holders);
-                startInteraction();
-            });
-        });
+        showCapTable(holders);
+        startInteraction();
     });
 }
 
@@ -222,24 +208,6 @@ function readCapTableFromTxR(holders) {
     });
 }
 
-function readCapTableFromTxC(holders) {
-    return new Promise((resolve, reject) => {
-        token.getPastEvents('CancelTransaction', {
-            filter: {_from: accounts[0]},
-            fromBlock: 0,
-            toBlock: 'latest'
-        }, function(error, events) {
-            if (error) {
-                console.log(error);
-                return;
-            }
-            holders = processCapTableEventResult(events, holders);
-            resolve(holders);
-        }
-        );
-    });
-}
-
 function processCapTableEventResult(events, holders) {
     for (i=0; i < events.length; i++) {
         let from = events[i].returnValues.from;
@@ -276,29 +244,6 @@ function readTxHistory() {
                 logTx(num, from, to, value, symbol)
                 num++;
             }
-            startInteraction();
-        }
-    );
-}
-
-function readCancellationHistory() {
-    console.log('Transactions cancellation history:');
-    token.getPastEvents('CancelTransaction', {
-            filter: {_from: accounts[0]},
-            fromBlock: 0,
-            toBlock: 'latest'
-        }, function(error, events) {
-            if (error) {
-                console.log(error);
-                return;
-            }
-
-            if (events.length != 0) {
-                showHistory(events);
-            } else {
-                console.log('Cancellation history is empty.');
-            }
-            
             startInteraction();
         }
     );
@@ -358,27 +303,6 @@ async function txRollBack() {
         let action = token.methods.createRollbackTransaction(to, from, value, checkpointId, txHash);
         // send transaction
         let message = 'Create rollback transaction. Please wait...';
-        sendTransaction(from, action, message);
-    } catch (error) {
-        console.log('Transaction reverted by EVM.');
-        return startInteraction();
-    }
-}
-
-async function txCancellation() {
-    let txHash =  readlineSync.question('TxHash: ');
-
-    let receipt = await web3.eth.getTransactionReceipt(txHash);
-    let checkpointId = parseInt(receipt.logs[0].topics[2]);
-
-    let from = prepareAddressFromLog(receipt.logs[1].topics[1]);
-    let to = prepareAddressFromLog(receipt.logs[1].topics[2]);
-    let value = parseInt(receipt.logs[1].data);
-
-    try {
-        let action = token.methods.createCancellationTransaction(to, from, value, checkpointId, txHash);
-        // send transaction
-        let message = 'Create cancellation transaction. Please wait...';
         sendTransaction(from, action, message);
     } catch (error) {
         console.log('Transaction reverted by EVM.');
@@ -476,11 +400,9 @@ function showHelpMessage() {
         --acounts (--a) Show list of all accounts
         --transfer (--t) Transfer tokens
         --rollbackTx (--r) Create rollback transaction
-        --cancelTx (--c) Create cancellation transaction
         --balanceOf (--b) Get account balance
         --txHistory (--txh) Show transactions history
         --txRollbacksHistory (--txr) Show rollbacks history
-        --txCancellationsHistory (--txc) Show cancellations history
         --updateCheckpointExpirationTime (--uet) Update checkpoint expiration time
         --capTable (--cp) Show cap table
         \n

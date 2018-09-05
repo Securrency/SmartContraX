@@ -49,7 +49,6 @@ contract("SLS20Token", accounts => {
     let zeroAddress = "0x0000000000000000000000000000000000000000";
 
     let txForRollback;
-    let txForCancellation;
 
     before(async() => {
         permissionModule = await PM.new();
@@ -261,8 +260,6 @@ contract("SLS20Token", accounts => {
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_2);
             assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
-
-            txForCancellation = tx.tx;
         });
 
         it("Should get correct ballance after previous transfers", async() => {
@@ -280,23 +277,6 @@ contract("SLS20Token", accounts => {
 
             let status = await SLS20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
-        });
-
-        it("Should cancel transaction", async() => {
-            let receipt = web3.eth.getTransactionReceipt(txForCancellation);
-            let checkpointId = parseInt(receipt.logs[0].topics[2]);
-
-            await SLS20Token.createCancellationTransaction(token_holder_2, token_owner, toTransfer, checkpointId, txForCancellation);
-
-            let status = await SLS20Token.isActiveCheckpoint(checkpointId);
-            assert.ok(!status, "Checkpoint not activated!");
-        });
-
-        it("Should get correct ballance after rollback and transaction cancellation", async() => {
-            let balance = await SLS20Token.balanceOf(token_owner);
-            balance = balance.toNumber();
-
-            assert.equal(balance, totalSupply);
         });
     });
 
