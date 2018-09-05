@@ -43,7 +43,7 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       SLS20VerificationDeployed = instance;
-      return deployer.deploy(TransferModule, tokensFactoryDeployed.address, {gas: 800000});
+      return deployer.deploy(TransferModule, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 900000});
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
@@ -61,6 +61,9 @@ module.exports = function(deployer, network, accounts) {
     })
     .then(() => {
       return PermissionModuleDeployed.addMethodToTheRole(createId("addTokenStrategy(address)"), "System", {gas: 500000});
+    })
+    .then(() => {
+      return PermissionModuleDeployed.addMethodToTheRole(createId("addVerificationLogic(address,bytes32)"), "System", {gas: 500000});
     })
     .then(() => {
       return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], "System", {gas:300000});

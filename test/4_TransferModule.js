@@ -106,6 +106,12 @@ contract('TransferModule', accounts => {
         assert.equal(tx.logs[0].args.methodId, addToWLId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
+        let addVL = createId("addVerificationLogic(address,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(addVL, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addVL);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
             
         assert.equal(tx.logs[0].args.wallet, accounts[0]);
@@ -156,7 +162,7 @@ contract('TransferModule', accounts => {
             "SLS20Vierification contract was not deployed"
         );
 
-        transferModule = await TM.new(TokensFactory.address.valueOf(), { from: token_owner });
+        transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
         assert.notEqual(
             transferModule.address.valueOf(),
             zeroAddress,

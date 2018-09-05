@@ -3,11 +3,12 @@ pragma solidity 0.4.24;
 import "./interfaces/ITransferModule.sol";
 import "./interfaces/ITransferVerification.sol";
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
+import "../permission-module/Protected.sol";
 
 /**
 * @title Transfer Module
 */
-contract TransferModule is ITransferModule {
+contract TransferModule is ITransferModule, Protected {
     // Address of the tokens factory
     address public tokenFactory;
 
@@ -25,7 +26,10 @@ contract TransferModule is ITransferModule {
     * @notice Setting address of the tokens factory
     * @param _tokensFactory Address of the tokens factory
     */
-    constructor(address _tokensFactory) public {
+    constructor(address _tokensFactory, address _permissiomModule) 
+        public
+        Protected(_permissiomModule)
+    {
         tokenFactory = _tokensFactory;
     }
 
@@ -69,7 +73,10 @@ contract TransferModule is ITransferModule {
     * @param tvAddress Transfer verification logic address
     * @param standard Token standard related to this logic
     */
-    function addVerificationLogic(address tvAddress, bytes32 standard) public {
+    function addVerificationLogic(address tvAddress, bytes32 standard) 
+        public
+        verifyPermission(msg.sig, msg.sender)
+    {
         require(tvAddress != address(0), "Invalid address of the transfer verification logic.");
         require(transferVerifications[standard] == address(0), "Transfer verification logic for this standard already present.");
         require(ITokensFactory(tokenFactory).isSupported(standard), "Standard didn't supports by tokens factory.");

@@ -98,6 +98,12 @@ contract("SLS20Token", accounts => {
         assert.equal(tx.logs[0].args.methodId, addStrategyId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
+        let addVL = createId("addVerificationLogic(address,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(addVL, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addVL);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
         let createTokenId = createId("createToken(string,string,uint8,uint256,bytes32)");
         tx = await permissionModule.addMethodToTheRole(createTokenId, issuerRoleName, { from: accounts[0] });
 
@@ -160,7 +166,7 @@ contract("SLS20Token", accounts => {
             "SLS20Vierification contract was not deployed"
         );
 
-        transferModule = await TM.new(TokensFactory.address.valueOf(), { from: token_owner });
+        transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
         assert.notEqual(
             transferModule.address.valueOf(),
             zeroAddress,
