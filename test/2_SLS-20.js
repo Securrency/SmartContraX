@@ -173,7 +173,7 @@ contract("SLS20Token", accounts => {
         );
 
 
-        let SLS20Strategy = await SLS20S.new();
+        let SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf());
 
         await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
 

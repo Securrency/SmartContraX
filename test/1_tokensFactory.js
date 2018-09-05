@@ -182,7 +182,7 @@ contract('TokensFactory', accounts => {
             "TransferModule contract was not deployed"
         );
 
-        SLS20Strategy = await SLS20S.new();
+        SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf());
 
         assert.notEqual(
             TokensFactory.address.valueOf(),

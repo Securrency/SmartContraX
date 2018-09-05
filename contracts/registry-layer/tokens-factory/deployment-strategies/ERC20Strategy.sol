@@ -9,6 +9,14 @@ import "../tokens/ERC20Token.sol";
 contract ERC20Strategy is TokenDeploymentStrategy  {
     // Token standard
     bytes32 public constant TOKEN_STANDARD = "ERC-20";
+    
+    /**
+    * @notice initilaze contract
+    */
+    constructor(address tokensFactory) 
+        public
+        TokenDeploymentStrategy(tokensFactory)
+    {}
 
     /**
     * @notice This function create new token depending on his standard
@@ -24,7 +32,8 @@ contract ERC20Strategy is TokenDeploymentStrategy  {
         uint totalSupply,
         address tokenOwner
     ) 
-        public 
+        public
+        onlyTokensFactory(msg.sender)
         returns (address)
     {
         address token = new ERC20Token(

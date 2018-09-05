@@ -47,11 +47,11 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
-      return deployer.deploy(SLS20Strategy, {gas: 3600000}); 
+      return deployer.deploy(SLS20Strategy, tokensFactoryDeployed.address, {gas: 3700000}); 
     })
     .then((instance) => {
       SLS20StrategyDeployed = instance;
-      return deployer.deploy(ERC20Strategy, {gas: 3600000});
+      return deployer.deploy(ERC20Strategy, tokensFactoryDeployed.address, {gas: 3700000});
     })
     .then((instance) => {
       ERC20StrategyDeployed = instance;

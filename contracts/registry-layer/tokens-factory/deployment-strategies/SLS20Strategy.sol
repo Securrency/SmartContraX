@@ -14,6 +14,14 @@ contract SLS20Strategy is TokenDeploymentStrategy  {
     bytes32 public constant TOKEN_STANDARD = "SLS-20";
 
     /**
+    * @notice initilaze contract
+    */
+    constructor(address tokensFactory) 
+        public
+        TokenDeploymentStrategy(tokensFactory)
+    {}
+
+    /**
     * @notice This function create new token depending on his standard
     * @param name Name of the future token
     * @param symbol Symbol of the future token
@@ -27,7 +35,8 @@ contract SLS20Strategy is TokenDeploymentStrategy  {
         uint totalSupply,
         address tokenOwner
     ) 
-        public 
+        public
+        onlyTokensFactory(msg.sender)
         returns (address)
     {
         address token = new SLS20Token(
