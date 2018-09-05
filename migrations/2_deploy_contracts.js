@@ -35,7 +35,7 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       tokensFactoryDeployed = instance;
-      return deployer.deploy(WhiteList, tokensFactoryDeployed.address, {gas: 800000});
+      return deployer.deploy(WhiteList, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 1000000});
     })
     .then((instance) => {
       WhiteListDeployed = instance;

@@ -110,7 +110,7 @@ contract("SLS20Token", accounts => {
         assert.equal(tx.logs[0].args.methodId, createTokenId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
 
-        let addToWLId = createId("addToWhiteList(address, address)");
+        let addToWLId = createId("addToWhiteList(address,address)");
         tx = await permissionModule.addMethodToTheRole(addToWLId, complianceRoleName, { from: accounts[0] });
 
         assert.equal(tx.logs[0].args.methodId, addToWLId);
@@ -152,7 +152,7 @@ contract("SLS20Token", accounts => {
             "TokensFactory contract was not deployed"
         );
 
-        whiteList = await WL.new(TokensFactory.address.valueOf(), { from: token_owner });
+        whiteList = await WL.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
             zeroAddress,
@@ -222,7 +222,14 @@ contract("SLS20Token", accounts => {
 
     describe("Testing SLS-20 token", async() => {
         it("Should add accounts to the whitelist", async() => {
-            let tx = await whiteList.addToWhiteList(token_owner, SLS20Token.address.valueOf(), { from: token_owner });
+            let complianceRoleName = "Compliance";
+
+            let tx = await permissionModule.addRoleForSpecificToken(token_owner, SLS20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
+                
+            assert.equal(tx.logs[0].args.wallet, token_owner);
+            assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
+
+            tx = await whiteList.addToWhiteList(token_owner, SLS20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_owner);
             assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());

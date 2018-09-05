@@ -65,6 +65,7 @@ contract('TokensFactory', accounts => {
         let systemRoleName = "System";
         let registrationRoleName = "Registration";
         let issuerRoleName = "Issuer";
+        let complianceRoleName = "Compliance";
 
         let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
 
@@ -80,6 +81,11 @@ contract('TokensFactory', accounts => {
 
         assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.name))
         assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        tx = await permissionModule.createRole(complianceRoleName, issuerRoleName, {from: accounts[0]});
+
+        assert.equal(complianceRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.parent));
 
         let regSymbolId = createId("registerSymbol(bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
@@ -113,9 +119,16 @@ contract('TokensFactory', accounts => {
 
         let addVL = createId("addVerificationLogic(address,bytes32)");
         tx = await permissionModule.addMethodToTheRole(addVL, systemRoleName, { from: accounts[0] });
-
+        
         assert.equal(tx.logs[0].args.methodId, addVL);
         assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+
+        let addToWLId = createId("addToWhiteList(address,address)");
+        tx = await permissionModule.addMethodToTheRole(addToWLId, complianceRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addToWLId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
             
@@ -148,7 +161,7 @@ contract('TokensFactory', accounts => {
             "TokensFactory contract was not deployed"
         );
 
-        whiteList = await WL.new(TokensFactory.address.valueOf(), { from: token_owner });
+        whiteList = await WL.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
             zeroAddress,
@@ -432,7 +445,14 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should add accounts to the whitelist", async() => {
-            let tx = await whiteList.addToWhiteList(token_owner, SLS20Token.address.valueOf(), { from: token_owner });
+            let complianceRoleName = "Compliance";
+
+            let tx = await permissionModule.addRoleForSpecificToken(token_owner, SLS20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
+                
+            assert.equal(tx.logs[0].args.wallet, token_owner);
+            assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
+
+            tx = await whiteList.addToWhiteList(token_owner, SLS20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_owner);
             assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());

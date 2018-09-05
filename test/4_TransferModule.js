@@ -100,10 +100,16 @@ contract('TransferModule', accounts => {
         assert.equal(tx.logs[0].args.methodId, createTokenId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
 
-        let addToWLId = createId("addToWhiteList(address, address)");
+        let addToWLId = createId("addToWhiteList(address,address)");
         tx = await permissionModule.addMethodToTheRole(addToWLId, complianceRoleName, { from: accounts[0] });
 
         assert.equal(tx.logs[0].args.methodId, addToWLId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
+
+        let removeFormWLId = createId("removeFromWhiteList(address,address)");
+        tx = await permissionModule.addMethodToTheRole(removeFormWLId, complianceRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, removeFormWLId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
         let addVL = createId("addVerificationLogic(address,bytes32)");
@@ -148,7 +154,7 @@ contract('TransferModule', accounts => {
             "TokensFactory contract was not deployed"
         );
 
-        whiteList = await WL.new(TokensFactory.address.valueOf(), { from: token_owner });
+        whiteList = await WL.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
             zeroAddress,
@@ -200,7 +206,10 @@ contract('TransferModule', accounts => {
 
         SLS20Token = await DSToken.at(tx.logs[0].args.tokenAddress);
 
-
+        tx = await permissionModule.addRoleForSpecificToken(accounts[0], tx.logs[0].args.tokenAddress, complianceRoleName, { from: accounts[0] });
+                
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
         // Printing all the contract addresses
         console.log(`
@@ -293,6 +302,13 @@ contract('TransferModule', accounts => {
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_2);
             assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+        });
+
+        it("Should remove account from the whitelist", async() => {
+            let tx = await whiteList.removeFromWhiteList(token_holder_1, SLS20Token.address.valueOf(), { from: token_owner });
+
+            assert.equal(tx.logs[0].args.who, token_holder_1);
+            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
         });
     });
 });

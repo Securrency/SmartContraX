@@ -2,11 +2,12 @@ pragma solidity 0.4.24;
 
 import "../interfaces/IWhiteList.sol";
 import "../../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
+import "../../permission-module/Protected.sol";
 
 /**
 * @title Whitelist service
 */
-contract WhiteList is IWhiteList {
+contract WhiteList is IWhiteList, Protected {
     // Address of the tokens factory
     address public tokenFactory;
 
@@ -31,7 +32,10 @@ contract WhiteList is IWhiteList {
     * @notice Setting address of the tokens factory
     * @param _tokensFactory Address of the tokens factory
     */
-    constructor(address _tokensFactory) public {
+    constructor(address _tokensFactory, address _permissionModule) 
+        public
+        Protected(_permissionModule) 
+    {
         tokenFactory = _tokensFactory;
     }
 
@@ -49,7 +53,10 @@ contract WhiteList is IWhiteList {
     * @param who Address which will be added
     * @param tokenAddress Token for address attachment
     */
-    function addToWhiteList(address who, address tokenAddress) public {
+    function addToWhiteList(address who, address tokenAddress) 
+        public
+        verifyPermissionForToken(msg.sig, msg.sender, tokenAddress) 
+    {
         require(who != address(0), "Invalid customer address.");
         require(ITokensFactory(tokenFactory).getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
 
@@ -63,7 +70,10 @@ contract WhiteList is IWhiteList {
     * @param who Address which will be added
     * @param tokenAddress Token address
     */
-    function removeFromWhiteList(address who, address tokenAddress) public {
+    function removeFromWhiteList(address who, address tokenAddress) 
+        public
+        verifyPermissionForToken(msg.sig, msg.sender, tokenAddress) 
+    {
         require(who != address(0), "Invalid customer address.");
         require(ITokensFactory(tokenFactory).getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
 
