@@ -493,9 +493,9 @@ contract('TokensFactory', accounts => {
         it("Should transfer approved tokens", async() => {
             let tx = await SLS20Token.transferFrom(token_owner, token_holder_2, toApprove, {from: token_holder_1});
 
-            assert.equal(tx.logs[0].args.from, token_owner);
-            assert.equal(tx.logs[0].args.to, token_holder_2);
-            assert.equal(tx.logs[0].args.value.toNumber(), toApprove);
+            assert.equal(tx.logs[1].args.from, token_owner);
+            assert.equal(tx.logs[1].args.to, token_holder_2);
+            assert.equal(tx.logs[1].args.value.toNumber(), toApprove);
 
             let balance = await SLS20Token.balanceOf(token_holder_2);
             
