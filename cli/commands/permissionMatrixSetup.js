@@ -45,7 +45,6 @@ async function run() {
         "updateExpirationInterval(uint256)",
         "removeTokenStrategy(bytes32)",
         "updateTokenStrategy(bytes32,address)",
-        "setTransferModule(address)"
     ];
 
     let ownerMethods = [];
