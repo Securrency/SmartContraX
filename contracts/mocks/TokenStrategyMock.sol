@@ -1,9 +1,10 @@
 pragma solidity 0.4.24;
 
 import "../registry-layer/tokens-factory/deployment-strategies/TokenDeploymentStrategy.sol";
+import "../request-verification-layer/permission-module/Protected.sol";
 import "../registry-layer/tokens-factory/tokens/SLS20Token.sol";
 
-contract TokenStrategyMock is TokenDeploymentStrategy {
+contract TokenStrategyMock is TokenDeploymentStrategy, Protected {
     // Address of the Transfer module
     address transferModule;
     
@@ -13,9 +14,10 @@ contract TokenStrategyMock is TokenDeploymentStrategy {
     /**
     * @notice initilaze contract
     */
-    constructor(address tokensFactory) 
+    constructor(address tokensFactory, address permissionModule) 
         public
         TokenDeploymentStrategy(tokensFactory)
+        Protected(permissionModule)
     {}
 
     /**
@@ -41,7 +43,8 @@ contract TokenStrategyMock is TokenDeploymentStrategy {
             decimals,
             totalSupply,
             tokenOwner,
-            transferModule
+            transferModule,
+            pm
         );
 
         emit CreatedToken(
@@ -65,7 +68,10 @@ contract TokenStrategyMock is TokenDeploymentStrategy {
     /**
     * @notice Set transfer module to the strategy
     */
-    function setTransferModule(address _transferModule) public {
+    function setTransferModule(address _transferModule) 
+        public
+        verifyPermission(msg.sig, msg.sender)
+    {
         transferModule = _transferModule;
     }
 }

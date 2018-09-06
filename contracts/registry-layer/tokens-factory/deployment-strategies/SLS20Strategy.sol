@@ -47,7 +47,8 @@ contract SLS20Strategy is TokenDeploymentStrategy, Protected  {
             decimals,
             totalSupply,
             tokenOwner,
-            transferModule
+            transferModule,
+            pm
         );
 
         emit CreatedToken(

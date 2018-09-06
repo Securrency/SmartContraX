@@ -121,6 +121,12 @@ contract("SLS20Token", accounts => {
         assert.equal(tx.logs[0].args.methodId, addToWLId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
+        let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
+        tx = await permissionModule.addMethodToTheRole(rollbackId, complianceRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, rollbackId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
+
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
             
         assert.equal(tx.logs[0].args.wallet, accounts[0]);
@@ -200,17 +206,24 @@ contract("SLS20Token", accounts => {
         await symbolRegistry.registerSymbol(hexSymbol, { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
+        let tokenAddress = tx.logs[0].args.tokenAddress;
 
         assert.notEqual(
-            tx.logs[0].args.tokenAddress,
+            tokenAddress,
             zeroAddress,
             "New token was not deployed"
         );
 
-        assert.equal(tx.logs[0].args.name, name);
-        assert.equal(tx.logs[0].args.symbol, symbol);
+        // assert.equal(tx.logs[0].args.name, name);
+        // assert.equal(tx.logs[0].args.symbol, symbol);
 
-        SLS20Token = await DSToken.at(tx.logs[0].args.tokenAddress);
+        // tx = await permissionModule.addRoleForSpecificToken(accounts[0], tokenAddress, complianceRoleName, { from: accounts[0] });
+
+        // assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        // assert.equal(tx.logs[0].args.token, tokenAddress);
+        // assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
+
+        SLS20Token = await DSToken.at(tokenAddress);
 
         // Printing all the contract addresses
         console.log(`
@@ -277,9 +290,11 @@ contract("SLS20Token", accounts => {
 
         it("Should rollback transaction", async() => {
             let receipt = web3.eth.getTransactionReceipt(txForRollback);
+            let transaction = web3.eth.getTransaction(txForRollback);
+
             let checkpointId = parseInt(receipt.logs[0].topics[2]);
             
-            await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, toTransfer, checkpointId, txForRollback);
+            await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, transaction["from"], toTransfer, checkpointId, txForRollback);
 
             let status = await SLS20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
@@ -312,7 +327,7 @@ contract("SLS20Token", accounts => {
 
             let errorThrown = false;
             try {
-                await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, toTransfer, checkpointId, tx.tx);
+                await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, token_holder_1, toTransfer, checkpointId, tx.tx);
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Checkpoint is already used or expired.`.grey);
@@ -340,7 +355,7 @@ contract("SLS20Token", accounts => {
             
             let checkpointId = tx.logs[0].args.checkpointId.toNumber();
 
-            await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, toTransfer, checkpointId, tx.tx);
+            await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, token_owner, toTransfer, checkpointId, tx.tx);
 
             let status = await SLS20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");

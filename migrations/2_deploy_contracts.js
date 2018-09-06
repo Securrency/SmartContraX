@@ -47,7 +47,7 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
-      return deployer.deploy(SLS20Strategy, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 3900000}); 
+      return deployer.deploy(SLS20Strategy, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 4100000}); 
     })
     .then((instance) => {
       SLS20StrategyDeployed = instance;

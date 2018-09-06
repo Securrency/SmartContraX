@@ -31,6 +31,16 @@ contract Protected {
     }
 
     /**
+    * @notice Verify permission for the method, sender and for the token
+    * @param method Requested method
+    * @param sender Transaction sender address
+    */
+    modifier verifyPermissionForCurrentToken(bytes4 method, address sender) {
+        require(IPermissionModule(pm).allowed(method, sender, address(this)), "Declined by Permission Module.");
+        _;
+    }
+
+    /**
     * @notice Initialize contract with permission module
     */
     constructor(address permissionMudule) public {
