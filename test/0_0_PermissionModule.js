@@ -60,12 +60,159 @@ contract('PermissionModule', accounts => {
         );
     });
 
-    describe("Test roles manager", async() => {
+    describe("Test permission module adding and removals mechanism", async() => {
         it("Should create owner role on the deploy", async() => {
             let roles = await permissionModule.getListOfAllRoles();
             assert.equal(ownerRoleName, bytes32ToString(roles[0]));
         });
 
+        it("Should create list of the roles", async() => {
+            let tx;
+            for (let i = 0; i < testRoles.length; i++) {
+                tx = await permissionModule.createRole(testRoles[i], ownerRoleName, {from: owner});
+
+                assert.equal(testRoles[i], bytes32ToString(tx.logs[0].args.name))
+                assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+            }
+        });
+
+        it("Should add methods to the role", async() => {
+            let tx;
+            for (let i = 0; i < testMethodIds.length; i++) {
+                tx = await permissionModule.addMethodToTheRole(testMethodIds[i], testRoles[0], { from: owner });
+
+                assert.equal(tx.logs[0].args.methodId, testMethodIds[i]);
+                assert.equal(bytes32ToString(tx.logs[0].args.role), testRoles[0]);
+            }
+        });
+
+        it("Should correctly remove methods from the role", async() => {
+            let methodsToRemove = testMethodIds.slice(0);
+            
+            let indexToRemove = Math.round(methodsToRemove.length / 2);
+
+            let tx = await permissionModule.removeMethodFromTheRole(methodsToRemove[indexToRemove], testRoles[0], { from: owner });
+
+            assert.equal(bytes32ToString(tx.logs[0].args.role), testRoles[0]);
+            assert.equal(tx.logs[0].args.methodId, methodsToRemove[indexToRemove]);
+            
+            methodsToRemove[indexToRemove] = methodsToRemove[methodsToRemove.length - 1];
+            methodsToRemove.splice(methodsToRemove.length - 1, 1);
+
+            tx = await permissionModule.removeMethodFromTheRole(methodsToRemove[indexToRemove], testRoles[0], { from: owner });
+
+            assert.equal(bytes32ToString(tx.logs[0].args.role), testRoles[0]);
+            assert.equal(tx.logs[0].args.methodId, methodsToRemove[indexToRemove]);
+
+            methodsToRemove[indexToRemove] = methodsToRemove[methodsToRemove.length - 1];
+            methodsToRemove.splice(methodsToRemove.length - 1, 1);
+
+            for (let i = 0; i < methodsToRemove.length; i++) {
+                tx = await permissionModule.removeMethodFromTheRole(methodsToRemove[i], testRoles[0], { from: owner });
+
+                assert.equal(tx.logs[0].args.methodId, methodsToRemove[i]);
+                assert.equal(bytes32ToString(tx.logs[0].args.role), testRoles[0]);
+            }
+
+            let roleMethods = await permissionModule.getSupportedMethodsByRole(testRoles[0]);
+            
+            assert.equal(roleMethods.length, 0)
+        });
+
+        it("Should add roles to the wallet", async() => {
+            let tx;
+            for (let i = 0; i < 20; i++) {
+                tx = await permissionModule.addRoleToTheWallet(accounts[9], testRoles[i], { from: owner });
+                
+                assert.equal(tx.logs[0].args.wallet, accounts[9]);
+                assert.equal(bytes32ToString(tx.logs[0].args.role), testRoles[i]);
+            }
+        });
+
+        it("Should correctly remove roles from the wallet", async() => {
+            let rolesToRemove = testRoles.slice(0);
+            rolesToRemove.splice(20, 5);
+            
+            let indexToRemove = Math.round(rolesToRemove.length / 2);
+
+            let tx = await permissionModule.removeRoleFromTheWallet(accounts[9], rolesToRemove[indexToRemove], { from: owner });
+            
+            assert.equal(tx.logs[0].args.wallet, accounts[9]);
+            assert.equal(bytes32ToString(tx.logs[0].args.role), rolesToRemove[indexToRemove]);
+
+            rolesToRemove[indexToRemove] = rolesToRemove[rolesToRemove.length - 1];
+            rolesToRemove.splice(rolesToRemove.length - 1, 1);
+
+            tx = await permissionModule.removeRoleFromTheWallet(accounts[9], rolesToRemove[indexToRemove], { from: owner });
+            
+            assert.equal(tx.logs[0].args.wallet, accounts[9]);
+            assert.equal(bytes32ToString(tx.logs[0].args.role), rolesToRemove[indexToRemove]);
+
+            rolesToRemove[indexToRemove] = rolesToRemove[rolesToRemove.length - 1];
+            rolesToRemove.splice(rolesToRemove.length - 1, 1);
+            
+            for (let i = 0; i < 18; i++) {
+                tx = await permissionModule.removeRoleFromTheWallet(accounts[9], rolesToRemove[i], { from: owner });
+                
+                assert.equal(tx.logs[0].args.wallet, accounts[9]);
+                assert.equal(bytes32ToString(tx.logs[0].args.role), rolesToRemove[i]);
+            }
+
+            let walletRoles = await permissionModule.getWalletRoles(accounts[9]);
+            
+            for (i = 0; i < walletRoles.length; i++) {
+                assert.equal(walletRoles[i], "0x0000000000000000000000000000000000000000000000000000000000000000");
+            }
+        });
+
+        it("Should add roles for specific token", async() => {
+            let tx;
+            for (let i = 0; i < 20; i++) {
+                tx = await permissionModule.addRoleForSpecificToken(accounts[9], testToken, testRoles[i], { from: owner });
+                
+                assert.equal(tx.logs[0].args.wallet, accounts[9]);
+                assert.equal(bytes32ToString(tx.logs[0].args.role), testRoles[i]);
+            }
+        });
+
+        it("Should correctly remove roles from the specific token", async() => {
+            let rolesToRemove = testRoles.slice(0);
+            rolesToRemove.splice(20, 5);
+            
+            let indexToRemove = Math.round(rolesToRemove.length / 2);
+
+            let tx = await permissionModule.removeRoleFromSpecificToken(accounts[9], testToken, rolesToRemove[indexToRemove], { from: owner });
+            
+            assert.equal(tx.logs[0].args.wallet, accounts[9]);
+            assert.equal(bytes32ToString(tx.logs[0].args.role), rolesToRemove[indexToRemove]);
+
+            rolesToRemove[indexToRemove] = rolesToRemove[rolesToRemove.length - 1];
+            rolesToRemove.splice(rolesToRemove.length - 1, 1);
+
+            tx = await permissionModule.removeRoleFromSpecificToken(accounts[9], testToken, rolesToRemove[indexToRemove], { from: owner });
+            
+            assert.equal(tx.logs[0].args.wallet, accounts[9]);
+            assert.equal(bytes32ToString(tx.logs[0].args.role), rolesToRemove[indexToRemove]);
+
+            rolesToRemove[indexToRemove] = rolesToRemove[rolesToRemove.length - 1];
+            rolesToRemove.splice(rolesToRemove.length - 1, 1);
+            
+            for (let i = 0; i < 18; i++) {
+                tx = await permissionModule.removeRoleFromSpecificToken(accounts[9], testToken, rolesToRemove[i], { from: owner });
+                
+                assert.equal(tx.logs[0].args.wallet, accounts[9]);
+                assert.equal(bytes32ToString(tx.logs[0].args.role), rolesToRemove[i]);
+            }
+
+            let walletRoles = await permissionModule.getWalletRolesForToken(accounts[9], testToken);
+            
+            for (i = 0; i < walletRoles.length; i++) {
+                assert.equal(walletRoles[i], "0x0000000000000000000000000000000000000000000000000000000000000000");
+            }
+        });
+    });
+
+    describe("Test roles manager", async() => {
         it("Should create a new role", async() => {
             let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: owner});
 
@@ -418,14 +565,6 @@ contract('PermissionModule', accounts => {
         // roles limit
         it("Should fail when wallet roles limit will be reached", async() => {
             let tx;
-            // create roles
-            for (let i = 0; i < 21; i++) {
-                tx = await permissionModule.createRole(testRoles[i], ownerRoleName, {from: owner});
-
-                assert.equal(testRoles[i], bytes32ToString(tx.logs[0].args.name))
-                assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
-            }
-            
             // add roles to the account
             for (let i = 0; i < 20; i++) {
                 tx = await permissionModule.addRoleToTheWallet(accounts[4], testRoles[i], { from: owner });
@@ -524,8 +663,8 @@ contract('PermissionModule', accounts => {
         it("Should transfer ownership", async() => {
             let tx = await permissionModule.transferOwnership(accounts[1], { from: owner });
 
-            assert.equal(tx.logs[0].args.oldOwner, owner);
-            assert.equal(tx.logs[0].args.newOwner, accounts[1]);
+            assert.equal(tx.logs[2].args.oldOwner, owner);
+            assert.equal(tx.logs[2].args.newOwner, accounts[1]);
         });
 
         it("Should fail execute ownable method from old onwer account", async() => {
@@ -550,8 +689,8 @@ contract('PermissionModule', accounts => {
         it("Should transfer ownership back to the previous owner", async() => {
             let tx = await permissionModule.transferOwnership(owner, { from: accounts[1] });
 
-            assert.equal(tx.logs[0].args.oldOwner, accounts[1]);
-            assert.equal(tx.logs[0].args.newOwner, owner);
+            assert.equal(tx.logs[2].args.oldOwner, accounts[1]);
+            assert.equal(tx.logs[2].args.newOwner, owner);
         });
 
         it("Should execute ownable method from new onwer account", async() => {
