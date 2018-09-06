@@ -69,10 +69,14 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
         tokenDependentRoles[wallet][token][roleName] = false;
 
         uint8 index = indexesOfTheTokenDependentRoles[wallet][token][roleName];
-        uint8 last =  tokenDependentRolesIndex[wallet][token];
+        uint8 last =  tokenDependentRolesIndex[wallet][token] - 1;
 
-        listOfTheTokenDependentRoles[wallet][token][index] = listOfTheTokenDependentRoles[wallet][token][last];
+        if (last != 0) {
+            indexesOfTheTokenDependentRoles[wallet][token][listOfTheTokenDependentRoles[wallet][token][last]] = index;
+            listOfTheTokenDependentRoles[wallet][token][index] = listOfTheTokenDependentRoles[wallet][token][last];
+        }
 
+        delete indexesOfTheTokenDependentRoles[wallet][token][roleName];
         delete listOfTheTokenDependentRoles[wallet][token][last];
         tokenDependentRolesIndex[wallet][token]--;
 

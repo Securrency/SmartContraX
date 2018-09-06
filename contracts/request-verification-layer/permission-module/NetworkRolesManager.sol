@@ -40,14 +40,24 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         uint8 index = walletRolesIndex[wallet];
         require(index <= rolesLimit, "The limit for number of roles has been reached.");
     
-        walletRoles[wallet][roleName] = true;
+        addRole(wallet, roleName);
+    }
 
-        listOfTheWalletRoles[wallet][index] = roleName;
+    /**
+    * @notice Add a role to the wallet
+    * @param wallet Wallet address
+    * @param role Name of the role which will be added to the wallet
+    */
+    function addRole(address wallet, bytes32 role) internal {
+        walletRoles[wallet][role] = true;
 
-        indexesOfTheWalletRoles[wallet][roleName] = index;
+        uint8 index = walletRolesIndex[wallet];
+        listOfTheWalletRoles[wallet][index] = role;
+
+        indexesOfTheWalletRoles[wallet][role] = index;
         walletRolesIndex[wallet]++;
 
-        emit RoleAdded(wallet, roleName);
+        emit RoleAdded(wallet, role);
     }
 
     /**
@@ -65,17 +75,30 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     {
         require(walletRoles[wallet][roleName], "The wallet has no this role.");
 
-        walletRoles[wallet][roleName] = false;
+        removeRole(wallet, roleName);
+    }
 
-        uint8 index = indexesOfTheWalletRoles[wallet][roleName];
-        uint8 last =  walletRolesIndex[wallet];
+    /**
+    * @notice Remove role from the wallet
+    * @param wallet Wallet address
+    * @param role Name of the role which will be removed from the wallet
+    */
+    function removeRole(address wallet, bytes32 role) internal {
+        walletRoles[wallet][role] = false;
 
-        listOfTheWalletRoles[wallet][index] = listOfTheWalletRoles[wallet][last];
+        uint8 index = indexesOfTheWalletRoles[wallet][role];
+        uint8 last =  walletRolesIndex[wallet] - 1;
 
+        if(last != 0) {
+            indexesOfTheWalletRoles[wallet][listOfTheWalletRoles[wallet][last]] = index;
+            listOfTheWalletRoles[wallet][index] = listOfTheWalletRoles[wallet][last];
+        }
+        
+        delete indexesOfTheWalletRoles[wallet][role];
         delete listOfTheWalletRoles[wallet][last];
         walletRolesIndex[wallet]--;
 
-        emit RoleDeleted(wallet, roleName);
+        emit RoleDeleted(wallet, role);
     }
 
     /**
@@ -86,22 +109,8 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         require(newOwner != address(0), "Invalid new owner address.");
         require(walletRolesIndex[newOwner] <= rolesLimit, "The limit for number of roles has been reached.");
 
-        walletRoles[msg.sender][ownerRole] = false;
-
-        uint8 index = indexesOfTheWalletRoles[msg.sender][ownerRole];
-        uint8 last =  walletRolesIndex[msg.sender];
-
-        listOfTheWalletRoles[msg.sender][index] = listOfTheWalletRoles[msg.sender][last];
-
-        delete listOfTheWalletRoles[msg.sender][last];
-        walletRolesIndex[msg.sender]--;
-
-        walletRoles[newOwner][ownerRole] = true;
-
-        index = walletRolesIndex[newOwner];
-        listOfTheWalletRoles[newOwner][index] = ownerRole;
-
-        indexesOfTheWalletRoles[newOwner][ownerRole] = index;
+        removeRole(msg.sender, ownerRole);
+        addRole(newOwner, ownerRole);
 
         emit TransferedOwnership(msg.sender, newOwner);
     }

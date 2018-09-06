@@ -79,6 +79,7 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
         roleStatus[ownerRole] = true;
         walletRoles[msg.sender][ownerRole] = true;
         listOfTheWalletRoles[msg.sender][0] = ownerRole;
+        indexesOfTheWalletRoles[msg.sender][ownerRole] = 0;
         walletRolesIndex[msg.sender] = 1;
         listOfTheRoles.push(ownerRole);
     }
@@ -169,11 +170,11 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
         uint index = indexesOfTheRoleMethods[roleName][methodId];
         uint last = listOfTheRoleMethods[roleName].length - 1;
         
-        delete indexesOfTheRoleMethods[roleName][methodId];
-
+        indexesOfTheRoleMethods[roleName][listOfTheRoleMethods[roleName][last]] = index;
         listOfTheRoleMethods[roleName][index] = listOfTheRoleMethods[roleName][last];
-        delete listOfTheRoleMethods[roleName][last];
 
+        delete listOfTheRoleMethods[roleName][last];
+        delete indexesOfTheRoleMethods[roleName][methodId];
         listOfTheRoleMethods[roleName].length--;
 
         emit MethodRemoved(methodId, roleName);

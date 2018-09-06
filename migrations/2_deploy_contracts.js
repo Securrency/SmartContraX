@@ -25,7 +25,7 @@ module.exports = function(deployer, network, accounts) {
   var SLS20VerificationDeployed;
   var PermissionModuleDeployed;
   
-  deployer.deploy(PermissionModule, {gas: 5200000})
+  deployer.deploy(PermissionModule, {gas: 5400000})
   .then((instance) => {
     PermissionModuleDeployed = instance;
     return deployer.deploy(SymbolRegistry, PermissionModuleDeployed.address, {gas: 2100000})
