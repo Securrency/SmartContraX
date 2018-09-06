@@ -28,6 +28,9 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
     // Declare storage for registered tokens
     mapping(address => bytes32) internal registeredTokens;
 
+    // Declare storage for issuers
+    mapping(address => address) internal issuers;
+
     // Emit when added new token strategy
     event StrategyAdded(bytes32 standard, address strategy);
 
@@ -102,6 +105,7 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
         );
 
         registeredTokens[token] = tokenStandard;
+        issuers[token] = msg.sender;
 
         emit CreatedToken(
             token,
@@ -198,6 +202,14 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
     */
     function getTokenStandard(address tokenAddress) public view returns (bytes32) {
         return registeredTokens[tokenAddress];
+    }
+
+    /**
+    * @notice Returns token issuer address
+    * @param token Token address
+    */
+    function getIssuerByToken(address token) public view returns (address) {
+        return issuers[token];
     }
 
     /**

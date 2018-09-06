@@ -52,6 +52,12 @@ contract ITokensFactory {
     function getTokenStandard(address tokenAddress) public view returns (bytes32);
 
     /**
+    * @notice Returns token issuer address
+    * @param token Token address
+    */
+    function getIssuerByToken(address token) public view returns (address);
+
+    /**
     * @notice Verification of the supported tokens standards in the tokens factory
     * @param standard A standard for verification
     */
