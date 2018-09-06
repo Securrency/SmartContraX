@@ -4,6 +4,9 @@ pragma solidity 0.4.24;
 * @title Permission Module Storage
 */
 contract PermissionModuleStorage {
+    // Address of the Tokens Factory;
+    address tf;
+    
     // List of the all supported roles
     bytes32[] listOfTheRoles;
 

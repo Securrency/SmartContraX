@@ -1,5 +1,6 @@
 pragma solidity 0.4.24;
 
+import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenRolesManager.sol";
 import "./RolesManager.sol";
 
@@ -18,6 +19,16 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
     event TokenDependetRoleDeleted(address indexed wallet, address indexed token, bytes32 role);
 
     /**
+    * @notice Verify token issuer
+    * @param token Address of the requested token
+    */
+    modifier onlyIssuer(address token) {
+        address tokenIssuer = ITokensFactory(tf).getIssuerByToken(token);
+        require(tokenIssuer == msg.sender, "Allowed only for the issuer.");
+        _;
+    }
+
+    /**
     * @notice Add role for a specific token
     * @param wallet Wallet address
     * @param token Token address
@@ -30,7 +41,7 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
     ) 
         public
         validRole(roleName)
-        canWorkWithRole(roleName)
+        onlyIssuer(token)
     {
         require(token != address(0), "Invalid token address.");
         require(!tokenDependentRoles[wallet][token][roleName], "Role already added.");
@@ -61,7 +72,7 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
     ) 
         public
         validRole(roleName)
-        canWorkWithRole(roleName)
+        onlyIssuer(token)
     {
         require(token != address(0), "Invalid token address.");
         require(tokenDependentRoles[wallet][token][roleName], "The wallet has no this role.");
@@ -81,6 +92,14 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
         tokenDependentRolesIndex[wallet][token]--;
 
         emit TokenDependetRoleDeleted(wallet, token, roleName);
+    }
+
+    /**
+    * @notice Add tokens factory address to the permission module
+    */ 
+    function setTokensFactory(address tokensFactory) public onlyOwner() {
+        require(tf == address(0), "Already added.");
+        tf = tokensFactory;
     }
 
     /**

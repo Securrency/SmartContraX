@@ -163,6 +163,8 @@ contract("SLS20Token", accounts => {
             "TokensFactory contract was not deployed"
         );
 
+        await permissionModule.setTokensFactory(TokensFactory.address.valueOf());
+
         whiteList = await WL.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
@@ -213,15 +215,6 @@ contract("SLS20Token", accounts => {
             zeroAddress,
             "New token was not deployed"
         );
-
-        // assert.equal(tx.logs[0].args.name, name);
-        // assert.equal(tx.logs[0].args.symbol, symbol);
-
-        // tx = await permissionModule.addRoleForSpecificToken(accounts[0], tokenAddress, complianceRoleName, { from: accounts[0] });
-
-        // assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        // assert.equal(tx.logs[0].args.token, tokenAddress);
-        // assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
         SLS20Token = await DSToken.at(tokenAddress);
 

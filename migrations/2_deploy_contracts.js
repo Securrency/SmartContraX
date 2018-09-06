@@ -81,6 +81,9 @@ module.exports = function(deployer, network, accounts) {
       return SLS20StrategyDeployed.setTransferModule(TransferModuleDeployed.address, {gas: 120000});
     })
     .then(() => {
+      return PermissionModuleDeployed.setTokensFactory(tokensFactoryDeployed.address, {gas: 500000});
+    })
+    .then(() => {
       return SLS20StrategyDeployed.getTokenStandard();
     })
     .then((standard) => {

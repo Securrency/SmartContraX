@@ -1,5 +1,12 @@
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
+var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
+var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
+var SLS20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/SLS20Token.sol");
+
+var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
+
 function isException(error) {
     let strError = error.toString();
     return strError.includes('invalid opcode') || strError.includes('invalid JUMP') || strError.includes('revert');
@@ -7,6 +14,12 @@ function isException(error) {
 
 function bytes32ToString(bytes32) {
     return web3.toAscii(bytes32).replace(/\0/g, '')
+}
+
+function createId(signature) {
+    let hash = web3.sha3(signature);
+
+    return hash.substring(0, 10);
 }
 
 function makeId() {
@@ -52,7 +65,7 @@ contract('PermissionModule (Permissions matrix)', accounts => {
     let systemAcc1 = accounts[1];
     let systemAcc2 = accounts[2];
     let registrationAcc1 = accounts[3];
-    let issuerAcc1 = accounts[4];
+    let issuerAcc1 = accounts[0];
     let complianceAcc1 = accounts[5];
     let whitelistAcc1 = accounts[6];
     let whitelistAcc2 = accounts[7];
@@ -68,6 +81,153 @@ contract('PermissionModule (Permissions matrix)', accounts => {
             "0x0000000000000000000000000000000000000000",
             "Permission module contract was not deployed"
         );
+
+        let ownerRoleName = "Owner";
+        let systemRoleName = "System";
+        let registrationRoleName = "Registration";
+        let issuerRoleName = "Issuer";
+
+        let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        tx = await permissionModule.createRole(registrationRoleName, systemRoleName, {from: accounts[0]});
+
+        assert.equal(registrationRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        tx = await permissionModule.createRole(issuerRoleName, systemRoleName, {from: accounts[0]});
+
+        assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.name))
+        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+
+        let regSymbolId = createId("registerSymbol(bytes)");
+        tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, regSymbolId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        let createTokenId = createId("createToken(string,string,uint8,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(createTokenId, issuerRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, createTokenId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+
+        let addStrategyId = createId("addTokenStrategy(address)");
+        tx = await permissionModule.addMethodToTheRole(addStrategyId, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addStrategyId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        let setTM = createId("setTransferModule(address)");
+        tx = await permissionModule.addMethodToTheRole(setTM, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, setTM);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], issuerRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+
+        symbolRegistry = await SR.new(permissionModule.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            symbolRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "SymbolRegistry contract was not deployed"
+        );
+
+        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), permissionModule.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            TokensFactory.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "TokensFactory contract was not deployed"
+        );
+
+        SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
+
+        assert.notEqual(
+            TokensFactory.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "SLS20Strategy contract was not deployed"
+        ); 
+        
+        let transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: accounts[0] });
+        assert.notEqual(
+            transferModule.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "TransferModule contract was not deployed"
+        );
+
+        await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
+
+        tx = await TokensFactory.addTokenStrategy(SLS20Strategy.address, { from : accounts[0] });
+        assert.equal(tx.logs[0].args.strategy, SLS20Strategy.address);
+
+        let standard = await SLS20Strategy.getTokenStandard();
+
+        let symbol = "TEST";
+        let hexSymbol = web3.toHex(symbol);
+        await symbolRegistry.registerSymbol(hexSymbol, { from : accounts[0] });
+            
+        tx = await TokensFactory.createToken("TEST NAME", symbol, 18, 100000000, standard, { from : accounts[0] });
+        testToken = tx.logs[0].args.tokenAddress;
+
+        assert.notEqual(
+            testToken,
+            "0x0000000000000000000000000000000000000000",
+            "New token was not deployed"
+        );
+
+        await permissionModule.setTokensFactory(TokensFactory.address.valueOf());
+
+        tx = await permissionModule.removeMethodFromTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
+
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+        assert.equal(tx.logs[0].args.methodId, regSymbolId);
+
+        tx = await permissionModule.removeMethodFromTheRole(createTokenId, issuerRoleName, { from: accounts[0] });
+
+        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+        assert.equal(tx.logs[0].args.methodId, createTokenId);
+
+        tx = await permissionModule.removeMethodFromTheRole(addStrategyId, systemRoleName, { from: accounts[0] });
+
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+        assert.equal(tx.logs[0].args.methodId, addStrategyId);
+
+        tx = await permissionModule.removeMethodFromTheRole(setTM, systemRoleName, { from: accounts[0] });
+
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+        assert.equal(tx.logs[0].args.methodId, setTM);
+
+        tx = await permissionModule.removeRoleFromTheWallet(accounts[0], issuerRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+
+        tx = await permissionModule.removeRoleFromTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+
+        tx = await permissionModule.removeRoleFromTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
+            
+        assert.equal(tx.logs[0].args.wallet, accounts[0]);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
     });
     
     describe("Create roles", async() => {
