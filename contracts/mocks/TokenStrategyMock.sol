@@ -11,6 +11,14 @@ contract TokenStrategyMock is TokenDeploymentStrategy {
     bytes32 public constant TOKEN_STANDARD = "SLS-00";
     
     /**
+    * @notice initilaze contract
+    */
+    constructor(address tokensFactory) 
+        public
+        TokenDeploymentStrategy(tokensFactory)
+    {}
+
+    /**
     * @notice This function create new token depending on his standard
     * @param name Name of the future token
     * @param symbol Symbol of the future token

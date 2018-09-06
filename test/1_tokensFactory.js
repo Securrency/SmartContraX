@@ -192,7 +192,7 @@ contract('TokensFactory', accounts => {
 
         await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
 
-        TokenStrategyMock = await TSMock.new();
+        TokenStrategyMock = await TSMock.new(TokensFactory.address.valueOf());
 
         assert.notEqual(
             TokenStrategyMock.address.valueOf(),
@@ -200,7 +200,7 @@ contract('TokensFactory', accounts => {
             "TokenStrategyMock contract was not deployed"
         );
 
-        TokenStrategyMock2 = await TSMock.new();
+        TokenStrategyMock2 = await TSMock.new(TokensFactory.address.valueOf());
 
         assert.notEqual(
             TokenStrategyMock2.address.valueOf(),
