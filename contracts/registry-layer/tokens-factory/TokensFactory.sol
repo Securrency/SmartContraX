@@ -47,6 +47,7 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
     // Emit when created new token
     event CreatedToken(
         address indexed tokenAddress,
+        address indexed issuer,
         string name,
         string symbol,
         uint8 decimals,
@@ -109,6 +110,7 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
 
         emit CreatedToken(
             token,
+            msg.sender,
             name,
             symbol,
             decimals,
