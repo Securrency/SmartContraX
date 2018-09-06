@@ -54,7 +54,7 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken {
 
     /**
     * @notice Redefinition of the ERC-20 standard transfer function. 
-    * @notice Generate addiotional info for rollback and transaction cancellation
+    * @notice Generate addiotional info for rollback
     * @param to The address which you want to transfer to
     * @param value the amount of tokens to be transferred
     */
@@ -70,5 +70,25 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken {
         createCheckpoint(msg.sender, to, value, msg.sender);
 
         return super.transfer(to, value);
+    }
+
+    /**
+    * @notice Redefinition of the ERC-20 standard transferFrom function. 
+    * @notice Generate addiotional info for rollback
+    * @param to The address which you want to transfer to
+    * @param value the amount of tokens to be transferred
+    */
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+        bool allowed = ITransferModule(transferModule).verifyTransfer(
+            from,
+            to,
+            msg.sender,
+            value
+        );
+
+        require(allowed, "Transfer was declined.");
+        createCheckpoint(from, to, value, msg.sender);
+
+        return super.transferFrom(from, to, value);
     }
 }
