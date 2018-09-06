@@ -2,11 +2,12 @@ pragma solidity ^0.4.24;
 
 import "./TokenDeploymentStrategy.sol";
 import "../tokens/SLS20Token.sol";
+import "../../../request-verification-layer/permission-module/Protected.sol";
 
 /**
 * @title SLS-20 token deployment strategy
 */
-contract SLS20Strategy is TokenDeploymentStrategy  {
+contract SLS20Strategy is TokenDeploymentStrategy, Protected  {
     // Address of the Transfer module
     address transferModule;
 
@@ -16,9 +17,10 @@ contract SLS20Strategy is TokenDeploymentStrategy  {
     /**
     * @notice initilaze contract
     */
-    constructor(address tokensFactory) 
+    constructor(address tokensFactory, address permissionModule) 
         public
         TokenDeploymentStrategy(tokensFactory)
+        Protected(permissionModule)
     {}
 
     /**
@@ -69,7 +71,11 @@ contract SLS20Strategy is TokenDeploymentStrategy  {
     /**
     * @notice Set transfer module to the strategy
     */
-    function setTransferModule(address _transferModule) public {
+    function setTransferModule(address _transferModule) 
+        public
+        verifyPermission(msg.sig, msg.sender)
+    {
+        require(transferModule == address(0), "Transfer module already initialized.");
         transferModule = _transferModule;
     }
 }

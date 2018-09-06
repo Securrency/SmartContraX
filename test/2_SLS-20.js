@@ -108,6 +108,12 @@ contract("SLS20Token", accounts => {
 
         assert.equal(tx.logs[0].args.methodId, createTokenId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+        
+        let setTM = createId("setTransferModule(address)");
+        tx = await permissionModule.addMethodToTheRole(setTM, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, setTM);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
         let addToWLId = createId("addToWhiteList(address,address)");
         tx = await permissionModule.addMethodToTheRole(addToWLId, complianceRoleName, { from: accounts[0] });
@@ -173,7 +179,7 @@ contract("SLS20Token", accounts => {
         );
 
 
-        let SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf());
+        let SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
 
         await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
 

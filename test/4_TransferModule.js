@@ -87,6 +87,12 @@ contract('TransferModule', accounts => {
 
         assert.equal(tx.logs[0].args.methodId, addStrategyId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+        
+        let setTM = createId("setTransferModule(address)");
+        tx = await permissionModule.addMethodToTheRole(setTM, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, setTM);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
         let regSymbolId = createId("registerSymbol(bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
@@ -175,7 +181,7 @@ contract('TransferModule', accounts => {
             "TransferModule contract was not deployed"
         );
 
-        SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf());
+        SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
