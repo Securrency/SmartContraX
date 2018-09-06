@@ -44,7 +44,7 @@ async function run() {
     let systemMethods = [
         "updateExpirationInterval(uint256)",
         "removeTokenStrategy(bytes32)",
-        "updateTokenStrategy(bytes32, address)",
+        "updateTokenStrategy(bytes32,address)",
         "setTransferModule(address)"
     ];
 
@@ -53,7 +53,7 @@ async function run() {
     let registrationMethods = [
         "registerSymbol(bytes)",
         "renewSymbol(bytes)",
-        "transferOwnership(bytes, address)"
+        "transferOwnership(bytes,address)"
     ];
 
     let issuerMethods = [
@@ -61,8 +61,8 @@ async function run() {
     ];
     
     let complianceMethods = [
-        "addToWhiteList(address, address)",
-        "removeFromWhiteList(address, address)",
+        "addToWhiteList(address,address)",
+        "removeFromWhiteList(address,address)",
         "createRollbackTransaction(address,address,uint,uint,string)",
     ];
 
