@@ -44,6 +44,8 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken {
         )
         returns (bool)
     {
+        require(tokens <= balances[from], "Insufficient funds on balance.");
+
         balances[from] -= tokens;
         balances[to] += tokens;
 

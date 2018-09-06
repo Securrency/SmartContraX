@@ -82,7 +82,7 @@ contract TxCheckpoints is Utils, ITxCheckpoints {
     * @param from Address from
     * @param to Tokens owner
     * @param value Quantity of the tokens in transaction
-    * @param sender Transaction initiator (if transaction was from system account this value will be equal "from")
+    * @param sender Transaction initiator
     */
     function createCheckpoint(
         address from,
@@ -90,7 +90,7 @@ contract TxCheckpoints is Utils, ITxCheckpoints {
         uint value, 
         address sender
     )
-        public
+        internal
     {
         bytes32 checkpointKey = generateCheckpoint(
             from,

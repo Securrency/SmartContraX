@@ -46,8 +46,6 @@ contract SecuritiesToken is TxCheckpoints, ISecuritiesToken {
         uint checkpointId,
         string originalTxHash
     ) {
-        // TODO add verification with system account
-        // after permission module implementation
         processCheckpoint(
             from,
             to,
