@@ -251,4 +251,11 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     function getSymbolExpireDate(bytes symbol) public view returns (uint) {
         return registeredSymbols[symbol].expiredAt;
     }
+
+    /**
+    * @notice Return issuer name
+    */
+    function getIssuerNameBySymbol(bytes symbol) public view returns (bytes) {
+        return registeredSymbols[symbol].issuerName;
+    }
 }

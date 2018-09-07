@@ -50,6 +50,7 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
         address indexed issuer,
         string name,
         string symbol,
+        bytes issuerName,
         uint8 decimals,
         uint totalSupply,
         bytes32 standard
@@ -98,21 +99,26 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
             totalSupply,
             msg.sender
         );
+
+        bytes memory bytesSymbol = bytes(symbol);
         
         ISymbolRegistry(symbolRegistry).registerTokenToTheSymbol(
             msg.sender,
-            bytes(symbol),
+            bytesSymbol,
             token
         );
 
         registeredTokens[token] = tokenStandard;
         issuers[token] = msg.sender;
 
+        bytes memory issuerName = ISymbolRegistry(symbolRegistry).getIssuerNameBySymbol(bytesSymbol);
+
         emit CreatedToken(
             token,
             msg.sender,
             name,
             symbol,
+            issuerName,
             decimals,
             totalSupply,
             tokenStandard

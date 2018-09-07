@@ -65,4 +65,9 @@ contract ISymbolRegistry {
     * @notice Return symbol expire date
     */
     function getSymbolExpireDate(bytes symbol) public view returns (uint);
+
+    /**
+    * @notice Return issuer name
+    */
+    function getIssuerNameBySymbol(bytes symbol) public view returns (bytes);
 }
