@@ -209,7 +209,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         symbol = toUpperBytes(symbol);
 
         return registeredSymbols[symbol].tokenAddress == address(0)
-            && registeredSymbols[symbol].expiredAt < now;
+            || (registeredSymbols[symbol].owner != address(0) && registeredSymbols[symbol].expiredAt < now);
     }
 
     /**
