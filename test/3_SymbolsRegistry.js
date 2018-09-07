@@ -86,6 +86,11 @@ contract('SymbolsRegistry', accounts => {
     });
 
     describe("Test symbols registry", async() => {
+        it("ETH symbol is busy", async() => {
+            let result = await symbolRegistry.symbolIsAvailable("ETH", { from: accounts[0] });
+            assert.equal(result, false);
+        });
+
         it("Should register new symbol", async() => {
             let tx = await symbolRegistry.registerSymbol(hexSymbol, { from : accounts[0] });
             assert.equal(tx.logs[0].args.symbol, hexSymbol);

@@ -75,7 +75,14 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     /**
     * @notice Initialize contract
     */
-    constructor(address permissionModule) public Protected(permissionModule) {} 
+    constructor(address permissionModule) public Protected(permissionModule) {
+        registeredSymbols["ETH"] = Symbol({
+            owner: address(0),
+            tokenAddress: msg.sender,
+            registeredAt: now,
+            expiredAt: now + 86400 * 30 * 365 * 1000
+        });
+    } 
 
     /**
     * @notice Register new symbol in the registry
@@ -201,8 +208,8 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     {
         symbol = toUpperBytes(symbol);
 
-        return registeredSymbols[symbol].owner == address(0)
-            || registeredSymbols[symbol].expiredAt < now;
+        return registeredSymbols[symbol].tokenAddress == address(0)
+            && registeredSymbols[symbol].expiredAt < now;
     }
 
     /**
