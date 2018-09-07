@@ -85,7 +85,7 @@ contract("SLS20Token", accounts => {
         assert.equal(complianceRoleName, bytes32ToString(tx.logs[0].args.name))
         assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.parent));
 
-        let regSymbolId = createId("registerSymbol(bytes)");
+        let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
 
         assert.equal(tx.logs[0].args.methodId, regSymbolId);
@@ -206,7 +206,7 @@ contract("SLS20Token", accounts => {
         await transferModule.addVerificationLogic(SLS20Verification.address.valueOf(), standard);
 
         let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, { from : token_owner });
+        await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
         let tokenAddress = tx.logs[0].args.tokenAddress;

@@ -28,7 +28,7 @@ module.exports = function(deployer, network, accounts) {
   deployer.deploy(PermissionModule, {gas: 5400000})
   .then((instance) => {
     PermissionModuleDeployed = instance;
-    return deployer.deploy(SymbolRegistry, PermissionModuleDeployed.address, {gas: 2500000})
+    return deployer.deploy(SymbolRegistry, PermissionModuleDeployed.address, {gas: 2800000})
     .then((instance) => {
       SymbolRegistryDeployed = instance;
       return deployer.deploy(TokensFactory, SymbolRegistryDeployed.address, PermissionModuleDeployed.address, {gas: 3100000})

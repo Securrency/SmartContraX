@@ -7,8 +7,9 @@ contract ISymbolRegistry {
     /**
     * @notice Register new symbol in the registry
     * @param symbol Symbol
+    * @param issuerName Name of the issuer
     */
-    function registerSymbol(bytes symbol) public;
+    function registerSymbol(bytes symbol, bytes issuerName) public;
 
     /**
     * @notice Renew symbol
@@ -19,8 +20,9 @@ contract ISymbolRegistry {
     /**
     * @notice Change symbol owner
     * @param newOwner Address of the new symbol owner
+    * @param issuerName Name of the issuer
     */
-    function transferOwnership(bytes symbol, address newOwner) public;
+    function transferOwnership(bytes symbol, address newOwner, bytes issuerName) public;
 
     /**
     * @notice Checks symbol in system 

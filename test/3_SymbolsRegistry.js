@@ -47,7 +47,7 @@ contract('SymbolsRegistry', accounts => {
         assert.equal(registrationRoleName, bytes32ToString(tx.logs[0].args.name))
         assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
 
-        let regSymbolId = createId("registerSymbol(bytes)");
+        let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
 
         assert.equal(tx.logs[0].args.methodId, regSymbolId);
@@ -92,7 +92,7 @@ contract('SymbolsRegistry', accounts => {
         });
 
         it("Should register new symbol", async() => {
-            let tx = await symbolRegistry.registerSymbol(hexSymbol, { from : accounts[0] });
+            let tx = await symbolRegistry.registerSymbol(hexSymbol, "", { from : accounts[0] });
             assert.equal(tx.logs[0].args.symbol, hexSymbol);
             assert.equal(tx.logs[0].args.owner, accounts[0]);
         });
@@ -126,7 +126,7 @@ contract('SymbolsRegistry', accounts => {
         });
 
         it("Should successful transfer symbol ownership", async() => {
-            let tx = await symbolRegistry.transferOwnership(hexSymbol, accounts[1], { from: accounts[0] });
+            let tx = await symbolRegistry.transferOwnership(hexSymbol, accounts[1], "", { from: accounts[0] });
             
             assert.equal(tx.logs[0].args.oldOwner, accounts[0]);
             assert.equal(tx.logs[0].args.newOwner, accounts[1]);
@@ -145,13 +145,13 @@ contract('SymbolsRegistry', accounts => {
         it("Should register already an expired symbol", async() => {
             let symbol2 = "TEST2";
             let hexSymbol2 = web3.toHex(symbol2);
-            let tx = await symbolRegistry.registerSymbol(hexSymbol2, { from: accounts[0] });
+            let tx = await symbolRegistry.registerSymbol(hexSymbol2, "", { from: accounts[0] });
             assert.equal(tx.logs[0].args.symbol, hexSymbol2);
             assert.equal(tx.logs[0].args.owner, accounts[0]);
 
             sleep.sleep(2);
 
-            tx = await symbolRegistry.registerSymbol(hexSymbol2, { from: accounts[1] });
+            tx = await symbolRegistry.registerSymbol(hexSymbol2, "", { from: accounts[1] });
             assert.equal(tx.logs[0].args.symbol, hexSymbol2);
             assert.equal(tx.logs[0].args.owner, accounts[1]);
 

@@ -18,13 +18,15 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     event TransferedOwnership(
         address oldOwner,
         address newOwner,
-        bytes symbol
+        bytes symbol,
+        bytes issuerName
     );
 
     // Write info to the log when was registered new symbol
     event RegisteredSymbol(
         address owner,
-        bytes symbol
+        bytes symbol,
+        bytes issuerName
     );
 
     // Write info to the log about symbol renewal
@@ -40,6 +42,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     struct Symbol {
         address owner;
         address tokenAddress;
+        bytes issuerName;
         uint registeredAt;
         uint expiredAt;
     }
@@ -79,6 +82,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         registeredSymbols["ETH"] = Symbol({
             owner: address(0),
             tokenAddress: msg.sender,
+            issuerName: "",
             registeredAt: now,
             expiredAt: now + 86400 * 30 * 365 * 1000
         });
@@ -87,8 +91,9 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     /**
     * @notice Register new symbol in the registry
     * @param symbol Symbol
+    * @param issuerName Name of the issuer
     */
-    function registerSymbol(bytes symbol) 
+    function registerSymbol(bytes symbol, bytes issuerName) 
         public 
         verifySymbol(symbol) 
         verifyPermission(msg.sig, msg.sender) 
@@ -107,13 +112,14 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         Symbol memory symbolStruct = Symbol({
             owner: msg.sender,
             tokenAddress: address(0),
+            issuerName: issuerName,
             registeredAt: now,
             expiredAt: now + exprationInterval
         });
 
         registeredSymbols[symbol] = symbolStruct;
 
-        emit RegisteredSymbol(msg.sender, symbol);
+        emit RegisteredSymbol(msg.sender, symbol, issuerName);
     }
 
     /**
@@ -131,20 +137,25 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     /**
     * @notice Change symbol owner
     * @param newOwner Address of the new symbol owner
+    * @param issuerName Name of the issuer
     */
-    function transferOwnership(bytes symbol, address newOwner) 
+    function transferOwnership(bytes symbol, address newOwner, bytes issuerName) 
         public
         onlySymbolOwner(symbol, msg.sender)
     {
+        require(newOwner != address(0), "Invalid new owner address.");
+        
         symbol = toUpperBytes(symbol);
 
         emit TransferedOwnership(
             registeredSymbols[symbol].owner,
             newOwner,
-            symbol
+            symbol,
+            issuerName
         );
 
         registeredSymbols[symbol].owner = newOwner;
+        registeredSymbols[symbol].issuerName = issuerName;
     }
 
     /**

@@ -50,7 +50,7 @@ async function run() {
     let ownerMethods = [];
     
     let registrationMethods = [
-        "registerSymbol(bytes)",
+        "registerSymbol(bytes,bytes)",
         "renewSymbol(bytes)",
         "transferOwnership(bytes,address)"
     ];

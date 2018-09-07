@@ -94,7 +94,7 @@ contract('TransferModule', accounts => {
         assert.equal(tx.logs[0].args.methodId, setTM);
         assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
-        let regSymbolId = createId("registerSymbol(bytes)");
+        let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
 
         assert.equal(tx.logs[0].args.methodId, regSymbolId);
@@ -200,7 +200,7 @@ contract('TransferModule', accounts => {
         let standard = await SLS20Strategy.getTokenStandard();
 
         let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, { from : token_owner });
+        await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
 

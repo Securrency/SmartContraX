@@ -102,7 +102,7 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.name))
         assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
 
-        let regSymbolId = createId("registerSymbol(bytes)");
+        let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
 
         assert.equal(tx.logs[0].args.methodId, regSymbolId);
@@ -182,7 +182,7 @@ contract('PermissionModule (Permissions matrix)', accounts => {
 
         let symbol = "TEST";
         let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, { from : accounts[0] });
+        await symbolRegistry.registerSymbol(hexSymbol, "", { from : accounts[0] });
             
         tx = await TokensFactory.createToken("TEST NAME", symbol, 18, 100000000, standard, { from : accounts[0] });
         testToken = tx.logs[0].args.tokenAddress;
