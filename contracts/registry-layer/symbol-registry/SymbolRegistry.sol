@@ -11,6 +11,9 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     // Interval for symbol expiration
     uint public exprationInterval = 604800;
 
+    // Address of the tokens factory
+    address tf;
+
     // Write info to the log when was transferred symbol ownership
     event TransferedOwnership(
         address oldOwner,
@@ -152,6 +155,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         onlySymbolOwner(symbol, sender)
     {
         require(tokenAddress != address(0), "Invalid token address");
+        require(msg.sender == tf, "Allowed only for the tokens factory.");
 
         symbol = toUpperBytes(symbol);
 
@@ -173,6 +177,17 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         exprationInterval = interval;
 
         emit ExpirationIntervalUpdated(interval);
+    }
+
+    /**
+    * @notice Add tokens factory address to the symbol registry
+    * @param tokensFactory Address of the tokens factory
+    */
+    function setTokensFactory(address tokensFactory) public {
+        require(tf == address(0), "Already initialized.");
+        require(tokensFactory != address(0), "Invalid tokens factory address.");
+
+        tf = tokensFactory;
     }
 
     /**

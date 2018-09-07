@@ -163,6 +163,7 @@ contract('PermissionModule', accounts => {
         );
 
         await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
+        await symbolRegistry.setTokensFactory(TokensFactory.address.valueOf());
 
         tx = await TokensFactory.addTokenStrategy(SLS20Strategy.address, { from : accounts[0] });
         assert.equal(tx.logs[0].args.strategy, SLS20Strategy.address);

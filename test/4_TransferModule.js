@@ -161,6 +161,7 @@ contract('TransferModule', accounts => {
         );
 
         await permissionModule.setTokensFactory(TokensFactory.address.valueOf());
+        await symbolRegistry.setTokensFactory(TokensFactory.address.valueOf());
 
         whiteList = await WL.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
         assert.notEqual(

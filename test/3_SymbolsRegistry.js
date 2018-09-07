@@ -155,11 +155,16 @@ contract('SymbolsRegistry', accounts => {
         });
 
         it("Should register token to the symbol", async() => {
-            let tokenAddress = "0x0dfcdef556ea71ef6cd957cc382cfc012539cf94";
-            let tx = await symbolRegistry.registerTokenToTheSymbol(accounts[1], hexSymbol,tokenAddress);
-            
-            assert.equal(tx.logs[0].args.tokenAddress, tokenAddress);
-            assert.equal(tx.logs[0].args.symbol, hexSymbol);
+            let errorThrown = false;
+            try {
+                let tokenAddress = "0x0dfcdef556ea71ef6cd957cc382cfc012539cf94";
+                await symbolRegistry.registerTokenToTheSymbol(accounts[1], hexSymbol,tokenAddress);
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the tokens factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
         });
     });
 });
