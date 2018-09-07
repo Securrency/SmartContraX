@@ -78,6 +78,39 @@ contract TxCheckpoints is Utils, ITxCheckpoints {
     }
 
     /**
+    * @notice Check if checkpoint is active
+    * @param checkpointId Checkpoint identifier
+    */
+    function isActiveCheckpoint(uint checkpointId) public view returns (bool) {
+        Checkpoint memory c = checkpoints[checkpointId];
+        require(c.expireDate != 0, "Invalid checkpoint.");
+
+        if (!c.used && c.expireDate > now) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+    * @notice Update checkpoints expiration time
+    * @param newExpirationInterval New expiration interval in seconds
+    */
+    function updateExpirationTime(uint newExpirationInterval) public {
+        emit ExpireInteravalUpdated(expireInterval, newExpirationInterval);
+
+        expireInterval = newExpirationInterval;
+    }
+
+    /**
+    * @notice Return checkpoint key which was generated in tokens transfer
+    * @param checkpointId Checkpoint identifier
+    */
+    function getCheckpointKey(uint checkpointId) public view returns (bytes32) {
+        return checkpoints[checkpointId].checkpointKey;
+    }
+
+    /**
     * @notice Create checkpoint
     * @param from Address from
     * @param to Tokens owner
@@ -122,38 +155,5 @@ contract TxCheckpoints is Utils, ITxCheckpoints {
         checkpoints[checkpointId].used = true;
 
         emit CheckpointWasUsed(checkpointId, originalTxHash);
-    }
-
-    /**
-    * @notice Check if checkpoint is active
-    * @param checkpointId Checkpoint identifier
-    */
-    function isActiveCheckpoint(uint checkpointId) public view returns (bool) {
-        Checkpoint memory c = checkpoints[checkpointId];
-        require(c.expireDate != 0, "Invalid checkpoint.");
-
-        if (!c.used && c.expireDate > now) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-    * @notice Update checkpoints expiration time
-    * @param newExpirationInterval New expiration interval in seconds
-    */
-    function updateExpirationTime(uint newExpirationInterval) public {
-        emit ExpireInteravalUpdated(expireInterval, newExpirationInterval);
-
-        expireInterval = newExpirationInterval;
-    }
-
-    /**
-    * @notice Return checkpoint key which was generated in tokens transfer
-    * @param checkpointId Checkpoint identifier
-    */
-    function getCheckpointKey(uint checkpointId) public view returns (bytes32) {
-        return checkpoints[checkpointId].checkpointKey;
     }
 }

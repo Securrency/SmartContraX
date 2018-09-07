@@ -48,7 +48,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     }
 
     // Declare storage for registered tokens symbols
-    mapping(bytes => Symbol) internal registeredSymbols;
+    mapping(bytes => Symbol) registeredSymbols;
 
     /**
     * @notice Verify symbol

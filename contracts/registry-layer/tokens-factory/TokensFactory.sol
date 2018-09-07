@@ -14,7 +14,7 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
     address symbolRegistry;
 
     // Initialize the storage which will store supported tokens tandards
-    bytes32[] internal supportedStandards;
+    bytes32[] supportedStandards;
 
     // Describe tokens deployment strategy
     struct TokenStrategy {
@@ -23,13 +23,13 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
     }
 
     // Declare storge for tokens strategies
-    mapping(bytes32 => TokenStrategy) internal tokensStrategies;
+    mapping(bytes32 => TokenStrategy) tokensStrategies;
 
     // Declare storage for registered tokens
-    mapping(address => bytes32) internal registeredTokens;
+    mapping(address => bytes32) registeredTokens;
 
     // Declare storage for issuers
-    mapping(address => address) internal issuers;
+    mapping(address => address) issuers;
 
     // Emit when added new token strategy
     event StrategyAdded(bytes32 standard, address strategy);

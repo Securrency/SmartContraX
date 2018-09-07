@@ -22,6 +22,24 @@ contract ITxCheckpoints {
         returns (bytes32);
 
     /**
+    * @notice Check if checkpoint is active
+    * @param checkpointId Checkpoint identifier
+    */
+    function isActiveCheckpoint(uint checkpointId) public view returns (bool);
+
+    /**
+    * @notice Update checkpoints expiration time
+    * @param newExpirationInterval New expiration interval in seconds
+    */
+    function updateExpirationTime(uint newExpirationInterval) public;
+
+    /**
+    * @notice Return checkpoint key which was generated in tokens transfer
+    * @param checkpointId Checkpoint identifier
+    */
+    function getCheckpointKey(uint checkpointId) public view returns (bytes32);
+
+    /**
     * @notice Create checkpoint
     * @param from Address from
     * @param to Tokens owner
@@ -42,22 +60,4 @@ contract ITxCheckpoints {
     * @param originalTxHash The hash of the transaction which was canceled or rollbacked 
     */
     function deactivateCheckpoint(uint checkpointId, string originalTxHash) internal;
-
-    /**
-    * @notice Check if checkpoint is active
-    * @param checkpointId Checkpoint identifier
-    */
-    function isActiveCheckpoint(uint checkpointId) public view returns (bool);
-
-    /**
-    * @notice Update checkpoints expiration time
-    * @param newExpirationInterval New expiration interval in seconds
-    */
-    function updateExpirationTime(uint newExpirationInterval) public;
-
-    /**
-    * @notice Return checkpoint key which was generated in tokens transfer
-    * @param checkpointId Checkpoint identifier
-    */
-    function getCheckpointKey(uint checkpointId) public view returns (bytes32);
 }

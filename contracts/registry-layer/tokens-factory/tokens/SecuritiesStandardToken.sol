@@ -54,21 +54,6 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken, Protected {
     }
 
     /**
-    * @notice Update token holders balances
-    * @param from Address from which we rollback tokens
-    * @param to Tokens owner
-    * @param tokens Quantity of the tokens that will be rollbacked
-    */
-    function updatedBalances(address from, address to, uint tokens) internal {
-        require(tokens <= balances[from], "Insufficient funds on balance.");
-
-        balances[from] -= tokens;
-        balances[to] += tokens;
-
-        emit Transfer(from, to, tokens);
-    }
-
-    /**
     * @notice Redefinition of the ERC-20 standard transfer function. 
     * @notice Generate addiotional info for rollback
     * @param to The address which you want to transfer to
@@ -106,5 +91,20 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken, Protected {
         createCheckpoint(from, to, value, msg.sender);
 
         return super.transferFrom(from, to, value);
+    }
+
+    /**
+    * @notice Update token holders balances
+    * @param from Address from which we rollback tokens
+    * @param to Tokens owner
+    * @param tokens Quantity of the tokens that will be rollbacked
+    */
+    function updatedBalances(address from, address to, uint tokens) internal {
+        require(tokens <= balances[from], "Insufficient funds on balance.");
+
+        balances[from] -= tokens;
+        balances[to] += tokens;
+
+        emit Transfer(from, to, tokens);
     }
 }

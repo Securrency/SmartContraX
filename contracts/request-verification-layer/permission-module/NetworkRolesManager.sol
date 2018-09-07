@@ -44,23 +44,6 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     }
 
     /**
-    * @notice Add a role to the wallet
-    * @param wallet Wallet address
-    * @param role Name of the role which will be added to the wallet
-    */
-    function addRole(address wallet, bytes32 role) internal {
-        walletRoles[wallet][role] = true;
-
-        uint8 index = walletRolesIndex[wallet];
-        listOfTheWalletRoles[wallet][index] = role;
-
-        indexesOfTheWalletRoles[wallet][role] = index;
-        walletRolesIndex[wallet]++;
-
-        emit RoleAdded(wallet, role);
-    }
-
-    /**
     * @notice Remove role from the wallet
     * @param wallet Wallet address
     * @param roleName Name of the role which will be removed from the wallet
@@ -76,29 +59,6 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         require(walletRoles[wallet][roleName], "The wallet has no this role.");
 
         removeRole(wallet, roleName);
-    }
-
-    /**
-    * @notice Remove role from the wallet
-    * @param wallet Wallet address
-    * @param role Name of the role which will be removed from the wallet
-    */
-    function removeRole(address wallet, bytes32 role) internal {
-        walletRoles[wallet][role] = false;
-
-        uint8 index = indexesOfTheWalletRoles[wallet][role];
-        uint8 last =  walletRolesIndex[wallet] - 1;
-
-        if(last != 0) {
-            indexesOfTheWalletRoles[wallet][listOfTheWalletRoles[wallet][last]] = index;
-            listOfTheWalletRoles[wallet][index] = listOfTheWalletRoles[wallet][last];
-        }
-        
-        delete indexesOfTheWalletRoles[wallet][role];
-        delete listOfTheWalletRoles[wallet][last];
-        walletRolesIndex[wallet]--;
-
-        emit RoleDeleted(wallet, role);
     }
 
     /**
@@ -145,5 +105,45 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     */
     function getWalletRoles(address wallet) public view returns (bytes32[20]) {
         return listOfTheWalletRoles[wallet];
+    }
+
+    /**
+    * @notice Add a role to the wallet
+    * @param wallet Wallet address
+    * @param role Name of the role which will be added to the wallet
+    */
+    function addRole(address wallet, bytes32 role) internal {
+        walletRoles[wallet][role] = true;
+
+        uint8 index = walletRolesIndex[wallet];
+        listOfTheWalletRoles[wallet][index] = role;
+
+        indexesOfTheWalletRoles[wallet][role] = index;
+        walletRolesIndex[wallet]++;
+
+        emit RoleAdded(wallet, role);
+    }
+
+    /**
+    * @notice Remove role from the wallet
+    * @param wallet Wallet address
+    * @param role Name of the role which will be removed from the wallet
+    */
+    function removeRole(address wallet, bytes32 role) internal {
+        walletRoles[wallet][role] = false;
+
+        uint8 index = indexesOfTheWalletRoles[wallet][role];
+        uint8 last =  walletRolesIndex[wallet] - 1;
+
+        if(last != 0) {
+            indexesOfTheWalletRoles[wallet][listOfTheWalletRoles[wallet][last]] = index;
+            listOfTheWalletRoles[wallet][index] = listOfTheWalletRoles[wallet][last];
+        }
+        
+        delete indexesOfTheWalletRoles[wallet][role];
+        delete listOfTheWalletRoles[wallet][last];
+        walletRolesIndex[wallet]--;
+
+        emit RoleDeleted(wallet, role);
     }
 }
