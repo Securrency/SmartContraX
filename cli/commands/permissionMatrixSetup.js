@@ -52,7 +52,7 @@ async function run() {
     let registrationMethods = [
         "registerSymbol(bytes,bytes)",
         "renewSymbol(bytes)",
-        "transferOwnership(bytes,address)"
+        "transferOwnership(bytes,address,bytes)"
     ];
 
     let issuerMethods = [
@@ -62,7 +62,7 @@ async function run() {
     let complianceMethods = [
         "addToWhiteList(address,address)",
         "removeFromWhiteList(address,address)",
-        "createRollbackTransaction(address,address,uint,uint,string)",
+        "createRollbackTransaction(address,address,uint256,uint256,string)",
     ];
 
     let rolesData = [
