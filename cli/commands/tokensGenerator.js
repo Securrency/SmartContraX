@@ -46,7 +46,6 @@ async function run() {
     }
 
     accounts = await web3.eth.getAccounts();
-    issuer = accounts[0];
 
     // take details
     console.log("Please fill token details");
@@ -63,6 +62,13 @@ async function run() {
     let tokenStandard =  readlineSync.question('Token standard: ');
     if (tokenStandard == "") tokenStandard = "ST-20";
 
+    let issuer = readlineSync.question('Issuer: ');
+    if (issuer == '') issuer = accounts[0];
+    if (!web3.utils.isAddress(issuer)) {
+        issuer = accounts[issuer];
+    }
+
+
     decimals = 18;
 
     let confirm =  readlineSync.question(`
@@ -72,6 +78,8 @@ async function run() {
         Decimals: ${decimals}
         Total supply: ${totalSupply}
         Token standard: ${tokenStandard}
+        Issuer: ${issuer}
+
         \n
         Press enter to continue or exit (CTRL + C):
     `, {defaultInput: 'Y'});

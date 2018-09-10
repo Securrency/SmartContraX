@@ -292,15 +292,28 @@ function logTx(num, from, to, value, symbol) {
 async function txRollBack() {
     let txHash =  readlineSync.question('TxHash: ');
 
+    let from =  readlineSync.question('Send from: ');
+    if (!web3.utils.isAddress(from)) {
+        from = accounts[from];
+    }
+
     let receipt = await web3.eth.getTransactionReceipt(txHash);
     let checkpointId = parseInt(receipt.logs[0].topics[2]);
 
-    let from = prepareAddressFromLog(receipt.logs[1].topics[1]);
+    let txFrom = prepareAddressFromLog(receipt.logs[1].topics[1]);
     let to = prepareAddressFromLog(receipt.logs[1].topics[2]);
     let value = parseInt(receipt.logs[1].data);
 
+    console.log(`
+        To: ${to}
+        From: ${from},
+        Value: ${value},
+        CheckpointId: ${checkpointId},
+        txHash: ${txHash}
+    `);
+
     try {
-        let action = token.methods.createRollbackTransaction(to, from, value, checkpointId, txHash);
+        let action = token.methods.createRollbackTransaction(to, txFrom, txFrom, value, checkpointId, txHash);
         // send transaction
         let message = 'Create rollback transaction. Please wait...';
         sendTransaction(from, action, message);

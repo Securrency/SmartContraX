@@ -77,10 +77,15 @@ async function addToTheWhiteList() {
         return;
     }
 
+    let from =  readlineSync.question('Send from: ');
+    if (!web3.utils.isAddress(from)) {
+        from = accounts[from];
+    }   
+
     try {
         let action = whiteList.methods.addToWhiteList(account, tokenAddress);
         let message = 'Adding to the whitelist. Please wait...';
-        sendTransaction(accounts[0], action, message);
+        sendTransaction(from, action, message);
     } catch (error) {
         console.log('Transaction reverted by EVM.');
         return startInteraction();
@@ -99,10 +104,15 @@ async function remove() {
         return;
     }
 
+    let from =  readlineSync.question('Send from: ');
+    if (!web3.utils.isAddress(from)) {
+        from = accounts[from];
+    }
+
     try {
         let action = whiteList.methods.removeFromWhiteList(account, tokenAddress);
         let message = 'Removing from the whitelist. Please wait...';
-        sendTransaction(accounts[0], action, message);
+        sendTransaction(from, action, message);
     } catch (error) {
         console.log('Transaction reverted by EVM.');
         return startInteraction();
@@ -174,6 +184,9 @@ function showHelpMessage() {
     console.log(`
 
         --accounts (--a) Show list of all accounts
+        --add Add account tot he wahitelist
+        --remove Remove account from the whitelist
+        --checkAddress (--ca) Check address int the whitelist
         \n
         --help Show list of all supported commands
     `);

@@ -153,11 +153,11 @@ async function registerSymbol() {
     let symbol =  readlineSync.question('Symbol: ');
     let hexSymbol = web3.utils.toHex(symbol);
     try {
-        let action = registry.methods.registerSymbol(hexSymbol);
+        let action = registry.methods.registerSymbol(hexSymbol, web3.utils.toHex("test"));
         let message = 'Register new symbol. Please wait...';
         sendTransaction(from, action, message);
     } catch (error) {
-        console.log('Transaction reverted by EVM.');
+        console.log('Transaction reverted by EVM. 1');
         return startInteraction();
     }
 }
@@ -253,7 +253,7 @@ function showHelpMessage() {
         --isSymbolOwner (--iso) Check if address is symbol owner
         --getExpirationInterval (--gei) Get expiration interval 
         --updateExpirationInterval (--uei) Get expiration interval 
-        --acounts (--a) Show list of all accounts
+        --accounts (--a) Show list of all accounts
         \n
         --help Show list of all supported commands
     `);
