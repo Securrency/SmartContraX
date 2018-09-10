@@ -1,19 +1,29 @@
-const Web3 = require('web3');
-var readlineSync = require('readline-sync');
-var web3Helper = require('./helpers/web3Helper.js');
+let readlineSync = require('readline-sync');
+let web3Helper = require('./helpers/web3Helper.js');
 
-if (typeof web3 !== 'undefined') {
-    web3 = new Web3(web3.currentProvider);
-} else {
-    web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-}
+const config = require('../cli-config.js');
 
 // permission module
 let pm;
 
+// Web3 provider
+let web3;
+
+function initializeWeb3() {
+    let network = readlineSync.question("Network (default localhost:8545): ");
+
+    if (!network) {
+        web3 = config.networks.default.provider;
+    } else {
+        web3 = config.networks[network].provider;
+    }
+
+    return true;
+}
+
 let accounts;
 let ownerRole = "Owner";
-let hexOwnerRole = web3.utils.toHex(ownerRole);
+let hexOwnerRole;
 
 function initializePermissionModule(networkId) {
     try {
@@ -31,6 +41,8 @@ function initializePermissionModule(networkId) {
 }
 
 async function run() {
+    initializeWeb3();
+
     let networkId = await web3.eth.net.getId();
 
     if (!initializePermissionModule(networkId)) {
@@ -38,6 +50,8 @@ async function run() {
     }
     
     accounts = await web3.eth.getAccounts();
+
+    hexOwnerRole = web3.utils.toHex(ownerRole);
 
     startInteraction();
 }
@@ -314,7 +328,7 @@ function showHelpMessage() {
         --accounts (--a) Show list of all accounts
         --createRole (--cr) Craete new role in the permission module
         --getWalletRoles (--gwl) Get list of the wallet roles
-        --addRoleToTheWallet (arttw) Add role to the wallet
+        --addRoleToTheWallet (--arttw) Add role to the wallet
         --getRoleMethods (--grm) Get list of the role methods
         --addMethodToTheRole (--amttr) Add method to the role
         --removeMethodFromTheRole (--rmftr) Remove metod from the role

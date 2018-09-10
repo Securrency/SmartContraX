@@ -1,11 +1,21 @@
-const Web3 = require('web3');
-var readlineSync = require('readline-sync');
-var web3Helper = require('./helpers/web3Helper.js');
+let readlineSync = require('readline-sync');
+let web3Helper = require('./helpers/web3Helper.js');
 
-if (typeof web3 !== 'undefined') {
-    web3 = new Web3(web3.currentProvider);
-} else {
-    web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+const config = require('../cli-config.js');
+
+// Web3 provider
+let web3;
+
+function initializeWeb3() {
+    let network = readlineSync.question("Network (default localhost:8545): ");
+
+    if (!network) {
+        web3 = config.networks.default.provider;
+    } else {
+        web3 = config.networks[network].provider;
+    }
+
+    return true;
 }
 
 let accounts;
@@ -28,6 +38,8 @@ function initializeSymbolRegistry(networkId) {
 }
 
 async function run() {
+    initializeWeb3();
+
     let networkId = await web3.eth.net.getId();
     
     if (!initializeSymbolRegistry(networkId)) {
