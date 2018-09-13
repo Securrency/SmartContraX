@@ -11,6 +11,9 @@ module.exports = {
         },
         kovan: {
             provider: new Web3(new HDWalletProvider(mnemonic, "https://kovan.infura.io/", 0, 10)),
+        },
+        ropsten: {
+            provider: new Web3(new HDWalletProvider(mnemonic, "https://ropsten.infura.io/", 0, 10)),
         }
     }
 }
