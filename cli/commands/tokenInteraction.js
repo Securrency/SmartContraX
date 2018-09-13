@@ -4,6 +4,8 @@ let web3Helper = require('./helpers/web3Helper.js');
 
 const config = require('../cli-config.js');
 
+const ERC20 = 'ERC-20';
+
 // Web3 provider
 let web3;
 
@@ -19,6 +21,7 @@ function initializeWeb3() {
     return true;
 }
 
+let tokenStandard;
 let tokenAddress;
 let tokenABI;
 let token;
@@ -30,7 +33,12 @@ let totalSupply;
 
 function initializeToken() {
     try {
-        tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/SLS20Token.json').toString()).abi;
+        if (tokenStandard == ERC20) {
+            tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/ERC20Token.json').toString()).abi;
+        } else {
+            tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/SLS721Token.json').toString()).abi;
+        }
+        
         token = new web3.eth.Contract(tokenABI, tokenAddress);
         token.setProvider(web3.currentProvider);
     } catch(err) {
@@ -52,6 +60,8 @@ async function run() {
         return;
     }
 
+    tokenStandard =  readlineSync.question('Enter token standard: ');
+    
     initializeToken();
 
     tokenName = await token.methods.name().call({ from: accounts[0] }, function (error, result) {
@@ -120,6 +130,14 @@ async function startInteraction() {
         case '--uet':
         case '--updateCheckpointExpirationTime':
             updateExpirationTime();
+            break;
+        case '--m':
+        case '--mint':
+            mint();
+            break;
+        case '--tf':
+        case '--transferFrom':
+            transferFrom();
             break;
         case '--help':
             showHelpMessage();
@@ -313,7 +331,13 @@ async function txRollBack() {
 
     let txFrom = prepareAddressFromLog(receipt.logs[1].topics[1]);
     let to = prepareAddressFromLog(receipt.logs[1].topics[2]);
-    let value = parseInt(receipt.logs[1].data);
+
+    let value;
+    if (tokenStandard == ERC20) {
+        value = parseInt(receipt.logs[1].data);
+    } else {
+        value = parseInt(receipt.logs[1].topics[3]);
+    }
 
     console.log(`
         To: ${to}
@@ -380,9 +404,48 @@ async function getBalance() {
     });
 }
 
+async function mint() {
+    let tokenHolder =  readlineSync.question('Token holder address: ');
+    if(!web3.utils.isAddress(tokenHolder)) {
+        tokenHolder = accounts[tokenHolder];
+    }
+
+    let tokenId = readlineSync.question('Token id: ');
+
+    let from =  readlineSync.question('Send from address: ');
+    if(!web3.utils.isAddress(from)) {
+        from = accounts[from];
+    }
+
+    let action = token.methods.mint(tokenHolder, tokenId);
+    // send transaction
+    let message = `Minting the ${symbol} token. Please wait...`;
+    sendTransaction(from, action, message);
+}
+
+async function transferFrom() {
+    // transferFrom(address from, address to, uint256 tokenId)
+    let to =  readlineSync.question('Transfer to: ');
+    if(!web3.utils.isAddress(to)) {
+        to = accounts[to];
+    }
+
+    let tokenId = readlineSync.question('Token id: ');
+
+    let from =  readlineSync.question('Send from address: ');
+    if(!web3.utils.isAddress(from)) {
+        from = accounts[from];
+    }
+
+    let action = token.methods.transferFrom(from, to, tokenId);
+    // send transaction
+    let message = `Transfer the ${symbol} token. Please wait...`;
+    sendTransaction(from, action, message);
+}
+
 async function sendTransaction(from, action, message='Create transaction. Please wait...') {
     try {
-        let GAS = await web3Helper.estimateGas(action, from, 1.2);
+        let GAS = await web3Helper.estimateGas(action, from, 2);
         let GAS_PRICE = await web3.eth.getGasPrice();
 
         await action.send({ from: from, gas: GAS, gasPrice:GAS_PRICE})
@@ -421,7 +484,7 @@ function accountsList() {
 function showHelpMessage() {
     console.log(`
         supported commands:\n
-        --acounts (--a) Show list of all accounts
+        --accounts (--a) Show list of all accounts
         --transfer (--t) Transfer tokens
         --rollbackTx (--r) Create rollback transaction
         --balanceOf (--b) Get account balance
@@ -429,6 +492,8 @@ function showHelpMessage() {
         --txRollbacksHistory (--txr) Show rollbacks history
         --updateCheckpointExpirationTime (--uet) Update checkpoint expiration time
         --capTable (--cp) Show cap table
+        --mint (--m) Mint SLS-721 (ERC-721) Token
+        --transferFrom (--tf) Transfer from
         \n
         --help Show list of all supported commands
     `);

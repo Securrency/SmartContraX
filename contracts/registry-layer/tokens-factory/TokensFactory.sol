@@ -88,7 +88,6 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
 
         require(bytes(name).length > 0, "Name length should always greater 0.");
         require(strategy != address(0), "Token strategy not found.");
-        require(totalSupply > 0, "Total supply should always greater 0.");
         
         symbol = toUpper(symbol);
         

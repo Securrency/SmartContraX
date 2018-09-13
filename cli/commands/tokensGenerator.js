@@ -66,7 +66,7 @@ async function run() {
     if (tokenSymbol == "") tokenSymbol = 'DEF';
 
     let totalSupply =  readlineSync.question('Enter token total supply: ');
-    if (totalSupply == "") totalSupply = 100;
+    if (totalSupply == "") totalSupply = 0;
 
     let tokenStandard =  readlineSync.question('Token standard: ');
     if (tokenStandard == "") tokenStandard = "ST-20";

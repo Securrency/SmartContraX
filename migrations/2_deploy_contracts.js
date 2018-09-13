@@ -1,11 +1,13 @@
 var SymbolRegistry = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 var TokensFactory = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SLS20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
+var SLS721Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS721Strategy.sol");
 var ERC20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/ERC20Strategy.sol");
 
 var TransferModule = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
 var WhiteList = artifacts.require("./request-verification-layer/transfer-module/transfer-service/WhiteList.sol");
 var SLS20Verification = artifacts.require("./request-verification-layer/transfer-module/verification-service/SLS20Verification.sol");
+var SLS721Verification = artifacts.require("./request-verification-layer/transfer-module/verification-service/SLS721Verification.sol");
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
@@ -18,11 +20,13 @@ function createId(signature) {
 module.exports = function(deployer, network, accounts) {
   var tokensFactoryDeployed;
   var SLS20StrategyDeployed;
+  var SLS721StrategyDeployed;
   var ERC20StrategyDeployed;
   var SymbolRegistryDeployed;
   var TransferModuleDeployed;
   var WhiteListDeployed;
   var SLS20VerificationDeployed;
+  var SLS721VerificationDeployed;
   var PermissionModuleDeployed;
   
   deployer.deploy(PermissionModule, {gas: 5400000})
@@ -55,6 +59,14 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       ERC20StrategyDeployed = instance;
+      return deployer.deploy(SLS721Strategy, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 5700000});
+    })
+    .then((instance) => {
+      SLS721StrategyDeployed = instance;
+      return deployer.deploy(SLS721Verification, WhiteListDeployed.address, {gas: 500000});
+    })
+    .then((instance) => {
+      SLS721VerificationDeployed = instance;
     })
     .then(() => {
       return PermissionModuleDeployed.createRole("System", "Owner", {gas: 300000});
@@ -78,7 +90,13 @@ module.exports = function(deployer, network, accounts) {
       return tokensFactoryDeployed.addTokenStrategy(ERC20StrategyDeployed.address, {gas: 120000});
     })
     .then(() => {
+      return tokensFactoryDeployed.addTokenStrategy(SLS721StrategyDeployed.address, {gas: 120000});
+    })
+    .then(() => {
       return SLS20StrategyDeployed.setTransferModule(TransferModuleDeployed.address, {gas: 120000});
+    })
+    .then(() => {
+      return SLS721StrategyDeployed.setTransferModule(TransferModuleDeployed.address, {gas: 120000});
     })
     .then(() => {
       return PermissionModuleDeployed.setTokensFactory(tokensFactoryDeployed.address, {gas: 500000});
@@ -91,6 +109,12 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((standard) => {
       return TransferModuleDeployed.addVerificationLogic(SLS20VerificationDeployed.address, standard, {gas: 120000});
+    })
+    .then(() => {
+      return SLS721StrategyDeployed.getTokenStandard();
+    })
+    .then((standard) => {
+      return TransferModuleDeployed.addVerificationLogic(SLS721VerificationDeployed.address, standard, {gas: 120000});
     });
   });
 };
