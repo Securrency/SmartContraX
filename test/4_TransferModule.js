@@ -118,6 +118,12 @@ contract('TransferModule', accounts => {
         assert.equal(tx.logs[0].args.methodId, removeFormWLId);
         assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
+        let addArrayToWLId = createId("addArrayToWhiteList(address[],address)");
+        tx = await permissionModule.addMethodToTheRole(addArrayToWLId, complianceRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addArrayToWLId);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
+
         let addVL = createId("addVerificationLogic(address,bytes32)");
         tx = await permissionModule.addMethodToTheRole(addVL, systemRoleName, { from: accounts[0] });
 
@@ -311,6 +317,16 @@ contract('TransferModule', accounts => {
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_2);
             assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+        });
+
+        it("Should add multiple accounts to the whitelist", async() => {
+            let investors = [accounts[7], accounts[8], accounts[9]];
+            await whiteList.addArrayToWhiteList(investors, SLS20Token.address.valueOf(), { from: token_owner });
+
+            for (let i = 0; i < investors.length; i++) {
+                let result = await whiteList.presentInWhiteList(investors[i], SLS20Token.address.valueOf());
+                assert.equal(result, true);
+            }
         });
 
         it("Should remove account from the whitelist", async() => {

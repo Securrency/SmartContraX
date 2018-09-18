@@ -60,9 +60,24 @@ contract WhiteList is IWhiteList, Protected {
         require(who != address(0), "Invalid customer address.");
         require(ITokensFactory(tokenFactory).getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
 
-        whitelistedAddresses[tokenAddress][who] = true;
+        add(who, tokenAddress);
+    }
 
-        emit Added(who, tokenAddress);
+    /**
+    * @notice Add multiple addresses to the whitelist
+    * @param investors Array of the investors addresses
+    * @param tokenAddress Token for address attachment
+    */
+    function addArrayToWhiteList(address[] investors, address tokenAddress)
+        public
+        verifyPermissionForToken(msg.sig, msg.sender, tokenAddress)
+    {
+        require(ITokensFactory(tokenFactory).getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
+
+        for (uint i = 0; i < investors.length; i++) {
+            require(investors[i] != address(0), "Invalid investor address.");
+            add(investors[i], tokenAddress);
+        }
     }
 
     /**
@@ -80,5 +95,16 @@ contract WhiteList is IWhiteList, Protected {
         whitelistedAddresses[tokenAddress][who] = false;
 
         emit Removed(who, tokenAddress);
+    }
+
+    /**
+    * @notice Add address to the whitelist
+    * @param who Address which will be added
+    * @param tokenAddress Token for address attachment
+    */
+    function add(address who, address tokenAddress) internal {
+        whitelistedAddresses[tokenAddress][who] = true;
+
+        emit Added(who, tokenAddress);
     }
 }

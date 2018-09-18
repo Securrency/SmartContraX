@@ -75,6 +75,7 @@ async function run() {
     let complianceMethods = [
         "addToWhiteList(address,address)",
         "removeFromWhiteList(address,address)",
+        "addArrayToWhiteList(address[],address)",
         "createRollbackTransaction(address,address,address,uint256,uint256,string)",
     ];
 
