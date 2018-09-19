@@ -1,18 +1,18 @@
 pragma solidity ^0.4.24;
 
 import "./TokenDeploymentStrategy.sol";
-import "../tokens/SLS721Token.sol";
+import "../tokens/CAT721Token.sol";
 import "../../../request-verification-layer/permission-module/Protected.sol";
 
 /**
-* @title SLS-721 token (NFT) deployment strategy
+* @title CAT-721 token (NFT) deployment strategy
 */
-contract SLS721Strategy is TokenDeploymentStrategy, Protected  {
+contract CAT721Strategy is TokenDeploymentStrategy, Protected  {
     // Address of the Transfer module
     address transferModule;
 
     // Token standard
-    bytes32 public constant TOKEN_STANDARD = "SLS-721";
+    bytes32 public constant TOKEN_STANDARD = "CAT-721";
 
     /**
     * @notice initilaze contract
@@ -41,7 +41,7 @@ contract SLS721Strategy is TokenDeploymentStrategy, Protected  {
         onlyTokensFactory(msg.sender)
         returns (address)
     {
-        address token = new SLS721Token(
+        address token = new CAT721Token(
             name,
             symbol,
             tokenOwner,

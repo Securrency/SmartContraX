@@ -2,12 +2,12 @@ const sleep = require('sleep');
 
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
-var SLS20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
-var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/SLS20Token.sol");
+var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
 var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-module/verification-service/WhiteList.sol");
-var SLS20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/SLS20Verification.sol");
+var CAT20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/CAT20Verification.sol");
 
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
@@ -26,7 +26,7 @@ function isException(error) {
     return strError.includes('invalid opcode') || strError.includes('invalid JUMP') || strError.includes('revert');
 }
 
-contract("SLS20Token", accounts => {
+contract("CAT20Token", accounts => {
     const token_owner = accounts[0];
     const token_holder_1 = accounts[1];
     const token_holder_2 = accounts[2];
@@ -39,11 +39,11 @@ contract("SLS20Token", accounts => {
 
     const toTransfer = web3.toWei(10, "ether");
 
-    let SLS20Token;
+    let CAT20Token;
     let whiteList;
     let transferModule;
-    let SLS20Verification;
-    let SLS20Strategy;
+    let CAT20Verification;
+    let CAT20Strategy;
     let permissionModule;
 
     let zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -173,11 +173,11 @@ contract("SLS20Token", accounts => {
             "WhiteList contract was not deployed"
         );
 
-        SLS20Verification = await SLS20V.new(whiteList.address.valueOf(), { from: token_owner });
+        CAT20Verification = await CAT20V.new(whiteList.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
             zeroAddress,
-            "SLS20Vierification contract was not deployed"
+            "CAT20Vierification contract was not deployed"
         );
 
         transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
@@ -188,22 +188,22 @@ contract("SLS20Token", accounts => {
         );
 
 
-        let SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
+        let CAT20Strategy = await CAT20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
 
-        await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
+        await CAT20Strategy.setTransferModule(transferModule.address.valueOf());
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
             zeroAddress,
-            "SLS20Strategy contract was not deployed"
+            "CAT20Strategy contract was not deployed"
         );
         
-        tx = await TokensFactory.addTokenStrategy(SLS20Strategy.address, { from : token_owner });
-        assert.equal(tx.logs[0].args.strategy, SLS20Strategy.address);
+        tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
+        assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
 
-        let standard = await SLS20Strategy.getTokenStandard();
+        let standard = await CAT20Strategy.getTokenStandard();
 
-        await transferModule.addVerificationLogic(SLS20Verification.address.valueOf(), standard);
+        await transferModule.addVerificationLogic(CAT20Verification.address.valueOf(), standard);
 
         let hexSymbol = web3.toHex(symbol);
         await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
@@ -217,48 +217,48 @@ contract("SLS20Token", accounts => {
             "New token was not deployed"
         );
 
-        SLS20Token = await DSToken.at(tokenAddress);
+        CAT20Token = await DSToken.at(tokenAddress);
 
         // Printing all the contract addresses
         console.log(`
             Tokens factory core:\n
             PermissionModule: ${permissionModule.address}
             TokensFactory: ${TokensFactory.address}
-            SLS20Strategy: ${SLS20Strategy.address}
-            SLS20Token: ${SLS20Token.address}
+            CAT20Strategy: ${CAT20Strategy.address}
+            CAT20Token: ${CAT20Token.address}
             WhiteList: ${whiteList.address}
-            SLS20Vierification: ${SLS20Verification.address}
+            CAT20Vierification: ${CAT20Verification.address}
             TransferModule: ${transferModule.address}\n
         `);
     })
 
-    describe("Testing SLS-20 token", async() => {
+    describe("Testing CAT-20 token", async() => {
         it("Should add accounts to the whitelist", async() => {
             let complianceRoleName = "Compliance";
 
-            let tx = await permissionModule.addRoleForSpecificToken(token_owner, SLS20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
+            let tx = await permissionModule.addRoleForSpecificToken(token_owner, CAT20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
                 
             assert.equal(tx.logs[0].args.wallet, token_owner);
             assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
-            tx = await whiteList.addToWhiteList(token_owner, SLS20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(token_owner, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_owner);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
 
-            tx = await whiteList.addToWhiteList(token_holder_1, SLS20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(token_holder_1, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_holder_1);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
 
-            tx = await whiteList.addToWhiteList(token_holder_2, SLS20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(token_holder_2, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_holder_2);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
         })
 
         it("Should transfer tokens from the owner account to account " + token_holder_1, async() => {
-            let tx = await SLS20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_1);
@@ -268,7 +268,7 @@ contract("SLS20Token", accounts => {
         });
 
         it("Should transfer tokens from the owner account to account " + token_holder_2, async() => {
-            let tx = await SLS20Token.transfer(token_holder_2, toTransfer, {from: token_owner});
+            let tx = await CAT20Token.transfer(token_holder_2, toTransfer, {from: token_owner});
             
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_2);
@@ -276,7 +276,7 @@ contract("SLS20Token", accounts => {
         });
 
         it("Should get correct ballance after previous transfers", async() => {
-            let balance = await SLS20Token.balanceOf(token_owner);
+            let balance = await CAT20Token.balanceOf(token_owner);
             balance = balance.toNumber();
 
             assert.equal(balance + toTransfer * 2, totalSupply);
@@ -288,9 +288,9 @@ contract("SLS20Token", accounts => {
 
             let checkpointId = parseInt(receipt.logs[0].topics[2]);
             
-            await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, transaction["from"], toTransfer, checkpointId, txForRollback);
+            await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, transaction["from"], toTransfer, checkpointId, txForRollback);
 
-            let status = await SLS20Token.isActiveCheckpoint(checkpointId);
+            let status = await CAT20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
         });
     });
@@ -298,18 +298,18 @@ contract("SLS20Token", accounts => {
     describe("Transactions checkpoints", async() => {
         it("Should change checkpoint expiration time", async() => {
             let newExpirationTime = 1;
-            let expirationTime = await SLS20Token.expireInterval();
+            let expirationTime = await CAT20Token.expireInterval();
             expirationTime = expirationTime.toNumber();
 
-            await SLS20Token.updateExpirationTime(newExpirationTime);
-            let updatedTime = await SLS20Token.expireInterval();
+            await CAT20Token.updateExpirationTime(newExpirationTime);
+            let updatedTime = await CAT20Token.expireInterval();
             updatedTime = updatedTime.toNumber();
             
             assert.equal(updatedTime, newExpirationTime);
         });
 
         it("Should fial to create rollback transaction, checkpoint is expired", async() => {
-            let tx = await SLS20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_1);
@@ -321,7 +321,7 @@ contract("SLS20Token", accounts => {
 
             let errorThrown = false;
             try {
-                await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, token_holder_1, toTransfer, checkpointId, tx.tx);
+                await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, token_holder_1, toTransfer, checkpointId, tx.tx);
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Checkpoint is already used or expired.`.grey);
@@ -332,16 +332,16 @@ contract("SLS20Token", accounts => {
 
         it("Should update checkpoint expiration time and create rollback transaction", async() => {
             let newExpirationTime = 600;
-            let expirationTime = await SLS20Token.expireInterval();
+            let expirationTime = await CAT20Token.expireInterval();
             expirationTime = expirationTime.toNumber();
 
-            await SLS20Token.updateExpirationTime(newExpirationTime);
-            let updatedTime = await SLS20Token.expireInterval();
+            await CAT20Token.updateExpirationTime(newExpirationTime);
+            let updatedTime = await CAT20Token.expireInterval();
             updatedTime = updatedTime.toNumber();
             
             assert.equal(updatedTime, newExpirationTime);
 
-            let tx = await SLS20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_1);
@@ -349,9 +349,9 @@ contract("SLS20Token", accounts => {
             
             let checkpointId = tx.logs[0].args.checkpointId.toNumber();
 
-            await SLS20Token.createRollbackTransaction(token_holder_1, token_owner, token_owner, toTransfer, checkpointId, tx.tx);
+            await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, token_owner, toTransfer, checkpointId, tx.tx);
 
-            let status = await SLS20Token.isActiveCheckpoint(checkpointId);
+            let status = await CAT20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
         });
     });

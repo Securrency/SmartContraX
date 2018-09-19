@@ -1,13 +1,13 @@
 
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
-var SLS20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
+var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var TSMock = artifacts.require("./mocks/TokenStrategyMock.sol");
-var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/SLS20Token.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
 var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-module/verification-service/WhiteList.sol");
-var SLS20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/SLS20Verification.sol");
+var CAT20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/CAT20Verification.sol");
 
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
@@ -40,11 +40,11 @@ contract('TokensFactory', accounts => {
     const totalSupply = web3.toWei(100000, "ether");
 
     let deployedTokenAddress;
-    let SLS20Token;
+    let CAT20Token;
     let whiteList;
     let transferModule;
-    let SLS20Verification;
-    let SLS20Strategy;
+    let CAT20Verification;
+    let CAT20Strategy;
     let permissionModule;
 
     let invalidTokenStandard = "ST-JGAqabJmEZsm1PXh3DmN";
@@ -177,11 +177,11 @@ contract('TokensFactory', accounts => {
             "WhiteList contract was not deployed"
         );
 
-        SLS20Verification = await SLS20V.new(whiteList.address.valueOf(), { from: token_owner });
+        CAT20Verification = await CAT20V.new(whiteList.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
             zeroAddress,
-            "SLS20Vierification contract was not deployed"
+            "CAT20Vierification contract was not deployed"
         );
 
         transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
@@ -191,15 +191,15 @@ contract('TokensFactory', accounts => {
             "TransferModule contract was not deployed"
         );
 
-        SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
+        CAT20Strategy = await CAT20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
             zeroAddress,
-            "SLS20Strategy contract was not deployed"
+            "CAT20Strategy contract was not deployed"
         );
 
-        await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
+        await CAT20Strategy.setTransferModule(transferModule.address.valueOf());
 
         TokenStrategyMock = await TSMock.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
 
@@ -222,33 +222,33 @@ contract('TokensFactory', accounts => {
             Tokens factory core:\n
             PermissionModule: ${permissionModule.address}
             TokensFactory: ${TokensFactory.address}
-            SLS20Strategy: ${SLS20Strategy.address}
+            CAT20Strategy: ${CAT20Strategy.address}
             TokenStrategyMock1:${TokenStrategyMock.address}
             TokenStrategyMock2:${TokenStrategyMock2.address}
             WhiteList: ${whiteList.address}
-            SLS20Vierification: ${SLS20Verification.address}
+            CAT20Vierification: ${CAT20Verification.address}
             TransferModule: ${transferModule.address}\n
         `);
     });
 
     describe("Test tokens factory", async() => {
         it("Should add new token strategy to the tokens factory", async() => {
-            let tx = await TokensFactory.addTokenStrategy(SLS20Strategy.address, { from : token_owner });
-            assert.equal(tx.logs[0].args.strategy, SLS20Strategy.address);
+            let tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
+            assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
         });
 
-        it("Should add SLS20Verification to transfer module", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
-            let tx = await transferModule.addVerificationLogic(SLS20Verification.address.valueOf(), standard);
+        it("Should add CAT20Verification to transfer module", async() => {
+            let standard = await CAT20Strategy.getTokenStandard();
+            let tx = await transferModule.addVerificationLogic(CAT20Verification.address.valueOf(), standard);
 
             assert.equal(tx.logs[0].args.standard, standard);
-            assert.equal(tx.logs[0].args.tvAddress, SLS20Verification.address.valueOf());
+            assert.equal(tx.logs[0].args.tvAddress, CAT20Verification.address.valueOf());
         });
 
         it ("Should fail to add existing token strategy", async() => {
             let errorThrown = false;
             try {
-                await TokensFactory.addTokenStrategy(SLS20Strategy.address, { from : token_owner });
+                await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Strategy already present.`.grey);
@@ -325,14 +325,14 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should return the list of supported token standards", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
+            let standard = await CAT20Strategy.getTokenStandard();
 
             let standards = await TokensFactory.getSupportedStandards();
             assert.equal(standards[0], standard);
         });
 
         it("Should deploy a new token", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
+            let standard = await CAT20Strategy.getTokenStandard();
 
             let hexSymbol = web3.toHex(symbol);
             await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
@@ -350,11 +350,11 @@ contract('TokensFactory', accounts => {
             assert.equal(tx.logs[0].args.name, name);
             assert.equal(tx.logs[0].args.symbol, symbol);
 
-            SLS20Token = await DSToken.at(deployedTokenAddress);
+            CAT20Token = await DSToken.at(deployedTokenAddress);
         });
 
         it("Should deploy one more token", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
+            let standard = await CAT20Strategy.getTokenStandard();
             
             let symbol2 = "TES";
             let hexSymbol = web3.toHex(symbol2);
@@ -374,15 +374,15 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should returns registered token standard", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
+            let standard = await CAT20Strategy.getTokenStandard();
 
-            let result = await TokensFactory.getTokenStandard(SLS20Token.address, { from : token_owner });
+            let result = await TokensFactory.getTokenStandard(CAT20Token.address, { from : token_owner });
 
             assert.equal(standard, result);
         });
 
         it("Should return 'true' for a supported standard", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
+            let standard = await CAT20Strategy.getTokenStandard();
 
             let result = await TokensFactory.isSupported(standard, { from : token_owner });
 
@@ -390,7 +390,7 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should return 'false' for a not supported standard", async() => {
-            let standard = web3.toHex("SLS-0x00");
+            let standard = web3.toHex("CAT-0x00");
 
             let result = await TokensFactory.isSupported(standard, { from : token_owner });
 
@@ -398,7 +398,7 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should fail to create a new token with an empty name", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
+            let standard = await CAT20Strategy.getTokenStandard();
             let errorThrown = false;
             try {
                 await TokensFactory.createToken("", symbol, decimals, totalSupply, standard, { from : token_owner });
@@ -445,9 +445,9 @@ contract('TokensFactory', accounts => {
     });
 
     // Test ERC-20 standard functions
-    describe("Testing created SLS-20 token (ERC-20 standard functions)", async() => {
+    describe("Testing created CAT-20 token (ERC-20 standard functions)", async() => {
         it("Should return initial supply from balanceOf", async() => {
-            let balance = await SLS20Token.balanceOf(token_owner);
+            let balance = await CAT20Token.balanceOf(token_owner);
             balance = balance.toNumber();
 
             assert.equal(balance, totalSupply);
@@ -456,29 +456,29 @@ contract('TokensFactory', accounts => {
         it("Should add accounts to the whitelist", async() => {
             let complianceRoleName = "Compliance";
 
-            let tx = await permissionModule.addRoleForSpecificToken(token_owner, SLS20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
+            let tx = await permissionModule.addRoleForSpecificToken(token_owner, CAT20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
                 
             assert.equal(tx.logs[0].args.wallet, token_owner);
             assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
-            tx = await whiteList.addToWhiteList(token_owner, SLS20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(token_owner, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_owner);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
 
-            tx = await whiteList.addToWhiteList(token_holder_1, SLS20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(token_holder_1, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_holder_1);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
 
-            tx = await whiteList.addToWhiteList(token_holder_2, SLS20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(token_holder_2, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_holder_2);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
         })
 
         it("Should transfer tokens from the owner account to account " + token_holder_1, async() => {
-            let tx = await SLS20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_1);
@@ -486,7 +486,7 @@ contract('TokensFactory', accounts => {
         });
         
         it("Should approve " + web3.fromWei(toApprove, "ether") + symbol + " tokens for account " + token_holder_1, async() => {
-            let tx = await SLS20Token.approve(token_holder_1, toApprove, {from: token_owner});
+            let tx = await CAT20Token.approve(token_holder_1, toApprove, {from: token_owner});
 
             assert.equal(tx.logs[0].args.owner, token_owner);
             assert.equal(tx.logs[0].args.spender, token_holder_1);
@@ -494,13 +494,13 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should transfer approved tokens", async() => {
-            let tx = await SLS20Token.transferFrom(token_owner, token_holder_2, toApprove, {from: token_holder_1});
+            let tx = await CAT20Token.transferFrom(token_owner, token_holder_2, toApprove, {from: token_holder_1});
 
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_2);
             assert.equal(tx.logs[1].args.value.toNumber(), toApprove);
 
-            let balance = await SLS20Token.balanceOf(token_holder_2);
+            let balance = await CAT20Token.balanceOf(token_holder_2);
             
             assert.equal(balance.toNumber(), toApprove);
         });

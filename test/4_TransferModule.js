@@ -1,11 +1,11 @@
 var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-module/verification-service/WhiteList.sol");
-var SLS20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/SLS20Verification.sol");
+var CAT20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/CAT20Verification.sol");
 
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
-var SLS20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
-var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/SLS20Token.sol");
+var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
@@ -39,12 +39,12 @@ contract('TransferModule', accounts => {
 
     const toTransfer = web3.toWei(10, "ether");
 
-    let SLS20Token;
+    let CAT20Token;
     let zeroAddress = "0x0000000000000000000000000000000000000000";
     let whiteList;
     let transferModule;
-    let SLS20Verification;
-    let SLS20Strategy;
+    let CAT20Verification;
+    let CAT20Strategy;
     let permissionModule;
 
     before(async() => {
@@ -176,11 +176,11 @@ contract('TransferModule', accounts => {
             "WhiteList contract was not deployed"
         );
 
-        SLS20Verification = await SLS20V.new(whiteList.address.valueOf(), { from: token_owner });
+        CAT20Verification = await CAT20V.new(whiteList.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
             zeroAddress,
-            "SLS20Vierification contract was not deployed"
+            "CAT20Vierification contract was not deployed"
         );
 
         transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
@@ -190,20 +190,20 @@ contract('TransferModule', accounts => {
             "TransferModule contract was not deployed"
         );
 
-        SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
+        CAT20Strategy = await CAT20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
             zeroAddress,
-            "SLS20Strategy contract was not deployed"
+            "CAT20Strategy contract was not deployed"
         );
 
-        tx = await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
+        tx = await CAT20Strategy.setTransferModule(transferModule.address.valueOf());
         
-        tx = await TokensFactory.addTokenStrategy(SLS20Strategy.address, { from : token_owner });
-        assert.equal(tx.logs[0].args.strategy, SLS20Strategy.address);
+        tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
+        assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
 
-        let standard = await SLS20Strategy.getTokenStandard();
+        let standard = await CAT20Strategy.getTokenStandard();
 
         let hexSymbol = web3.toHex(symbol);
         await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
@@ -219,7 +219,7 @@ contract('TransferModule', accounts => {
         assert.equal(tx.logs[0].args.name, name);
         assert.equal(tx.logs[0].args.symbol, symbol);
 
-        SLS20Token = await DSToken.at(tx.logs[0].args.tokenAddress);
+        CAT20Token = await DSToken.at(tx.logs[0].args.tokenAddress);
 
         tx = await permissionModule.addRoleForSpecificToken(accounts[0], tx.logs[0].args.tokenAddress, complianceRoleName, { from: accounts[0] });
                 
@@ -231,41 +231,41 @@ contract('TransferModule', accounts => {
             Tokens factory core:\n
             PermissionModule: ${permissionModule.address}
             TokensFactory: ${TokensFactory.address}
-            SLS20Strategy: ${SLS20Strategy.address}
-            SLS20Token: ${SLS20Token.address}
+            CAT20Strategy: ${CAT20Strategy.address}
+            CAT20Token: ${CAT20Token.address}
             WhiteList: ${whiteList.address}
-            SLS20Vierification: ${SLS20Verification.address}
+            CAT20Vierification: ${CAT20Verification.address}
             TransferModule: ${transferModule.address}\n
         `);
     });
 
     describe("Test transfer module", async() => {
-        it("Should add SLS20Verification to transfer module", async() => {
-            let standard = await SLS20Strategy.getTokenStandard();
-            let tx = await transferModule.addVerificationLogic(SLS20Verification.address.valueOf(), standard);
+        it("Should add CAT20Verification to transfer module", async() => {
+            let standard = await CAT20Strategy.getTokenStandard();
+            let tx = await transferModule.addVerificationLogic(CAT20Verification.address.valueOf(), standard);
 
             assert.equal(tx.logs[0].args.standard, standard);
-            assert.equal(tx.logs[0].args.tvAddress, SLS20Verification.address.valueOf());
+            assert.equal(tx.logs[0].args.tvAddress, CAT20Verification.address.valueOf());
         });
 
         it("Should add account to the whitelist", async() => {
-            let tx = await whiteList.addToWhiteList(token_holder_1, SLS20Token.address.valueOf(), { from: token_owner });
+            let tx = await whiteList.addToWhiteList(token_holder_1, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_holder_1);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
 
-            tx = await whiteList.addToWhiteList(token_owner, SLS20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(token_owner, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_owner);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
         });
         
-        it("Should returns 'true' in the SLS20Verification", async() => {
-            let tx = await SLS20Verification.verifyTransfer(
+        it("Should returns 'true' in the CAT20Verification", async() => {
+            let tx = await CAT20Verification.verifyTransfer(
                 token_owner,
                 token_holder_1, 
                 token_owner, 
-                SLS20Token.address.valueOf(), 
+                CAT20Token.address.valueOf(), 
                 toTransfer,
                 { from: token_owner }
             );
@@ -273,12 +273,12 @@ contract('TransferModule', accounts => {
             assert.equal(tx, true);
         });
 
-        it("Should returns 'false' in the SLS20Verification", async() => {
-            let tx = await SLS20Verification.verifyTransfer(
+        it("Should returns 'false' in the CAT20Verification", async() => {
+            let tx = await CAT20Verification.verifyTransfer(
                 token_owner,
                 token_holder_2, 
                 token_owner, 
-                SLS20Token.address.valueOf(), 
+                CAT20Token.address.valueOf(), 
                 toTransfer,
                 { from: token_owner }
             );
@@ -287,7 +287,7 @@ contract('TransferModule', accounts => {
         });
 
         it("Should be transferred tokens on the account which is in the whitelist", async() => {
-            let tx = await SLS20Token.transfer(token_holder_1, toTransfer);
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer);
 
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_1);
@@ -297,7 +297,7 @@ contract('TransferModule', accounts => {
         it("Should be failed to transfer on account that is not in whitelist", async() => {
             let errorThrown = false;
             try {
-                await SLS20Token.transfer(token_holder_2, toTransfer);
+                await CAT20Token.transfer(token_holder_2, toTransfer);
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Account is not in whitelist.`.grey);
@@ -307,12 +307,12 @@ contract('TransferModule', accounts => {
         });
 
         it("Should add the previous account to the whitelist and successfully transfer", async() => {
-            let tx = await whiteList.addToWhiteList(token_holder_2, SLS20Token.address.valueOf(), { from: token_owner });
+            let tx = await whiteList.addToWhiteList(token_holder_2, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_holder_2);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
             
-            tx = await SLS20Token.transfer(token_holder_2, toTransfer);
+            tx = await CAT20Token.transfer(token_holder_2, toTransfer);
 
             assert.equal(tx.logs[1].args.from, token_owner);
             assert.equal(tx.logs[1].args.to, token_holder_2);
@@ -321,19 +321,19 @@ contract('TransferModule', accounts => {
 
         it("Should add multiple accounts to the whitelist", async() => {
             let investors = [accounts[7], accounts[8], accounts[9]];
-            await whiteList.addArrayToWhiteList(investors, SLS20Token.address.valueOf(), { from: token_owner });
+            await whiteList.addArrayToWhiteList(investors, CAT20Token.address.valueOf(), { from: token_owner });
 
             for (let i = 0; i < investors.length; i++) {
-                let result = await whiteList.presentInWhiteList(investors[i], SLS20Token.address.valueOf());
+                let result = await whiteList.presentInWhiteList(investors[i], CAT20Token.address.valueOf());
                 assert.equal(result, true);
             }
         });
 
         it("Should remove account from the whitelist", async() => {
-            let tx = await whiteList.removeFromWhiteList(token_holder_1, SLS20Token.address.valueOf(), { from: token_owner });
+            let tx = await whiteList.removeFromWhiteList(token_holder_1, CAT20Token.address.valueOf(), { from: token_owner });
 
             assert.equal(tx.logs[0].args.who, token_holder_1);
-            assert.equal(tx.logs[0].args.tokenAddress, SLS20Token.address.valueOf());
+            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
         });
     });
 });

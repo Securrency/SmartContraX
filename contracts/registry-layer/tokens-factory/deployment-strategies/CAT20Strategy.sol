@@ -1,18 +1,18 @@
 pragma solidity ^0.4.24;
 
 import "./TokenDeploymentStrategy.sol";
-import "../tokens/SLS20Token.sol";
+import "../tokens/CAT20Token.sol";
 import "../../../request-verification-layer/permission-module/Protected.sol";
 
 /**
-* @title SLS-20 token deployment strategy
+* @title CAT-20 token deployment strategy
 */
-contract SLS20Strategy is TokenDeploymentStrategy, Protected  {
+contract CAT20Strategy is TokenDeploymentStrategy, Protected  {
     // Address of the Transfer module
     address transferModule;
 
     // Token standard
-    bytes32 public constant TOKEN_STANDARD = "SLS-20";
+    bytes32 public constant TOKEN_STANDARD = "CAT-20";
 
     /**
     * @notice initilaze contract
@@ -41,7 +41,7 @@ contract SLS20Strategy is TokenDeploymentStrategy, Protected  {
         onlyTokensFactory(msg.sender)
         returns (address)
     {
-        address token = new SLS20Token(
+        address token = new CAT20Token(
             name,
             symbol,
             decimals,

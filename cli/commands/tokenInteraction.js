@@ -36,7 +36,7 @@ function initializeToken() {
         if (tokenStandard == ERC20) {
             tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/ERC20Token.json').toString()).abi;
         } else {
-            tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/SLS721Token.json').toString()).abi;
+            tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/CAT721Token.json').toString()).abi;
         }
         
         token = new web3.eth.Contract(tokenABI, tokenAddress);
@@ -492,7 +492,7 @@ function showHelpMessage() {
         --txRollbacksHistory (--txr) Show rollbacks history
         --updateCheckpointExpirationTime (--uet) Update checkpoint expiration time
         --capTable (--cp) Show cap table
-        --mint (--m) Mint SLS-721 (ERC-721) Token
+        --mint (--m) Mint CAT-721 (ERC-721) Token
         --transferFrom (--tf) Transfer from
         \n
         --help Show list of all supported commands

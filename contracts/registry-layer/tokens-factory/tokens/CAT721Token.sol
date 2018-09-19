@@ -3,9 +3,9 @@ pragma solidity ^0.4.24;
 import "./SecuritiesNFT.sol";
 
 /**
-* @title SLS-721 Token
+* @title CAT-721 Token
 */
-contract SLS721Token is SecuritiesNFT {
+contract CAT721Token is SecuritiesNFT {
     constructor(
         string _name,
         string _symbol,

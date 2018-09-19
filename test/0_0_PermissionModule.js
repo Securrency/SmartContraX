@@ -2,8 +2,8 @@ var PM = artifacts.require("./request-verification-layer/permission-module/Permi
 
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
-var SLS20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/SLS20Strategy.sol");
-var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/SLS20Token.sol");
+var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
 var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
 
@@ -147,12 +147,12 @@ contract('PermissionModule', accounts => {
             "TokensFactory contract was not deployed"
         );
 
-        SLS20Strategy = await SLS20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
+        CAT20Strategy = await CAT20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "SLS20Strategy contract was not deployed"
+            "CAT20Strategy contract was not deployed"
         ); 
         
         let transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: accounts[0] });
@@ -162,13 +162,13 @@ contract('PermissionModule', accounts => {
             "TransferModule contract was not deployed"
         );
 
-        await SLS20Strategy.setTransferModule(transferModule.address.valueOf());
+        await CAT20Strategy.setTransferModule(transferModule.address.valueOf());
         await symbolRegistry.setTokensFactory(TokensFactory.address.valueOf());
 
-        tx = await TokensFactory.addTokenStrategy(SLS20Strategy.address, { from : accounts[0] });
-        assert.equal(tx.logs[0].args.strategy, SLS20Strategy.address);
+        tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : accounts[0] });
+        assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
 
-        let standard = await SLS20Strategy.getTokenStandard();
+        let standard = await CAT20Strategy.getTokenStandard();
 
         let symbol = "TEST";
         let hexSymbol = web3.toHex(symbol);

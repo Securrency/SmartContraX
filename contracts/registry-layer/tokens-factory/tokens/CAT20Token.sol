@@ -4,9 +4,9 @@ import "openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 import "./SecuritiesStandardToken.sol";
 
 /**
- * @title Secure Liquid Securities, an extension of an ERC20 token standard
+ * @title Compliance Aware Token (CAT-20), an extension of an ERC20 token standard
  */
-contract SLS20Token is SecuritiesStandardToken, DetailedERC20 {
+contract CAT20Token is SecuritiesStandardToken, DetailedERC20 {
     constructor(
         string _name,
         string _symbol,
@@ -28,9 +28,5 @@ contract SLS20Token is SecuritiesStandardToken, DetailedERC20 {
         issuer = _issuer;
 
         emit Transfer(address(0), _issuer, totalSupply_);
-    }
-
-    function getName() public view returns (string) {
-        return name;
     }
 } 

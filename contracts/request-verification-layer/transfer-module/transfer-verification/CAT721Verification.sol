@@ -4,9 +4,9 @@ import "../interfaces/ITransferVerification.sol";
 import "../verification-service/WhiteList.sol";
 
 /**
-* @title Transfer verification of the SLS-20 token standard
+* @title Transfer verification of the CAT-721 (NFT) token standard
 */
-contract SLS20Verification is ITransferVerification {
+contract CAT721Verification is ITransferVerification {
     // Address of the Whitelist service
     address public whiteListAddress;
     
