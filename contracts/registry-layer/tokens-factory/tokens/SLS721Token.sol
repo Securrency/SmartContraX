@@ -38,6 +38,13 @@ contract SLS721Token is SecuritiesNFT {
         return true;
     }
 
+    /**
+    * @dev Function to mint tokens with token URI
+    * @param to The address that will receive the minted tokens.
+    * @param tokenId The token id to mint.
+    * @param tokenURI URI which be added to the token.
+    * @return A boolean that indicates if the operation was successful.
+    */
     function mintWithTokenURI(
         address to,
         uint256 tokenId,
