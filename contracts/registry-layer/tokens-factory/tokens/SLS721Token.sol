@@ -50,4 +50,20 @@ contract SLS721Token is SecuritiesNFT {
         _setTokenURI(tokenId, tokenURI);
         return true;
     }
+
+    /**
+    * @dev Function to burn a specific token
+    * Reverts if the token does not exist
+    * @param owner owner of the token to burn
+    * @param tokenId uint256 ID of the token being burned by the msg.sender
+    */
+    function burn(address owner, uint256 tokenId) 
+        public
+        verifyPermissionForCurrentToken(msg.sig, msg.sender)
+        returns (bool)
+    {
+        _burn(owner, tokenId);
+
+        return true;
+    }
 }
