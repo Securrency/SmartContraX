@@ -5,6 +5,7 @@ let web3Helper = require('./helpers/web3Helper.js');
 const config = require('../cli-config.js');
 
 const ERC20 = 'ERC-20';
+const CAT20 = 'CAT-20';
 
 // Web3 provider
 let web3;
@@ -33,7 +34,7 @@ let totalSupply;
 
 function initializeToken() {
     try {
-        if (tokenStandard == ERC20) {
+        if (tokenStandard == ERC20 || tokenStandard == CAT20) {
             tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/ERC20Token.json').toString()).abi;
         } else {
             tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/CAT721Token.json').toString()).abi;
