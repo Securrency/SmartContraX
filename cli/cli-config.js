@@ -14,6 +14,9 @@ module.exports = {
         },
         ropsten: {
             provider: new Web3(new HDWalletProvider(mnemonic, "https://ropsten.infura.io/", 0, 10)),
+        },
+        gochain: {
+            provider: new Web3(new HDWalletProvider(mnemonic, "https://testnet-rpc.gochain.io/", 0, 10)),
         }
     }
 }

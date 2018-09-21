@@ -21,6 +21,12 @@ module.exports = {
       network_id: "3",
       gas: 4500000,
       gasPrice: 5000000000
+    },
+    gochain: {
+      provider: new HDWalletProvider(privateKey, "https://testnet-rpc.gochain.io"),
+      network_id: "*",
+      gas: 4500000,
+      gasPrice: 5000000000
     }
   },
   solc: {
