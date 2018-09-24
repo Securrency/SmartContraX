@@ -12,8 +12,8 @@ program
   .command('permissionMatrixSetup')
   .alias('PMS')
   .description('Configure permission matrix')
-  .action(() => {
-    permissionMatrix.run();
+  .action((network) => {
+    permissionMatrix.run(network);
   });
 
 program.parse(process.argv);

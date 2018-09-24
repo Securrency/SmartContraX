@@ -9,8 +9,15 @@ let pm;
 // Web3 provider
 let web3;
 
-function initializeWeb3() {
-    let network = readlineSync.question("Network (default localhost:8545): ");
+// localhost network
+const localhost = 'localhost';
+
+function initializeWeb3(selectedNetwork) {
+    let network;
+    
+    if (selectedNetwork != localhost) {
+        network = readlineSync.question("Network (default localhost:8545): ");
+    }
 
     if (!network) {
         web3 = config.networks.default.provider;
@@ -42,16 +49,24 @@ function initializePermissionModule(networkId) {
     return true;
 }
 
-async function run() {
-    initializeWeb3();
-
-    let networkId = await web3.eth.net.getId();
-
+async function run(netowrk) {
+    initializeWeb3(netowrk);
+    
+    let networkId = await web3.eth.net.getId().catch((err) => {
+        console.log(err);
+        process.exit(1);
+    });
+    
     if (!initializePermissionModule(networkId)) {
-        return false;
+        process.exit(1);
     }
 
-    accounts = await web3.eth.getAccounts();
+    
+    accounts = await web3.eth.getAccounts().catch((err) => {
+        console.log(err);
+        process.exit(1);
+    });;
+    
 
     // roles methods
     let systemMethods = [
@@ -119,10 +134,11 @@ async function run() {
         }
         console.log('\n');
     }
+    process.exit(0);
 }
 
 module.exports = {
-    run: async function() {
-        return run();
+    run: async function(network) {
+        return run(network);
     }
 }
