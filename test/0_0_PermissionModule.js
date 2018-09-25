@@ -5,7 +5,7 @@ var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol"
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
-var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
+var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 
 function isException(error) {
     let strError = error.toString();

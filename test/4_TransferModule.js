@@ -1,6 +1,6 @@
-var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
-var WL = artifacts.require("./request-verification-layer/transfer-module/verification-service/WhiteList.sol");
-var CAT20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/CAT20Verification.sol");
+var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
+var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");
+var CAT20V = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-verification/CAT20Verification.sol");
 
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");

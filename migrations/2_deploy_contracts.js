@@ -4,10 +4,10 @@ var CAT20Strategy = artifacts.require("./registry-layer/tokens-factory/deploymen
 var CAT721Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT721Strategy.sol");
 var ERC20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/ERC20Strategy.sol");
 
-var TransferModule = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
-var WhiteList = artifacts.require("./request-verification-layer/transfer-module/transfer-service/WhiteList.sol");
-var CAT20Verification = artifacts.require("./request-verification-layer/transfer-module/verification-service/CAT20Verification.sol");
-var CAT721Verification = artifacts.require("./request-verification-layer/transfer-module/verification-service/CAT721Verification.sol");
+var TransferModule = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
+var WhiteList = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-service/WhiteList.sol");
+var CAT20Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT20Verification.sol");
+var CAT721Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT721Verification.sol");
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 

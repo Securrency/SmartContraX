@@ -5,9 +5,9 @@ var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strat
 var TSMock = artifacts.require("./mocks/TokenStrategyMock.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
-var TM = artifacts.require("./request-verification-layer/transfer-module/TransferModule.sol");
-var WL = artifacts.require("./request-verification-layer/transfer-module/verification-service/WhiteList.sol");
-var CAT20V = artifacts.require("./request-verification-layer/transfer-module/transfer-verification/CAT20Verification.sol");
+var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
+var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");
+var CAT20V = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-verification/CAT20Verification.sol");
 
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 

@@ -1,9 +1,9 @@
 pragma solidity 0.4.24;
 
 import "./interfaces/ITransferModule.sol";
-import "./interfaces/ITransferVerification.sol";
+import "../../request-verification-layer/transfer-verification-system/interfaces/ITransferVerification.sol";
+import "../../request-verification-layer/permission-module/Protected.sol";
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
-import "../permission-module/Protected.sol";
 
 /**
 * @title Transfer Module
