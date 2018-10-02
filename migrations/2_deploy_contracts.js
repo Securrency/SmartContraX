@@ -47,11 +47,11 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       CAT20VerificationDeployed = instance;
-      return deployer.deploy(TransferModule, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 900000});
+      return deployer.deploy(TransferModule, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 5200000});
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
-      return deployer.deploy(CAT20Strategy, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 4100000}); 
+      return deployer.deploy(CAT20Strategy, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 3700000}); 
     })
     .then((instance) => {
       CAT20StrategyDeployed = instance;
@@ -79,6 +79,12 @@ module.exports = function(deployer, network, accounts) {
     })
     .then(() => {
       return PermissionModuleDeployed.addMethodToTheRole(createId("setTransferModule(address)"), "System", {gas: 500000});
+    })
+    .then(() => {
+      return PermissionModuleDeployed.addMethodToTheRole(createId("addNewChain(bytes32)"), "System", {gas: 500000});
+    })
+    .then(() => {
+      return PermissionModuleDeployed.addMethodToTheRole(createId("removeChain(bytes32)"), "System", {gas: 500000});
     })
     .then(() => {
       return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], "System", {gas:300000});
@@ -109,6 +115,12 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((standard) => {
       return TransferModuleDeployed.addVerificationLogic(CAT20VerificationDeployed.address, standard, {gas: 120000});
+    })
+    .then(() => {
+      return TransferModuleDeployed.addNewChain("0x476f436861696e", {gas: 180000});
+    })
+    .then(() => {
+      return TransferModuleDeployed.addNewChain("0x457468657265756d", {gas: 180000});
     })
     .then(() => {
       return CAT721StrategyDeployed.getTokenStandard();
