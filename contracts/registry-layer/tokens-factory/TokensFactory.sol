@@ -90,16 +90,18 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
         require(strategy != address(0), "Token strategy not found.");
         
         symbol = toUpper(symbol);
-        
-        address token = ITokenStrategy(strategy).deploy(
+
+        bytes memory bytesSymbol = bytes(symbol);
+        address token = ISymbolRegistry(symbolRegistry).getTokenBySymbol(bytesSymbol);
+        require(token == address(0), "Token with this symbol already registered.");
+
+        token = ITokenStrategy(strategy).deploy(
             name,
             symbol,
             decimals,
             totalSupply,
             msg.sender
         );
-
-        bytes memory bytesSymbol = bytes(symbol);
         
         ISymbolRegistry(symbolRegistry).registerTokenToTheSymbol(
             msg.sender,
