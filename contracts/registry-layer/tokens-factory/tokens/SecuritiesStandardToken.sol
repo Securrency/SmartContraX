@@ -2,13 +2,14 @@ pragma solidity 0.4.24;
 
 import "../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
 import "../../../request-verification-layer/permission-module/Protected.sol";
+import "./MultiChainToken.sol";
 import "./SecuritiesToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
 /**
 * @title Securities Standart Token
 */
-contract SecuritiesStandardToken is SecuritiesToken, StandardToken, Protected {
+contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Protected {
     // // Address of the Transfer module
     address public transferModule;
     
@@ -18,7 +19,39 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken, Protected {
     constructor(address _transferModule) public {
         transferModule = _transferModule;
     }
-    
+
+    /**
+    * @notice Transfer tokens from chain
+    * @param value Tokens to be transfered
+    * @param chain Target chain name
+    * @param recipient Target address 
+    */
+    function crossChainTransfer(uint value, bytes32 chain, bytes32 recipient) external {
+        require(balances[msg.sender] >= value, "Insufficient funds.");
+        require(value > 0, "Invalid value.");
+
+        bool allowed = ITransferModule(transferModule).verifyTransfer(
+            msg.sender,
+            msg.sender,
+            msg.sender,
+            value
+        );
+
+        require(allowed, "Transfer was declined.");
+
+        balances[msg.sender] -= value;
+
+        emit Transfer(msg.sender, address(0), value);
+        emit FromChain(chain, value, msg.sender, recipient);
+
+        ITransferModule(transferModule).sendTokensFromChain(
+            msg.sender,
+            chain,
+            recipient,
+            value
+        );
+    }
+
     /**
     * @notice Allows create rollback transaction for ERC-20 tokens
     * @notice tokens will be send back to the old owner, will be emited "RollbackTransaction" event
@@ -91,6 +124,22 @@ contract SecuritiesStandardToken is SecuritiesToken, StandardToken, Protected {
         createCheckpoint(from, to, value, msg.sender);
 
         return super.transferFrom(from, to, value);
+    }
+
+    /**
+    * @notice Receive tokens from other chaine
+    * @param value Tokens to receive
+    * @param chain From chain
+    * @param recipient Tokens recipient
+    * @param sender Sender address
+    */
+    function acceptFromOtherChain(uint value, bytes32 chain, address recipient, bytes32 sender) public {
+        require(msg.sender == transferModule, "Only transfer module.");
+
+        balances[recipient] += value;
+
+        emit Transfer(address(0), recipient, value);
+        emit ToChain(chain, value, recipient, sender);
     }
 
     /**
