@@ -47,6 +47,8 @@ contract('TransferModule', accounts => {
     let CAT20Strategy;
     let permissionModule;
 
+    let crossChainTx;
+
     before(async() => {
         permissionModule = await PM.new();
 
@@ -93,6 +95,25 @@ contract('TransferModule', accounts => {
 
         assert.equal(tx.logs[0].args.methodId, setTM);
         assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+        
+        let addChain = createId("addNewChain(bytes32)");
+        tx = await permissionModule.addMethodToTheRole(addChain, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, addChain);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
+        let remChain = createId("removeChain(bytes32)");
+        tx = await permissionModule.addMethodToTheRole(remChain, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, remChain);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+        
+        let accTokensFromChain = createId("acceptTokensFromOtherChain(address,address,address,bytes32,bytes32,bytes32,uint256,uint256)");
+        tx = await permissionModule.addMethodToTheRole(accTokensFromChain, systemRoleName, { from: accounts[0] });
+
+        assert.equal(tx.logs[0].args.methodId, accTokensFromChain);
+        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+
 
         let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
@@ -336,4 +357,117 @@ contract('TransferModule', accounts => {
             assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
         });
     });
+
+    describe("Test cross chain service", async() => {
+        it("Should add new chain", async() => {
+            let chain = web3.toHex("Ethereum Classic");
+            let tx = await transferModule.addNewChain(chain);
+            
+            assert.equal(chain, tx.logs[0].args.chain.replace("00000000000000000000000000000000", ""));
+        });
+
+        it("Should add one more chain", async() => {
+            let chain = web3.toHex("Ethereum");
+            let tx = await transferModule.addNewChain(chain);
+            
+            assert.equal(chain, tx.logs[0].args.chain.replace("000000000000000000000000000000000000000000000000", ""));
+        });
+
+        it("Should verify chain", async() => {
+            let chain = web3.toHex("Ethereum");
+            let result = await transferModule.isSupported(chain);
+
+            assert.equal(result, true);
+        });
+
+        it("Should remove chain", async() => {
+            let chain = web3.toHex("Ethereum");
+            let tx = await transferModule.removeChain(chain);
+            
+            assert.equal(chain, tx.logs[0].args.chain.replace("000000000000000000000000000000000000000000000000", ""));
+        });
+    });
+
+    describe("Test cross chain transfer", async() => {
+        it("Should create cross chain transfer", async() => {
+            let chain = web3.toHex("Ethereum Classic");
+            let tx = await CAT20Token.crossChainTransfer(toTransfer, chain, accounts[7], { from: token_owner });
+
+            assert.equal(tx.logs[0].args.to, "0x0000000000000000000000000000000000000000");
+            assert.equal(tx.logs[0].args.from, token_owner);
+
+            crossChainTx = tx.tx;
+        });
+
+        it("Should accept tokens from other chain", async() => {
+            let tx = await web3.eth.getTransactionReceipt(crossChainTx);
+
+            let token = tx.logs[2].topics[1].replace("000000000000000000000000", "");
+            let sender = tx.logs[2].topics[2].replace("000000000000000000000000", "");
+            let id = parseInt(tx.logs[2].topics[3]);
+
+            let data = tx.logs[2].data.replace("0x", "");
+
+            let chain = "0x" + data.substring(0, 64).replace("00000000000000000000000000000000", "");
+            let recipient = "0x" + data.substring(64, 104);
+
+            let balance1 = await CAT20Token.balanceOf(accounts[7]);
+
+            tx = await transferModule.acceptTokensFromOtherChain(
+                token,
+                recipient,
+                token,
+                sender,
+                chain,
+                crossChainTx,
+                toTransfer,
+                id,
+                { from: accounts[0] }
+            );
+
+            let balance2 = await CAT20Token.balanceOf(accounts[7]); 
+            
+            assert.equal(balance1, 0);
+            assert.equal(balance2, toTransfer);
+        });
+
+        it("Should show that transaction is processed", async() => {
+            let result = await transferModule.crossChainTxIsProcessed(crossChainTx);
+
+            assert.equal(result, true);
+        });
+
+        it("Should fail activate already processed transaction", async() => {
+            let tx = await web3.eth.getTransactionReceipt(crossChainTx);
+
+            let token = tx.logs[2].topics[1].replace("000000000000000000000000", "");
+            let sender = tx.logs[2].topics[2].replace("000000000000000000000000", "");
+            let id = parseInt(tx.logs[2].topics[3]);
+
+            let data = tx.logs[2].data.replace("0x", "");
+
+            let chain = "0x" + data.substring(0, 64).replace("00000000000000000000000000000000", "");
+            let recipient = "0x" + data.substring(64, 104);
+            
+            let errorThrown = false;
+            try {
+                await transferModule.acceptTokensFromOtherChain(
+                    token,
+                    recipient,
+                    token,
+                    sender,
+                    chain,
+                    crossChainTx,
+                    toTransfer,
+                    id,
+                    { from: accounts[0] }
+                );
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transaction already processed.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, txRevertNotification);
+        });
+    }); 
 });
