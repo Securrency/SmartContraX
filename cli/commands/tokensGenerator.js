@@ -117,6 +117,7 @@ async function run() {
         Congratulations! The transaction was successfully completed.
         Token address: ${receipt.events['CreatedToken'].returnValues.tokenAddress}\n`
         );
+        process.exit(0);
     })
     .on('error', function(error) {
         console.log("Error", error);

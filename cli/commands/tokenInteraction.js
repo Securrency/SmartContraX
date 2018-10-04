@@ -35,7 +35,7 @@ let totalSupply;
 function initializeToken() {
     try {
         if (tokenStandard == ERC20 || tokenStandard == CAT20) {
-            tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/ERC20Token.json').toString()).abi;
+            tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/CAT20Token.json').toString()).abi;
         } else {
             tokenABI = JSON.parse(require('fs').readFileSync('./build/contracts/CAT721Token.json').toString()).abi;
         }
@@ -127,6 +127,10 @@ async function startInteraction() {
         case '--t':
         case '--transfer':
             transfer();
+            break;
+        case '--ct':
+        case '--crossChainTransfer':
+            crossChaintransfer();
             break;
         case '--uet':
         case '--updateCheckpointExpirationTime':
@@ -388,6 +392,30 @@ async function transfer() {
     let message = `Transfer ${valueOne} ${symbol} . Please wait...`;
     sendTransaction(from, action, message);
 }
+
+async function crossChaintransfer() {
+    let from =  readlineSync.question('From: ');
+    if (!web3.utils.isAddress(from)) {
+        from = accounts[from];
+    }
+    
+    let to = readlineSync.question('To: ');
+    if (!web3.utils.isAddress(to)) {
+        to = accounts[to];
+    }
+    
+    let valueOne = readlineSync.question('Value: ');
+    value = web3.utils.toWei(valueOne);
+
+    let chainOriginal = readlineSync.question('Chain: ');
+    let chain = web3.utils.toHex(chainOriginal);
+
+    let action = token.methods.crossChainTransfer(value, chain, to);
+
+    // send transaction
+    let message = `Transfer ${valueOne} ${symbol} . To the ${chainOriginal}. Please wait...`;
+    sendTransaction(from, action, message);
+} 
 
 async function getBalance() {
     let tokenHolder =  readlineSync.question('Token holder address: ');

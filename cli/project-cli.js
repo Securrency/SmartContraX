@@ -7,6 +7,7 @@ var tokenInteraction = require('./commands/tokenInteraction.js');
 var symbolRegistry = require('./commands/symbolRegistry.js');
 var whiteList = require('./commands/whiteList.js');
 var permissionModule = require("./commands/permissionModule.js");
+var crossChainListener = require("./commands/crossChainListener.js");
 
 program
   .version('0.0.1')
@@ -45,11 +46,19 @@ program
   });
 
 program
-  .command('permissionMuodule')
+  .command('permissionModule')
   .alias('PM')
   .description('Functions for interaction with permission module')
   .action(() => {
     permissionModule.run();
+  });
+
+program
+  .command('crossChain')
+  .alias('CCL')
+  .description('Listener for crosschain transfers')
+  .action(() => {
+    crossChainListener.run();
   });
 
 program.parse(process.argv);

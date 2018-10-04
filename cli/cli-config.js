@@ -7,7 +7,7 @@ const mnemonic = fs.readFileSync("./cli/mnemonic").toString();
 module.exports = {
     networks: {
         default: {
-            provider: new Web3(new Web3.providers.HttpProvider("http://localhost:8545")),
+            provider: new Web3(new HDWalletProvider(mnemonic, "http://localhost:8545", 0, 10)),
         },
         kovan: {
             provider: new Web3(new HDWalletProvider(mnemonic, "https://kovan.infura.io/", 0, 10)),
