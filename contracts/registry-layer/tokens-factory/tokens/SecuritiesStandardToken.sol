@@ -40,6 +40,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         require(allowed, "Transfer was declined.");
 
         balances[msg.sender] -= value;
+        totalSupply_ -= value;
 
         emit Transfer(msg.sender, address(0), value);
         emit FromChain(chain, value, msg.sender, recipient);
@@ -137,6 +138,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         require(msg.sender == transferModule, "Only transfer module.");
 
         balances[recipient] += value;
+        totalSupply_ += value;
 
         emit Transfer(address(0), recipient, value);
         emit ToChain(chain, value, recipient, sender);
