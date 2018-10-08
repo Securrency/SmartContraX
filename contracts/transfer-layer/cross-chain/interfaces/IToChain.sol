@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
 /**
 * @notice Interface for the contract which allows receipt tokens from the other chain

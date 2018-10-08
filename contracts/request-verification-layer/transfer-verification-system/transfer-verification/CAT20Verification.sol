@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
 import "../interfaces/ITransferVerification.sol";
 import "../verification-service/WhiteList.sol";

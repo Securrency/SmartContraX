@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
 import "../registry-layer/tokens-factory/deployment-strategies/TokenDeploymentStrategy.sol";
 import "../request-verification-layer/permission-module/Protected.sol";
