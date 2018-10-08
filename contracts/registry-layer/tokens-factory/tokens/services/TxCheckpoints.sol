@@ -2,11 +2,15 @@ pragma solidity ^0.4.24;
 
 import "../../interfaces/ITxCheckpoints.sol";
 import "../../../../helpers/Utils.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Transactions checkpoints
 */
 contract TxCheckpoints is Utils, ITxCheckpoints {
+    // define libraries
+    using SafeMath for uint256;
+
     // Declares variable that stores expiration interval
     uint public expireInterval = 3600;
 
@@ -134,7 +138,7 @@ contract TxCheckpoints is Utils, ITxCheckpoints {
 
         checkpoints[id] = Checkpoint({
             checkpointKey: checkpointKey,
-            expireDate: now + expireInterval,
+            expireDate: now.add(expireInterval),
             used: false
         });
 

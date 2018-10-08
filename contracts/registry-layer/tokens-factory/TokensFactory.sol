@@ -5,11 +5,15 @@ import "./interfaces/ITokenStrategy.sol";
 import "../symbol-registry/interfaces/ISymbolRegistry.sol";
 import "../../helpers/Utils.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Factory of the tokens
 */
 contract TokensFactory is ITokensFactory, Utils, Protected {
+    // define libraries
+    using SafeMath for uint256;
+
     // Symbol Registry address
     address symbolRegistry;
 
@@ -167,14 +171,15 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
         address removedStrategy = tokensStrategies[standard].strategyAddress;
         
         if (supportedStandards.length > 1) {
-            bytes32 standardToUpdate = supportedStandards[supportedStandards.length - 1];
+            uint last = supportedStandards.length.sub(1);
+            bytes32 standardToUpdate = supportedStandards[last];
 
             supportedStandards[index] = standardToUpdate;
             tokensStrategies[standardToUpdate].index = index;
         }
 
         delete supportedStandards[index];
-        supportedStandards.length--;
+        supportedStandards.length = supportedStandards.length.sub(1);
 
         delete tokensStrategies[standard];
         

@@ -2,11 +2,15 @@ pragma solidity ^0.4.24;
 
 import "./interfaces/IRolesManager.sol";
 import "./PermissionModuleStorage.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Roles Manager
 */
 contract RolesManager is PermissionModuleStorage, IRolesManager {
+    // define libraries
+    using SafeMath for uint256;
+
     // Predefined name of the owner role
     bytes32 ownerRole = bytes32("Owner");
 
@@ -168,14 +172,14 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
         roleMethods[roleName][methodId] = false;
 
         uint index = indexesOfTheRoleMethods[roleName][methodId];
-        uint last = listOfTheRoleMethods[roleName].length - 1;
+        uint last = listOfTheRoleMethods[roleName].length.sub(1);
         
         indexesOfTheRoleMethods[roleName][listOfTheRoleMethods[roleName][last]] = index;
         listOfTheRoleMethods[roleName][index] = listOfTheRoleMethods[roleName][last];
 
         delete listOfTheRoleMethods[roleName][last];
         delete indexesOfTheRoleMethods[roleName][methodId];
-        listOfTheRoleMethods[roleName].length--;
+        listOfTheRoleMethods[roleName].length = last;
 
         emit MethodRemoved(methodId, roleName);
     }

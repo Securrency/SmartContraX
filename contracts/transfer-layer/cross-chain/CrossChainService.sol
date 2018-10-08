@@ -5,11 +5,15 @@ import "./FromChain.sol";
 import "./ToChain.sol";
 import "../../helpers/Utils.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Cross chain transfer service
 */
 contract CrossChainService is ICrossChainService, Protected, FromChain, ToChain {
+    // define libraries
+    using SafeMath for uint256;
+
     // chain identifier
     uint chainIdentifier = 0;
 
@@ -64,7 +68,7 @@ contract CrossChainService is ICrossChainService, Protected, FromChain, ToChain 
         require(supportedChains[chain], "Chain is not supported.");
 
         uint chainIndex = chainsIndexes[chain];
-        uint lastIndex = chains.length - 1;
+        uint lastIndex = chains.length.sub(1);
         bytes32 lastChain = chains[lastIndex];
 
         chains[chainIndex] = lastChain;
@@ -72,7 +76,7 @@ contract CrossChainService is ICrossChainService, Protected, FromChain, ToChain 
         
         delete supportedChains[chain];
         delete chains[lastIndex];
-        chains.length--;
+        chains.length = lastIndex;
 
         emit ChainRemoved(chain, chainsIds[chain]);
     }

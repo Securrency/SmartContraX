@@ -5,11 +5,15 @@ import "../../../request-verification-layer/permission-module/Protected.sol";
 import "./MultiChainToken.sol";
 import "./SecuritiesToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Securities Standart Token
 */
 contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Protected {
+    // define libraries
+    using SafeMath for uint256;
+
     // // Address of the Transfer module
     address public transferModule;
     
@@ -39,8 +43,8 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
 
         require(allowed, "Transfer was declined.");
 
-        balances[msg.sender] -= value;
-        totalSupply_ -= value;
+        balances[msg.sender] = balances[msg.sender].sub(value);
+        totalSupply_ = totalSupply_.sub(value);
 
         emit Transfer(msg.sender, address(0), value);
         emit FromChain(chain, value, msg.sender, recipient);
@@ -137,8 +141,8 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     function acceptFromOtherChain(uint value, bytes32 chain, address recipient, bytes32 sender) public {
         require(msg.sender == transferModule, "Only transfer module.");
 
-        balances[recipient] += value;
-        totalSupply_ += value;
+        balances[recipient] = balances[recipient].add(value);
+        totalSupply_ = totalSupply_.add(value);
 
         emit Transfer(address(0), recipient, value);
         emit ToChain(chain, value, recipient, sender);
@@ -153,8 +157,8 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     function updatedBalances(address from, address to, uint tokens) internal {
         require(tokens <= balances[from], "Insufficient funds on balance.");
 
-        balances[from] -= tokens;
-        balances[to] += tokens;
+        balances[from] = balances[from].sub(tokens);
+        balances[to] = balances[to].add(tokens);
 
         emit Transfer(from, to, tokens);
     }

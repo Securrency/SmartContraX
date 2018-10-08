@@ -2,11 +2,15 @@ pragma solidity ^0.4.24;
 
 import "./interfaces/INetworkRolesManager.sol";
 import "./RolesManager.sol";
+import "../../libraries/SafeMath8.sol";
 
 /**
 * @title Network roles manager
 */
 contract NetworkRolesManager is RolesManager, INetworkRolesManager {
+    // define libraries
+    using SafeMath8 for uint8;
+
     /**
     * @notice Write info to the log when the new role was added to the wallet
     */
@@ -133,7 +137,7 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         walletRoles[wallet][role] = false;
 
         uint8 index = indexesOfTheWalletRoles[wallet][role];
-        uint8 last =  walletRolesIndex[wallet] - 1;
+        uint8 last = walletRolesIndex[wallet].sub(1);
 
         if(last != 0) {
             indexesOfTheWalletRoles[wallet][listOfTheWalletRoles[wallet][last]] = index;
@@ -142,7 +146,7 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         
         delete indexesOfTheWalletRoles[wallet][role];
         delete listOfTheWalletRoles[wallet][last];
-        walletRolesIndex[wallet]--;
+        walletRolesIndex[wallet] = last;
 
         emit RoleDeleted(wallet, role);
     }

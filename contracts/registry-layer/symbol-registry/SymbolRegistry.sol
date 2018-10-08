@@ -3,11 +3,15 @@ pragma solidity ^0.4.24;
 import "./interfaces/ISymbolRegistry.sol";
 import "../../helpers/Utils.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Symbol Registry
 */
 contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
+    // define libraries
+    using SafeMath for uint256;
+
     // Interval for symbol expiration
     uint public exprationInterval = 604800;
 
@@ -114,7 +118,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
             tokenAddress: address(0),
             issuerName: issuerName,
             registeredAt: now,
-            expiredAt: now + exprationInterval
+            expiredAt: now.add(exprationInterval)
         });
 
         registeredSymbols[symbol] = symbolStruct;
@@ -129,7 +133,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     function renewSymbol(bytes symbol) public onlySymbolOwner(symbol, msg.sender) {
         symbol = toUpperBytes(symbol);
 
-        registeredSymbols[symbol].expiredAt += exprationInterval;
+        registeredSymbols[symbol].expiredAt = registeredSymbols[symbol].expiredAt.add(exprationInterval);
 
         emit Renewal(symbol);
     }

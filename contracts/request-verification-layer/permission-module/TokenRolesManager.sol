@@ -3,11 +3,15 @@ pragma solidity ^0.4.24;
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenRolesManager.sol";
 import "./RolesManager.sol";
+import "../../libraries/SafeMath8.sol";
 
 /**
 * @title Token roles manager
 */
 contract TokenRolesManager is RolesManager, ITokenRolesManager {
+    // define libraries
+    using SafeMath8 for uint8;
+
     /**
     * @notice Write info to the log when the new role was added to the wallet
     */
@@ -80,7 +84,7 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
         tokenDependentRoles[wallet][token][roleName] = false;
 
         uint8 index = indexesOfTheTokenDependentRoles[wallet][token][roleName];
-        uint8 last =  tokenDependentRolesIndex[wallet][token] - 1;
+        uint8 last =  tokenDependentRolesIndex[wallet][token].sub(1);
 
         if (last != 0) {
             indexesOfTheTokenDependentRoles[wallet][token][listOfTheTokenDependentRoles[wallet][token][last]] = index;
@@ -89,7 +93,7 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
 
         delete indexesOfTheTokenDependentRoles[wallet][token][roleName];
         delete listOfTheTokenDependentRoles[wallet][token][last];
-        tokenDependentRolesIndex[wallet][token]--;
+        tokenDependentRolesIndex[wallet][token] = last;
 
         emit TokenDependetRoleDeleted(wallet, token, roleName);
     }
