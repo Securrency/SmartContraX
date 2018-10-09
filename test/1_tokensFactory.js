@@ -2,7 +2,7 @@
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
-var TSMock = artifacts.require("./mocks/TokenStrategyMock.sol");
+var TSMock = artifacts.require("./common/mocks/TokenStrategyMock.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");

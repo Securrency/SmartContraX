@@ -1,8 +1,8 @@
 pragma solidity ^0.4.24;
 
-import "../registry-layer/tokens-factory/deployment-strategies/TokenDeploymentStrategy.sol";
-import "../request-verification-layer/permission-module/Protected.sol";
-import "../registry-layer/tokens-factory/tokens/CAT20Token.sol";
+import "../../registry-layer/tokens-factory/deployment-strategies/TokenDeploymentStrategy.sol";
+import "../../request-verification-layer/permission-module/Protected.sol";
+import "../../registry-layer/tokens-factory/tokens/CAT20Token.sol";
 
 contract TokenStrategyMock is TokenDeploymentStrategy, Protected {
     // Address of the Transfer module
