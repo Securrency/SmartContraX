@@ -3,7 +3,7 @@ pragma solidity ^0.4.24;
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenRolesManager.sol";
 import "./RolesManager.sol";
-import "../../libraries/SafeMath8.sol";
+import "../../common/libraries/SafeMath8.sol";
 
 /**
 * @title Token roles manager
