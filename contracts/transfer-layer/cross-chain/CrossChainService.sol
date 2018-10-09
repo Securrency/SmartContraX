@@ -3,7 +3,6 @@ pragma solidity ^0.4.24;
 import "./interfaces/ICrossChainService.sol";
 import "./FromChain.sol";
 import "./ToChain.sol";
-import "../../helpers/Utils.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 

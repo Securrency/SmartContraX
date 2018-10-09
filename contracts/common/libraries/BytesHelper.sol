@@ -1,6 +1,11 @@
 pragma solidity ^0.4.24;
 
-contract Utils {
+
+/**
+ * @title BytesHelper
+ * @dev Different operations with bytes
+ */
+library BytesHelper {
     /**
     * @notice Changes a string to upper case
     * @param base String to change

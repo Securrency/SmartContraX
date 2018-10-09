@@ -3,16 +3,17 @@ pragma solidity ^0.4.24;
 import "./interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenStrategy.sol";
 import "../symbol-registry/interfaces/ISymbolRegistry.sol";
-import "../../helpers/Utils.sol";
+import "../../common/libraries/BytesHelper.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Factory of the tokens
 */
-contract TokensFactory is ITokensFactory, Utils, Protected {
+contract TokensFactory is ITokensFactory, Protected {
     // define libraries
     using SafeMath for uint256;
+    using BytesHelper for string;
 
     // Symbol Registry address
     address symbolRegistry;
@@ -93,7 +94,7 @@ contract TokensFactory is ITokensFactory, Utils, Protected {
         require(bytes(name).length > 0, "Name length should always greater 0.");
         require(strategy != address(0), "Token strategy not found.");
         
-        symbol = toUpper(symbol);
+        symbol = symbol.toUpper();
 
         bytes memory bytesSymbol = bytes(symbol);
         address token = ISymbolRegistry(symbolRegistry).getTokenBySymbol(bytesSymbol);

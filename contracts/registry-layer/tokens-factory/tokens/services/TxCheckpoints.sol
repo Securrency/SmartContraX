@@ -1,15 +1,17 @@
 pragma solidity ^0.4.24;
 
 import "../../interfaces/ITxCheckpoints.sol";
-import "../../../../helpers/Utils.sol";
+import "../../../../common/libraries/BytesHelper.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Transactions checkpoints
 */
-contract TxCheckpoints is Utils, ITxCheckpoints {
+contract TxCheckpoints is ITxCheckpoints {
     // define libraries
     using SafeMath for uint256;
+    using BytesHelper for address;
+    using BytesHelper for uint;
 
     // Declares variable that stores expiration interval
     uint public expireInterval = 3600;
@@ -65,14 +67,14 @@ contract TxCheckpoints is Utils, ITxCheckpoints {
         
         uint8 bytesIndex = 0;
         for (uint8 i = 0; i < addresses.length; i++) {
-            addBytes = addressToBytes(addresses[i]);
+            addBytes = addresses[i].addressToBytes();
             for (uint8 j = 0; j < 20; j++) {
                 b[bytesIndex] = addBytes[j];
                 bytesIndex++;
             }
         }
         
-        bytes memory bytesValue = uintToBytes(value);
+        bytes memory bytesValue = value.uintToBytes();
         for (i = 0; i < 32; i++) {
             b[bytesIndex] = bytesValue[i];
             bytesIndex++;

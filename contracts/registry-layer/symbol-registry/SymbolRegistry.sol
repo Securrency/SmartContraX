@@ -1,16 +1,17 @@
 pragma solidity ^0.4.24;
 
 import "./interfaces/ISymbolRegistry.sol";
-import "../../helpers/Utils.sol";
+import "../../common/libraries/BytesHelper.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Symbol Registry
 */
-contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
+contract SymbolRegistry is ISymbolRegistry, Protected {
     // define libraries
     using SafeMath for uint256;
+    using BytesHelper for bytes;
 
     // Interval for symbol expiration
     uint public exprationInterval = 604800;
@@ -102,7 +103,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         verifySymbol(symbol) 
         verifyPermission(msg.sig, msg.sender) 
     {
-        symbol = toUpperBytes(symbol);
+        symbol = symbol.toUpperBytes();
 
         require(
             registeredSymbols[symbol].tokenAddress == address(0),
@@ -131,7 +132,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     * @param symbol Symbol which will be renewed
     */
     function renewSymbol(bytes symbol) public onlySymbolOwner(symbol, msg.sender) {
-        symbol = toUpperBytes(symbol);
+        symbol = symbol.toUpperBytes();
 
         registeredSymbols[symbol].expiredAt = registeredSymbols[symbol].expiredAt.add(exprationInterval);
 
@@ -149,7 +150,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
     {
         require(newOwner != address(0), "Invalid new owner address.");
         
-        symbol = toUpperBytes(symbol);
+        symbol = symbol.toUpperBytes();
 
         emit TransferedOwnership(
             registeredSymbols[symbol].owner,
@@ -179,7 +180,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         require(tokenAddress != address(0), "Invalid token address");
         require(msg.sender == tf, "Allowed only for the tokens factory.");
 
-        symbol = toUpperBytes(symbol);
+        symbol = symbol.toUpperBytes();
 
         registeredSymbols[symbol].tokenAddress = tokenAddress;
 
@@ -221,7 +222,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         view 
         returns (bool) 
     {
-        symbol = toUpperBytes(symbol);
+        symbol = symbol.toUpperBytes();
 
         return registeredSymbols[symbol].tokenAddress == address(0)
             && registeredSymbols[symbol].expiredAt < now;
@@ -237,7 +238,7 @@ contract SymbolRegistry is ISymbolRegistry, Utils, Protected {
         view 
         returns (bool) 
     {
-        symbol = toUpperBytes(symbol);
+        symbol = symbol.toUpperBytes();
 
         return registeredSymbols[symbol].owner == owner;
     }
