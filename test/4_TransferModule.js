@@ -1,7 +1,7 @@
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");
 var CAT20V = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-verification/CAT20Verification.sol");
-
+var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
@@ -46,11 +46,19 @@ contract('TransferModule', accounts => {
     let CAT20Verification;
     let CAT20Strategy;
     let permissionModule;
+    let componentsRegistry;
 
     let crossChainTx;
 
     before(async() => {
-        permissionModule = await PM.new();
+        componentsRegistry = await CR.new();
+        assert.notEqual(
+            componentsRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Components Registry contract was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),
@@ -171,7 +179,9 @@ contract('TransferModule', accounts => {
         assert.equal(tx.logs[0].args.wallet, accounts[0]);
         assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
 
-        symbolRegistry = await SR.new(permissionModule.address.valueOf(), {from: accounts[0]});
+        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+
+        symbolRegistry = await SR.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             symbolRegistry.address.valueOf(),
@@ -179,7 +189,9 @@ contract('TransferModule', accounts => {
             "SymbolRegistry contract was not deployed"
         );
 
-        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
+        tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
+
+        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -187,10 +199,9 @@ contract('TransferModule', accounts => {
             "TokensFactory contract was not deployed"
         );
 
-        await permissionModule.setTokensFactory(TokensFactory.address.valueOf());
-        await symbolRegistry.setTokensFactory(TokensFactory.address.valueOf());
+        tx = componentsRegistry.registerNewComponent(TokensFactory.address.valueOf());
 
-        whiteList = await WL.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
+        whiteList = await WL.new(componentsRegistry.address.valueOf(), { from: token_owner });
         assert.notEqual(
             whiteList.address.valueOf(),
             zeroAddress,
@@ -204,22 +215,22 @@ contract('TransferModule', accounts => {
             "CAT20Vierification contract was not deployed"
         );
 
-        transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
+        transferModule = await TM.new(componentsRegistry.address.valueOf(), { from: token_owner });
         assert.notEqual(
             transferModule.address.valueOf(),
             zeroAddress,
             "TransferModule contract was not deployed"
         );
 
-        CAT20Strategy = await CAT20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: token_owner });
+        tx = componentsRegistry.registerNewComponent(transferModule.address.valueOf());
+
+        CAT20Strategy = await CAT20S.new(componentsRegistry.address.valueOf());
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
             zeroAddress,
             "CAT20Strategy contract was not deployed"
         );
-
-        tx = await CAT20Strategy.setTransferModule(transferModule.address.valueOf());
         
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
         assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
@@ -249,8 +260,8 @@ contract('TransferModule', accounts => {
 
         // Printing all the contract addresses
         console.log(`
-            Tokens factory core:\n
-            PermissionModule: ${permissionModule.address}
+            Core smart contracts:\n
+            ComponentsRegistry: ${componentsRegistry.address}
             TokensFactory: ${TokensFactory.address}
             CAT20Strategy: ${CAT20Strategy.address}
             CAT20Token: ${CAT20Token.address}

@@ -1,16 +1,14 @@
 pragma solidity ^0.4.24;
 
 import "../interfaces/IWhiteList.sol";
-import "../../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
+import "../../../registry-layer/components-registry/instances/TokensFactoryInstance.sol";
 import "../../permission-module/Protected.sol";
+
 
 /**
 * @title Whitelist service
 */
-contract WhiteList is IWhiteList, Protected {
-    // Address of the tokens factory
-    address public tokenFactory;
-
+contract WhiteList is IWhiteList, Protected, TokensFactoryInstance {
     // Declare storage for a whitelisted addresses
     mapping(address => mapping(address => bool)) whitelistedAddresses;
 
@@ -29,15 +27,13 @@ contract WhiteList is IWhiteList, Protected {
     event Removed(address indexed who, address indexed tokenAddress);
 
     /**
-    * @notice Setting address of the tokens factory
-    * @param _tokensFactory Address of the tokens factory
+    * @notice Intialize contract
+    * @param _componentsRegistry Address of the components registry
     */
-    constructor(address _tokensFactory, address _permissionModule) 
+    constructor(address _componentsRegistry) 
         public
-        Protected(_permissionModule) 
-    {
-        tokenFactory = _tokensFactory;
-    }
+        WithComponentsRegistry(_componentsRegistry) 
+    {}
 
     /**
     * @notice Werify address in the whitelist
@@ -58,7 +54,7 @@ contract WhiteList is IWhiteList, Protected {
         verifyPermissionForToken(msg.sig, msg.sender, tokenAddress) 
     {
         require(who != address(0), "Invalid customer address.");
-        require(ITokensFactory(tokenFactory).getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
+        require(tfInstance().getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
 
         add(who, tokenAddress);
     }
@@ -72,7 +68,7 @@ contract WhiteList is IWhiteList, Protected {
         public
         verifyPermissionForToken(msg.sig, msg.sender, tokenAddress)
     {
-        require(ITokensFactory(tokenFactory).getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
+        require(tfInstance().getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
 
         for (uint i = 0; i < investors.length; i++) {
             require(investors[i] != address(0), "Invalid investor address.");
@@ -90,7 +86,7 @@ contract WhiteList is IWhiteList, Protected {
         verifyPermissionForToken(msg.sig, msg.sender, tokenAddress) 
     {
         require(who != address(0), "Invalid customer address.");
-        require(ITokensFactory(tokenFactory).getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
+        require(tfInstance().getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
 
         whitelistedAddresses[tokenAddress][who] = false;
 

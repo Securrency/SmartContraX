@@ -1,23 +1,23 @@
 pragma solidity ^0.4.24;
 
 import "./interfaces/ISymbolRegistry.sol";
+import "./SymbolRegistryMetadata.sol";
 import "../../common/libraries/BytesHelper.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
+import "../../common/component/SystemComponent.sol";
+import "../../registry-layer/components-registry/getters/TokensFactoryAddress.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Symbol Registry
 */
-contract SymbolRegistry is ISymbolRegistry, Protected {
+contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFactoryAddress, SymbolRegistryMetadata {
     // define libraries
     using SafeMath for uint256;
     using BytesHelper for bytes;
 
     // Interval for symbol expiration
     uint public exprationInterval = 604800;
-
-    // Address of the tokens factory
-    address tf;
 
     // Write info to the log when was transferred symbol ownership
     event TransferedOwnership(
@@ -83,7 +83,13 @@ contract SymbolRegistry is ISymbolRegistry, Protected {
     /**
     * @notice Initialize contract
     */
-    constructor(address permissionModule) public Protected(permissionModule) {
+    constructor(address componentsRegistry) 
+        public 
+        WithComponentsRegistry(componentsRegistry)
+    {
+        componentName = SYMBOL_REGISTRY_NAME;
+        componentId = SYMBOL_REGISTRY_ID;
+
         registeredSymbols["ETH"] = Symbol({
             owner: address(0),
             tokenAddress: msg.sender,
@@ -177,8 +183,9 @@ contract SymbolRegistry is ISymbolRegistry, Protected {
         public
         onlySymbolOwner(symbol, sender)
     {
+        address tokensFactory = getTokensFactoryAddress();
         require(tokenAddress != address(0), "Invalid token address");
-        require(msg.sender == tf, "Allowed only for the tokens factory.");
+        require(msg.sender == tokensFactory, "Allowed only for the tokens factory.");
 
         symbol = symbol.toUpperBytes();
 
@@ -200,17 +207,6 @@ contract SymbolRegistry is ISymbolRegistry, Protected {
         exprationInterval = interval;
 
         emit ExpirationIntervalUpdated(interval);
-    }
-
-    /**
-    * @notice Add tokens factory address to the symbol registry
-    * @param tokensFactory Address of the tokens factory
-    */
-    function setTokensFactory(address tokensFactory) public {
-        require(tf == address(0), "Already initialized.");
-        require(tokensFactory != address(0), "Invalid tokens factory address.");
-
-        tf = tokensFactory;
     }
 
     /**

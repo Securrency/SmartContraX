@@ -2,21 +2,22 @@ pragma solidity ^0.4.24;
 
 import "./interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenStrategy.sol";
+import "./TokensFactoryMetadata.sol";
 import "../symbol-registry/interfaces/ISymbolRegistry.sol";
 import "../../common/libraries/BytesHelper.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
+import "../components-registry/instances/SymbolRegistryInstance.sol";
+import "../../common/component/SystemComponent.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 /**
 * @title Factory of the tokens
 */
-contract TokensFactory is ITokensFactory, Protected {
+contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, SystemComponent, TokensFactoryMetadata {
     // define libraries
     using SafeMath for uint256;
     using BytesHelper for string;
-
-    // Symbol Registry address
-    address symbolRegistry;
 
     // Initialize the storage which will store supported tokens tandards
     bytes32[] supportedStandards;
@@ -64,11 +65,12 @@ contract TokensFactory is ITokensFactory, Protected {
     /**
     * @notice Add symbol registry
     */
-    constructor(address _symbolRegistry, address _permissionModule) 
+    constructor(address _componentsRegistry) 
         public 
-        Protected(_permissionModule) 
+        WithComponentsRegistry(_componentsRegistry) 
     {
-        symbolRegistry = _symbolRegistry;
+        componentName = TOKENS_FACTORY_NAME;
+        componentId = TOKENS_FACTORY_ID;
     }
 
     /**
@@ -97,7 +99,10 @@ contract TokensFactory is ITokensFactory, Protected {
         symbol = symbol.toUpper();
 
         bytes memory bytesSymbol = bytes(symbol);
-        address token = ISymbolRegistry(symbolRegistry).getTokenBySymbol(bytesSymbol);
+
+        ISymbolRegistry symbolRegistry = srInstance(); 
+
+        address token = symbolRegistry.getTokenBySymbol(bytesSymbol);
         require(token == address(0), "Token with this symbol already registered.");
 
         token = ITokenStrategy(strategy).deploy(
@@ -108,7 +113,7 @@ contract TokensFactory is ITokensFactory, Protected {
             msg.sender
         );
         
-        ISymbolRegistry(symbolRegistry).registerTokenToTheSymbol(
+        symbolRegistry.registerTokenToTheSymbol(
             msg.sender,
             bytesSymbol,
             token
@@ -117,7 +122,7 @@ contract TokensFactory is ITokensFactory, Protected {
         registeredTokens[token] = tokenStandard;
         issuers[token] = msg.sender;
 
-        bytes memory issuerName = ISymbolRegistry(symbolRegistry).getIssuerNameBySymbol(bytesSymbol);
+        bytes memory issuerName = symbolRegistry.getIssuerNameBySymbol(bytesSymbol);
 
         emit CreatedToken(
             token,

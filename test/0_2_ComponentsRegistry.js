@@ -1,7 +1,7 @@
 let CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 let CM = artifacts.require("./common/mocks/ComponentMock.sol");
 
-contract("Coponents registry", accounts => {
+contract("Components registry", accounts => {
     let componentsRegistry;
     let component1;
     let component2;
@@ -39,8 +39,8 @@ contract("Coponents registry", accounts => {
 
     describe("Test components registry", async() => {
         it("Should add new component to the registry", async() => {
-            let id = await component1.getId();
-            let name = await component1.getName();
+            let id = await component1.getComponentId();
+            let name = await component1.getComponentName();
             let address = component1.address.valueOf();
 
             let tx = await componentsRegistry.registerNewComponent(address);
@@ -51,8 +51,8 @@ contract("Coponents registry", accounts => {
         });
 
         it("Should return component details", async() => {
-            let id = await component1.getId();
-            let name = await component1.getName();
+            let id = await component1.getComponentId();
+            let name = await component1.getComponentName();
             let address = component1.address.valueOf();
 
             let componentAddress = await componentsRegistry.getAddressById(id);
@@ -63,8 +63,8 @@ contract("Coponents registry", accounts => {
         });
 
         it("Should add one more component", async() => {
-            let id = await component2.getId();
-            let name = await component2.getName();
+            let id = await component2.getComponentId();
+            let name = await component2.getComponentName();
             let address = component2.address.valueOf();
 
             let tx = await componentsRegistry.registerNewComponent(address);
@@ -83,8 +83,8 @@ contract("Coponents registry", accounts => {
                 componentsList.push(component);
             }
 
-            let id1 = await component1.getId();
-            let id2 = await component2.getId();
+            let id1 = await component1.getComponentId();
+            let id2 = await component2.getComponentId();
 
             assert.notEqual(componentsList.indexOf(id1), -1);
             assert.notEqual(componentsList.indexOf(id2), -1);
@@ -99,7 +99,7 @@ contract("Coponents registry", accounts => {
         });
 
         it("Should fail to return deleted component details", async() => {
-            let id = await component1.getId();
+            let id = await component1.getComponentId();
 
             let componentAddress = await componentsRegistry.getAddressById(id);
 
@@ -107,7 +107,7 @@ contract("Coponents registry", accounts => {
         });
 
         it("Should return second component details", async() => {
-            let id = await component2.getId();
+            let id = await component2.getComponentId();
             let address = component2.address.valueOf();
 
             let componentAddress = await componentsRegistry.getAddressById(id);
@@ -126,8 +126,8 @@ contract("Coponents registry", accounts => {
         });
 
         it("Should return component details after update", async() => {
-            let id = await component2.getId();
-            let name = await component2.getName();
+            let id = await component2.getComponentId();
+            let name = await component2.getComponentName();
             let address = component3.address.valueOf();
 
             let componentAddress = await componentsRegistry.getAddressById(id);

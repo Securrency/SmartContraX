@@ -10,14 +10,12 @@ contract CAT721Token is SecuritiesNFT {
         string _name,
         string _symbol,
         address _issuer,
-        address _transferModule,
-        address _permissionModule
+        address _componentsRegistry
     ) 
         public
         ERC721Token(_name, _symbol)
         SecuritiesToken(_issuer)
-        SecuritiesNFT(_transferModule)
-        Protected(_permissionModule)
+        WithComponentsRegistry(_componentsRegistry)
     { }
 
     /**
@@ -31,7 +29,7 @@ contract CAT721Token is SecuritiesNFT {
         uint256 tokenId
     )
         public
-        verifyPermissionForCurrentToken(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
         returns (bool)
     {
         _mint(to, tokenId);
@@ -66,7 +64,7 @@ contract CAT721Token is SecuritiesNFT {
     */
     function burn(address owner, uint256 tokenId) 
         public
-        verifyPermissionForCurrentToken(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
         returns (bool)
     {
         _burn(owner, tokenId);

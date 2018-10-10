@@ -2,17 +2,18 @@ pragma solidity ^0.4.24;
 
 import "../cross-chain/CrossChainService.sol";
 import "./interfaces/ITransferModule.sol";
+import "./TransferModuleMetadata.sol";
 import "../../request-verification-layer/transfer-verification-system/interfaces/ITransferVerification.sol";
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "../../registry-layer/tokens-factory/interfaces/IMultiChainToken.sol";
+import "../../common/component/SystemComponent.sol";
+import "../../registry-layer/components-registry/instances/TokensFactoryInstance.sol";
+
 
 /**
 * @title Transfer Module
 */
-contract TransferModule is ITransferModule, CrossChainService {
-    // Address of the tokens factory
-    address public tokenFactory;
-
+contract TransferModule is ITransferModule, CrossChainService, SystemComponent, TokensFactoryInstance, TransferModuleMetadata {
     // Declare storage for a transfer verification logics
     mapping(bytes32 => address) transferVerifications;
 
@@ -28,21 +29,22 @@ contract TransferModule is ITransferModule, CrossChainService {
     */
     modifier onlyRegistredToken(address tokenAddress) {
         require(
-            ITokensFactory(tokenFactory).getTokenStandard(tokenAddress) != 0x00, 
+            tfInstance().getTokenStandard(tokenAddress) != 0x00, 
             "Token is not registered in the tokens factory."
         );
         _;
     } 
 
     /**
-    * @notice Setting address of the tokens factory
-    * @param _tokensFactory Address of the tokens factory
+    * @notice Initialize contract
+    * @param _componentsRegistry Address of the components registry
     */
-    constructor(address _tokensFactory, address _permissiomModule) 
+    constructor(address _componentsRegistry) 
         public
-        Protected(_permissiomModule)
+        WithComponentsRegistry(_componentsRegistry)
     {
-        tokenFactory = _tokensFactory;
+        componentName = TRANSFER_MODULE_NAME;
+        componentId = TRANSFER_MODULE_ID;
     }
 
     /**
@@ -99,7 +101,7 @@ contract TransferModule is ITransferModule, CrossChainService {
         verifyPermission(msg.sig, msg.sender)
     {
         require(
-            ITokensFactory(tokenFactory).getTokenStandard(tokenAddress) != 0x00, 
+            tfInstance().getTokenStandard(tokenAddress) != 0x00, 
             "Token is not registered in the tokens factory."
         );
         require(fromTokenAddress != address(0), "Invalid address.");
@@ -146,7 +148,7 @@ contract TransferModule is ITransferModule, CrossChainService {
         view
         returns (bool)
     {
-        bytes32 standard = ITokensFactory(tokenFactory).getTokenStandard(msg.sender);
+        bytes32 standard = tfInstance().getTokenStandard(msg.sender);
         address verification = transferVerifications[standard];
 
         if(verification == address(0)) {
@@ -173,7 +175,7 @@ contract TransferModule is ITransferModule, CrossChainService {
     {
         require(tvAddress != address(0), "Invalid address of the transfer verification logic.");
         require(transferVerifications[standard] == address(0), "Transfer verification logic for this standard already present.");
-        require(ITokensFactory(tokenFactory).isSupported(standard), "Standard didn't supports by tokens factory.");
+        require(tfInstance().isSupported(standard), "Standard didn't supports by tokens factory.");
 
         transferVerifications[standard] = tvAddress;
 

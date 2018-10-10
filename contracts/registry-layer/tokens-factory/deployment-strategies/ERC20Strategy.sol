@@ -13,9 +13,9 @@ contract ERC20Strategy is TokenDeploymentStrategy  {
     /**
     * @notice initilaze contract
     */
-    constructor(address tokensFactory) 
+    constructor(address _componentsRegistry) 
         public
-        TokenDeploymentStrategy(tokensFactory)
+        WithComponentsRegistry(_componentsRegistry)
     {}
 
     /**

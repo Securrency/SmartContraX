@@ -2,13 +2,14 @@ pragma solidity ^0.4.24;
 
 import "./interfaces/IComponentsRegistry.sol";
 import "../../common/component/interfaces/IComponent.sol";
+import "../../request-verification-layer/permission-module/PermissionModuleMetadata.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 /**
 * @title Components Registry
 */
-contract ComponentsRegistry is IComponentsRegistry {
+contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
     // Define libraries
     using SafeMath for uint;
 
@@ -46,8 +47,8 @@ contract ComponentsRegistry is IComponentsRegistry {
     {
         require(oldAddress != newAddress, "Invalid addresses.");
 
-        bytes4 idOld = IComponent(oldAddress).getId();
-        bytes4 idNew = IComponent(newAddress).getId();
+        bytes4 idOld = IComponent(oldAddress).getComponentId();
+        bytes4 idNew = IComponent(newAddress).getComponentId();
 
         require(idOld == idNew, "Component identifiers must be the same.");
 
@@ -66,7 +67,7 @@ contract ComponentsRegistry is IComponentsRegistry {
     {
         require(componentAddress != address(0), "Invalid component address");
 
-        bytes4 id = IComponent(componentAddress).getId();
+        bytes4 id = IComponent(componentAddress).getComponentId();
 
         require(id != bytes4(""), "Invalid component address.");
 
@@ -108,9 +109,9 @@ contract ComponentsRegistry is IComponentsRegistry {
     function initializePermissionModule(address moduleAddress) external {
         require(moduleAddress != address(0), "Invalid component address");
 
-        bytes4 id = IComponent(moduleAddress).getId();
+        bytes4 id = IComponent(moduleAddress).getComponentId();
 
-        require(id == bytes4(keccak256("PermissionModule")), "Invalid component.");
+        require(id == PERMISSION_MODULE_ID, "Invalid component.");
         require(
             components[id].componentAddress == address(0),
             "Permission module already initialized."
@@ -133,7 +134,7 @@ contract ComponentsRegistry is IComponentsRegistry {
     */
     function getNameById(bytes4 id) public view returns (bytes) {
         address componentAddress = components[id].componentAddress;
-        return IComponent(componentAddress).getName();
+        return IComponent(componentAddress).getComponentName();
     }
 
     /**
@@ -160,7 +161,7 @@ contract ComponentsRegistry is IComponentsRegistry {
         componentsIds[componentAddress] = id;
         componentsList.push(id);
 
-        bytes memory name = IComponent(componentAddress).getName();
+        bytes memory name = IComponent(componentAddress).getComponentName();
 
         require(name.length > 0, "Invalid component name.");
 

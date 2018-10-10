@@ -8,22 +8,22 @@ import "./interfaces/IComponent.sol";
 */
 contract SystemComponent is IComponent {
     // Component id 
-    bytes4 public id;
+    bytes4 public componentId;
 
     // Component name
-    bytes public name;
-    
+    bytes public componentName;
+
     /**
     * @notice Return component id
     */
-    function getId() public view returns (bytes4) {
-        return id;
+    function getComponentId() public view returns (bytes4) {
+        return componentId;
     }
 
     /**
     * @notice Retun component name
     */
-    function getName() public view returns (bytes) {
-        return name;
+    function getComponentName() public view returns (bytes) {
+        return componentName;
     }
 }

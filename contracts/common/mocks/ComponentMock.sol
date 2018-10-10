@@ -8,8 +8,8 @@ import "../component/SystemComponent.sol";
 */
 contract ComponentMock is SystemComponent {
     // init component
-    constructor(bytes _name) public {
-        name = _name;
-        id = bytes4(keccak256(name));
+    constructor(bytes name) public {
+        componentName = name;
+        componentId = bytes4(keccak256(name));
     }
 }

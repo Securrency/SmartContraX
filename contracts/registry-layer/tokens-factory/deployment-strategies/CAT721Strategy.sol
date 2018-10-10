@@ -8,19 +8,15 @@ import "../../../request-verification-layer/permission-module/Protected.sol";
 * @title CAT-721 token (NFT) deployment strategy
 */
 contract CAT721Strategy is TokenDeploymentStrategy, Protected  {
-    // Address of the Transfer module
-    address transferModule;
-
     // Token standard
     bytes32 public constant TOKEN_STANDARD = "CAT-721";
 
     /**
     * @notice initilaze contract
     */
-    constructor(address tokensFactory, address permissionModule) 
+    constructor(address componentsRegistry) 
         public
-        TokenDeploymentStrategy(tokensFactory)
-        Protected(permissionModule)
+        WithComponentsRegistry(componentsRegistry)
     {}
 
     /**
@@ -45,8 +41,7 @@ contract CAT721Strategy is TokenDeploymentStrategy, Protected  {
             name,
             symbol,
             tokenOwner,
-            transferModule,
-            pm
+            componentsRegistry
         );
 
         emit CreatedToken(
@@ -65,16 +60,5 @@ contract CAT721Strategy is TokenDeploymentStrategy, Protected  {
     */
     function getTokenStandard() public view returns (bytes32) {
         return TOKEN_STANDARD;
-    }
-
-    /**
-    * @notice Set transfer module to the strategy
-    */
-    function setTransferModule(address _transferModule) 
-        public
-        verifyPermission(msg.sig, msg.sender)
-    {
-        require(transferModule == address(0), "Transfer module already initialized.");
-        transferModule = _transferModule;
     }
 }

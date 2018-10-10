@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
 import "../../../request-verification-layer/permission-module/Protected.sol";
+import "../../components-registry/instances/TransferModuleInstance.sol";
 import "./MultiChainToken.sol";
 import "./SecuritiesToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
@@ -10,19 +11,9 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /**
 * @title Securities Standart Token
 */
-contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Protected {
+contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Protected, TransferModuleInstance {
     // define libraries
     using SafeMath for uint256;
-
-    // // Address of the Transfer module
-    address public transferModule;
-    
-    /**
-    * @notice Set Transfer module address to the token
-    */
-    constructor(address _transferModule) public {
-        transferModule = _transferModule;
-    }
 
     /**
     * @notice Transfer tokens from chain
@@ -34,7 +25,9 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         require(balances[msg.sender] >= value, "Insufficient funds.");
         require(value > 0, "Invalid value.");
 
-        bool allowed = ITransferModule(transferModule).verifyTransfer(
+        ITransferModule transferModule = tmInstance();
+
+        bool allowed = transferModule.verifyTransfer(
             msg.sender,
             msg.sender,
             msg.sender,
@@ -49,7 +42,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         emit Transfer(msg.sender, address(0), value);
         emit FromChain(chain, value, msg.sender, recipient);
 
-        ITransferModule(transferModule).sendTokensFromChain(
+        transferModule.sendTokensFromChain(
             msg.sender,
             chain,
             recipient,
@@ -75,7 +68,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         string originalTxHash
     )
         public
-        verifyPermissionForCurrentToken(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
         txRollback(
             from,
             to,
@@ -98,7 +91,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param value the amount of tokens to be transferred
     */
     function transfer(address to, uint256 value) public returns (bool) {
-        bool allowed = ITransferModule(transferModule).verifyTransfer(
+        bool allowed = tmInstance().verifyTransfer(
             msg.sender,
             to,
             msg.sender,
@@ -118,7 +111,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param value the amount of tokens to be transferred
     */
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
-        bool allowed = ITransferModule(transferModule).verifyTransfer(
+        bool allowed = tmInstance().verifyTransfer(
             from,
             to,
             msg.sender,
@@ -139,6 +132,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param sender Sender address
     */
     function acceptFromOtherChain(uint value, bytes32 chain, address recipient, bytes32 sender) public {
+        address transferModule = getTransferModuleAddress();
         require(msg.sender == transferModule, "Only transfer module.");
 
         balances[recipient] = balances[recipient].add(value);

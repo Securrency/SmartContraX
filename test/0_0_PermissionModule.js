@@ -1,5 +1,5 @@
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
-
+var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
@@ -42,6 +42,7 @@ function makeRole() {
 
 contract('PermissionModule', accounts => {
     let permissionModule;
+    let componentsRegistry;
 
     let owner = accounts[0];
 
@@ -64,7 +65,14 @@ contract('PermissionModule', accounts => {
             testRoles.push(makeRole());
         }
 
-        permissionModule = await PM.new();
+        componentsRegistry = await CR.new();
+        assert.notEqual(
+            componentsRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Components Registry contract was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf());
 
         assert.notEqual(
             permissionModule.address.valueOf(),
@@ -131,7 +139,9 @@ contract('PermissionModule', accounts => {
         assert.equal(tx.logs[0].args.wallet, accounts[0]);
         assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
 
-        symbolRegistry = await SR.new(permissionModule.address.valueOf(), {from: accounts[0]});
+        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+
+        symbolRegistry = await SR.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             symbolRegistry.address.valueOf(),
@@ -139,7 +149,9 @@ contract('PermissionModule', accounts => {
             "SymbolRegistry contract was not deployed"
         );
 
-        TokensFactory = await TF.new(symbolRegistry.address.valueOf(), permissionModule.address.valueOf(), {from: accounts[0]});
+        tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
+
+        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -147,7 +159,9 @@ contract('PermissionModule', accounts => {
             "TokensFactory contract was not deployed"
         );
 
-        CAT20Strategy = await CAT20S.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf());
+        tx = componentsRegistry.registerNewComponent(TokensFactory.address.valueOf());
+
+        CAT20Strategy = await CAT20S.new(componentsRegistry.address.valueOf());
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -155,15 +169,14 @@ contract('PermissionModule', accounts => {
             "CAT20Strategy contract was not deployed"
         ); 
         
-        let transferModule = await TM.new(TokensFactory.address.valueOf(), permissionModule.address.valueOf(), { from: accounts[0] });
+        let transferModule = await TM.new(componentsRegistry.address.valueOf(), { from: accounts[0] });
         assert.notEqual(
             transferModule.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "TransferModule contract was not deployed"
         );
 
-        await CAT20Strategy.setTransferModule(transferModule.address.valueOf());
-        await symbolRegistry.setTokensFactory(TokensFactory.address.valueOf());
+        tx = componentsRegistry.registerNewComponent(transferModule.address.valueOf());
 
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : accounts[0] });
         assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
@@ -182,8 +195,6 @@ contract('PermissionModule', accounts => {
             "0x0000000000000000000000000000000000000000",
             "New token was not deployed"
         );
-
-        await permissionModule.setTokensFactory(TokensFactory.address.valueOf());
 
         tx = await permissionModule.removeMethodFromTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
 

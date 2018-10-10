@@ -3,11 +3,24 @@ pragma solidity ^0.4.24;
 import "./interfaces/IPermissionModule.sol";
 import "./NetworkRolesManager.sol";
 import "./TokenRolesManager.sol";
+import "./PermissionModuleMetadata.sol";
+import "../../common/component/SystemComponent.sol";
+
 
 /**
 * @title Permission Module
 */
-contract PermissionModule is NetworkRolesManager, TokenRolesManager {
+contract PermissionModule is NetworkRolesManager, TokenRolesManager, SystemComponent, PermissionModuleMetadata {  
+    // Initialize module
+    constructor(address _componentsRegistry) 
+        public
+        WithComponentsRegistry(_componentsRegistry)
+        RolesManager()
+    {
+        componentName = PERMISSION_MODULE_NAME;
+        componentId = PERMISSION_MODULE_ID;
+    }
+
     /**
     * @notice Verification of the permissions
     * @param methodId Requested method

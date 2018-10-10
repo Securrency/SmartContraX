@@ -4,11 +4,13 @@ import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenRolesManager.sol";
 import "./RolesManager.sol";
 import "../../common/libraries/SafeMath8.sol";
+import "../../registry-layer/components-registry/instances/TokensFactoryInstance.sol";
+
 
 /**
 * @title Token roles manager
 */
-contract TokenRolesManager is RolesManager, ITokenRolesManager {
+contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesManager {
     // define libraries
     using SafeMath8 for uint8;
 
@@ -27,7 +29,7 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
     * @param token Address of the requested token
     */
     modifier onlyIssuer(address token) {
-        address tokenIssuer = ITokensFactory(tf).getIssuerByToken(token);
+        address tokenIssuer = tfInstance().getIssuerByToken(token);
         require(tokenIssuer == msg.sender, "Allowed only for the issuer.");
         _;
     }
@@ -96,14 +98,6 @@ contract TokenRolesManager is RolesManager, ITokenRolesManager {
         tokenDependentRolesIndex[wallet][token] = last;
 
         emit TokenDependetRoleDeleted(wallet, token, roleName);
-    }
-
-    /**
-    * @notice Add tokens factory address to the permission module
-    */ 
-    function setTokensFactory(address tokensFactory) public onlyOwner() {
-        require(tf == address(0), "Already added.");
-        tf = tokensFactory;
     }
 
     /**

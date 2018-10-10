@@ -3,6 +3,7 @@ var TokensFactory = artifacts.require("./registry-layer/tokens-factory/TokensFac
 var CAT20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var CAT721Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT721Strategy.sol");
 var ERC20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/ERC20Strategy.sol");
+var ComponentsRegistry = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 
 var TransferModule = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WhiteList = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-service/WhiteList.sol");
@@ -28,18 +29,23 @@ module.exports = function(deployer, network, accounts) {
   var CAT20VerificationDeployed;
   var CAT721VerificationDeployed;
   var PermissionModuleDeployed;
+  var ComponentsRegistryDeployed;
   
-  deployer.deploy(PermissionModule, {gas: 5400000})
+  deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
-    PermissionModuleDeployed = instance;
-    return deployer.deploy(SymbolRegistry, PermissionModuleDeployed.address, {gas: 2800000})
+    ComponentsRegistryDeployed = instance;
+    return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, {gas: 3200000})
+    .then((instance) => {
+      PermissionModuleDeployed = instance;
+      return deployer.deploy(SymbolRegistry, ComponentsRegistryDeployed.address, {gas: 3100000})
+    })
     .then((instance) => {
       SymbolRegistryDeployed = instance;
-      return deployer.deploy(TokensFactory, SymbolRegistryDeployed.address, PermissionModuleDeployed.address, {gas: 3100000})
+      return deployer.deploy(TokensFactory, ComponentsRegistryDeployed.address, {gas: 3100000})
     })
     .then((instance) => {
       tokensFactoryDeployed = instance;
-      return deployer.deploy(WhiteList, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 1000000});
+      return deployer.deploy(WhiteList, ComponentsRegistryDeployed.address, {gas: 1000000});
     })
     .then((instance) => {
       WhiteListDeployed = instance;
@@ -47,19 +53,19 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       CAT20VerificationDeployed = instance;
-      return deployer.deploy(TransferModule, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 5200000});
+      return deployer.deploy(TransferModule, ComponentsRegistryDeployed.address, {gas: 5200000});
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
-      return deployer.deploy(CAT20Strategy, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 3700000}); 
+      return deployer.deploy(CAT20Strategy, ComponentsRegistryDeployed.address, {gas: 3700000}); 
     })
     .then((instance) => {
       CAT20StrategyDeployed = instance;
-      return deployer.deploy(ERC20Strategy, tokensFactoryDeployed.address, {gas: 3700000});
+      return deployer.deploy(ERC20Strategy, ComponentsRegistryDeployed.address, {gas: 3700000});
     })
     .then((instance) => {
       ERC20StrategyDeployed = instance;
-      return deployer.deploy(CAT721Strategy, tokensFactoryDeployed.address, PermissionModuleDeployed.address, {gas: 5700000});
+      return deployer.deploy(CAT721Strategy, ComponentsRegistryDeployed.address, {gas: 5700000});
     })
     .then((instance) => {
       CAT721StrategyDeployed = instance;
@@ -67,6 +73,18 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       CAT721VerificationDeployed = instance;
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.initializePermissionModule(PermissionModuleDeployed.address, {gas: 120000});
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.registerNewComponent(TransferModuleDeployed.address, {gas: 120000});
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.registerNewComponent(tokensFactoryDeployed.address, {gas: 120000});
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.registerNewComponent(SymbolRegistryDeployed.address, {gas: 120000});
     })
     .then(() => {
       return PermissionModuleDeployed.createRole("System", "Owner", {gas: 300000});
@@ -99,34 +117,22 @@ module.exports = function(deployer, network, accounts) {
       return tokensFactoryDeployed.addTokenStrategy(CAT721StrategyDeployed.address, {gas: 120000});
     })
     .then(() => {
-      return CAT20StrategyDeployed.setTransferModule(TransferModuleDeployed.address, {gas: 120000});
-    })
-    .then(() => {
-      return CAT721StrategyDeployed.setTransferModule(TransferModuleDeployed.address, {gas: 120000});
-    })
-    .then(() => {
-      return PermissionModuleDeployed.setTokensFactory(tokensFactoryDeployed.address, {gas: 500000});
-    })
-    .then(() => {
-      return SymbolRegistryDeployed.setTokensFactory(tokensFactoryDeployed.address, {gas: 500000});
-    })
-    .then(() => {
       return CAT20StrategyDeployed.getTokenStandard();
     })
     .then((standard) => {
       return TransferModuleDeployed.addVerificationLogic(CAT20VerificationDeployed.address, standard, {gas: 120000});
     })
     .then(() => {
-      return TransferModuleDeployed.addNewChain("0x476f436861696e", {gas: 180000});
-    })
-    .then(() => {
-      return TransferModuleDeployed.addNewChain("0x457468657265756d", {gas: 180000});
-    })
-    .then(() => {
       return CAT721StrategyDeployed.getTokenStandard();
     })
     .then((standard) => {
       return TransferModuleDeployed.addVerificationLogic(CAT721VerificationDeployed.address, standard, {gas: 120000});
+    })
+    .then(() => {
+      return TransferModuleDeployed.addNewChain("0x476f436861696e", {gas: 180000});
+    })
+    .then(() => {
+      return TransferModuleDeployed.addNewChain("0x457468657265756d", {gas: 180000});
     });
   });
 };

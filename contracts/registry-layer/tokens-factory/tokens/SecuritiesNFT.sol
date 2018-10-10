@@ -2,23 +2,14 @@ pragma solidity ^0.4.24;
 
 import "../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
 import "../../../request-verification-layer/permission-module/Protected.sol";
+import "../../components-registry/instances/TransferModuleInstance.sol";
 import "./SecuritiesToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 
 /**
 * @title Securities NFT
 */
-contract SecuritiesNFT is SecuritiesToken, Protected, ERC721Token {
-    // // Address of the Transfer module
-    address public transferModule;
-    
-    /**
-    * @notice Set Transfer module address to the token
-    */
-    constructor(address _transferModule) public {
-        transferModule = _transferModule;
-    }
-    
+contract SecuritiesNFT is SecuritiesToken, Protected, TransferModuleInstance, ERC721Token {
     /**
     * @notice Allows create rollback transaction for tokens
     * @notice tokens will be send back to the old owner, will be emited "RollbackTransaction" event
@@ -37,7 +28,7 @@ contract SecuritiesNFT is SecuritiesToken, Protected, ERC721Token {
         string originalTxHash
     ) 
         public
-        verifyPermissionForCurrentToken(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
         txRollback(
             from,
             to,
@@ -58,7 +49,7 @@ contract SecuritiesNFT is SecuritiesToken, Protected, ERC721Token {
     * @param tokenId NFT id
     */
     function transferFrom(address from, address to, uint256 tokenId) public {
-        bool allowed = ITransferModule(transferModule).verifyTransfer(
+        bool allowed = tmInstance().verifyTransfer(
             from,
             to,
             msg.sender,

@@ -8,10 +8,10 @@ contract IComponent {
     /**
     * @notice Return component id
     */
-    function getId() public view returns (bytes4);
+    function getComponentId() public view returns (bytes4);
 
     /**
     * @notice Retun component name
     */
-    function getName() public view returns (bytes);
+    function getComponentName() public view returns (bytes);
 }

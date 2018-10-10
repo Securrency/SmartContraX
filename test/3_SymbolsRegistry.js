@@ -1,7 +1,7 @@
 const sleep = require('sleep');
 
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
-
+var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
 function createId(signature) {
@@ -22,10 +22,18 @@ function isException(error) {
 contract('SymbolsRegistry', accounts => {
     let symbolRegistry;
     let permissionModule;
+    let componentsRegistry;
     let symbol = "TEST";
     let hexSymbol;
     before(async() => {
-        permissionModule = await PM.new();
+        componentsRegistry = await CR.new();
+        assert.notEqual(
+            componentsRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Components Registry contract was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),
@@ -74,7 +82,9 @@ contract('SymbolsRegistry', accounts => {
         assert.equal(tx.logs[0].args.wallet, accounts[1]);
         assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
 
-        symbolRegistry = await SR.new(permissionModule.address.valueOf(), {from: accounts[0]});
+        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+        
+        symbolRegistry = await SR.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             symbolRegistry.address.valueOf(),
@@ -83,6 +93,8 @@ contract('SymbolsRegistry', accounts => {
         );
 
         hexSymbol = web3.toHex(symbol);
+
+        tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
     });
 
     describe("Test symbols registry", async() => {

@@ -13,14 +13,12 @@ contract CAT20Token is SecuritiesStandardToken, DetailedERC20 {
         uint8 _decimals,
         uint256 _totalSupply,
         address _issuer,
-        address _transferModule,
-        address _permissionModule
+        address _componentsRegistry
     ) 
         public
         DetailedERC20(_name, _symbol, _decimals)
         SecuritiesToken(_issuer)
-        SecuritiesStandardToken(_transferModule)
-        Protected(_permissionModule)
+        WithComponentsRegistry(_componentsRegistry)
     {
         totalSupply_ = _totalSupply;
         balances[_issuer] = totalSupply_;
