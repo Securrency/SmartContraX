@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 
+import "./interfaces/ISRStorage.sol";
 import "./interfaces/ISymbolRegistry.sol";
 import "./SymbolRegistryMetadata.sol";
 import "../../common/libraries/BytesHelper.sol";
@@ -16,44 +17,8 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     using SafeMath for uint256;
     using BytesHelper for bytes;
 
-    // Interval for symbol expiration
-    uint public exprationInterval = 604800;
-
-    // Write info to the log when was transferred symbol ownership
-    event TransferedOwnership(
-        address oldOwner,
-        address newOwner,
-        bytes symbol,
-        bytes issuerName
-    );
-
-    // Write info to the log when was registered new symbol
-    event RegisteredSymbol(
-        address owner,
-        bytes symbol,
-        bytes issuerName
-    );
-
-    // Write info to the log about symbol renewal
-    event Renewal(bytes symbol);
-
-    // Write info to the log when expiration interval was updated
-    event ExpirationIntervalUpdated(uint interval);
-
-    // Write info to the log when token was registered
-    event RegisteredToken(address tokenAddress, bytes symbol);
-
-    // Describe symbol struct
-    struct Symbol {
-        address owner;
-        address tokenAddress;
-        bytes issuerName;
-        uint registeredAt;
-        uint expiredAt;
-    }
-
-    // Declare storage for registered tokens symbols
-    mapping(bytes => Symbol) registeredSymbols;
+    // Eternal storage address
+    address srStorage;
 
     /**
     * @notice Verify symbol
@@ -83,20 +48,14 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     /**
     * @notice Initialize contract
     */
-    constructor(address componentsRegistry) 
+    constructor(address componentsRegistry, address storageAddress) 
         public 
         WithComponentsRegistry(componentsRegistry)
     {
         componentName = SYMBOL_REGISTRY_NAME;
         componentId = SYMBOL_REGISTRY_ID;
 
-        registeredSymbols["ETH"] = Symbol({
-            owner: address(0),
-            tokenAddress: msg.sender,
-            issuerName: "",
-            registeredAt: now,
-            expiredAt: now + 86400 * 30 * 365 * 1000
-        });
+        srStorage = storageAddress;
     } 
 
     /**
@@ -111,26 +70,29 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     {
         symbol = symbol.toUpperBytes();
 
+        address tokenAddress = SRStorage().getSymbolToken(symbol);
+        uint expiredAt = SRStorage().getSymbolExpiration(symbol);
         require(
-            registeredSymbols[symbol].tokenAddress == address(0),
+            tokenAddress == address(0),
             "The symbol is busy."
         );
         require(
-            registeredSymbols[symbol].expiredAt < now,
+            expiredAt < now,
             "The symbol is busy. Please wait when it will be available."
         );
 
-        Symbol memory symbolStruct = Symbol({
-            owner: msg.sender,
-            tokenAddress: address(0),
-            issuerName: issuerName,
-            registeredAt: now,
-            expiredAt: now.add(exprationInterval)
-        });
+        uint exprationInterval = SRStorage().getExpirationInterval();
 
-        registeredSymbols[symbol] = symbolStruct;
+        SRStorage().saveSymbol(
+            symbol,
+            msg.sender,
+            address(0),
+            issuerName,
+            now,
+            now.add(exprationInterval)
+        );
 
-        emit RegisteredSymbol(msg.sender, symbol, issuerName);
+        SRStorage().emitRegisteredSymbol(msg.sender, symbol, issuerName);
     }
 
     /**
@@ -140,9 +102,11 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     function renewSymbol(bytes symbol) public onlySymbolOwner(symbol, msg.sender) {
         symbol = symbol.toUpperBytes();
 
-        registeredSymbols[symbol].expiredAt = registeredSymbols[symbol].expiredAt.add(exprationInterval);
+        uint expiredAt = SRStorage().getSymbolExpiration(symbol);
+        uint exprationInterval = SRStorage().getExpirationInterval();
 
-        emit Renewal(symbol);
+        SRStorage().updateSymbolExpiration(symbol, expiredAt.add(exprationInterval));
+        SRStorage().emitRenewal(symbol);
     }
 
     /**
@@ -158,15 +122,16 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
         
         symbol = symbol.toUpperBytes();
 
-        emit TransferedOwnership(
-            registeredSymbols[symbol].owner,
+        address oldOwner = SRStorage().getSymbolOwner(symbol);
+        
+        SRStorage().udpateSymbolOwner(symbol, newOwner);
+        SRStorage().updateSymbolIssuerName(symbol, issuerName);
+        SRStorage().emitTransferedOwnership(
+            oldOwner,
             newOwner,
             symbol,
             issuerName
         );
-
-        registeredSymbols[symbol].owner = newOwner;
-        registeredSymbols[symbol].issuerName = issuerName;
     }
 
     /**
@@ -189,9 +154,8 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
 
         symbol = symbol.toUpperBytes();
 
-        registeredSymbols[symbol].tokenAddress = tokenAddress;
-
-        emit RegisteredToken(tokenAddress, symbol);
+        SRStorage().updateSymbolToken(symbol, tokenAddress);
+        SRStorage().emitRegisteredToken(tokenAddress, symbol);
     }
 
     /**
@@ -204,9 +168,8 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     {
         require(interval != 0, "Invalid expiration interval.");
 
-        exprationInterval = interval;
-
-        emit ExpirationIntervalUpdated(interval);
+        SRStorage().updateExpirationInterval(interval);
+        SRStorage().emitExpirationIntervalUpdated(interval);
     }
 
     /**
@@ -220,8 +183,10 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     {
         symbol = symbol.toUpperBytes();
 
-        return registeredSymbols[symbol].tokenAddress == address(0)
-            && registeredSymbols[symbol].expiredAt < now;
+        address tokenAddress = SRStorage().getSymbolToken(symbol);
+        uint expiredAt = SRStorage().getSymbolExpiration(symbol);
+        return tokenAddress == address(0)
+            && expiredAt < now;
     }
 
     /**
@@ -235,28 +200,36 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
         returns (bool) 
     {
         symbol = symbol.toUpperBytes();
+        address symbolOwner = SRStorage().getSymbolOwner(symbol);
 
-        return registeredSymbols[symbol].owner == owner;
+        return symbolOwner == owner;
     }
 
     /**
-    * @notice Return token registred on the symbol
+    * @notice Returns token registered on the symbol
     */
     function getTokenBySymbol(bytes symbol) public view returns (address) {
-        return registeredSymbols[symbol].tokenAddress;
+        return SRStorage().getSymbolToken(symbol);
     }
 
     /**
-    * @notice Return symbol expire date
+    * @notice Returns symbol expire date
     */
     function getSymbolExpireDate(bytes symbol) public view returns (uint) {
-        return registeredSymbols[symbol].expiredAt;
+        return SRStorage().getSymbolExpiration(symbol);
     }
 
     /**
-    * @notice Return issuer name
+    * @notice Returns issuer name
     */
     function getIssuerNameBySymbol(bytes symbol) public view returns (bytes) {
-        return registeredSymbols[symbol].issuerName;
+        return SRStorage().getSymbolIssuerName(symbol);
+    }
+
+    /**
+    * @notice Returns storage instance
+    */
+    function SRStorage() internal view returns (ISRStorage) {
+        return ISRStorage(srStorage);
     }
 }
