@@ -1,4 +1,5 @@
 var SymbolRegistry = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
+var SRStorage = artifacts.require("./registry-layer/symbol-registry/eternal-storage/SRStorage.sol");
 var TokensFactory = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var CAT20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var CAT721Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT721Strategy.sol");
@@ -30,6 +31,7 @@ module.exports = function(deployer, network, accounts) {
   var CAT721VerificationDeployed;
   var PermissionModuleDeployed;
   var ComponentsRegistryDeployed;
+  var SRStorageDeployed;
   
   deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
@@ -37,7 +39,11 @@ module.exports = function(deployer, network, accounts) {
     return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, {gas: 3200000})
     .then((instance) => {
       PermissionModuleDeployed = instance;
-      return deployer.deploy(SymbolRegistry, ComponentsRegistryDeployed.address, {gas: 3100000})
+      return deployer.deploy(SRStorage, ComponentsRegistryDeployed.address, {gas: 3100000})
+    })
+    .then((instance) => {
+      SRStorageDeployed = instance;
+      return deployer.deploy(SymbolRegistry, ComponentsRegistryDeployed.address, SRStorageDeployed.address, {gas: 3100000})
     })
     .then((instance) => {
       SymbolRegistryDeployed = instance;
