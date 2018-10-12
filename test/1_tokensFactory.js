@@ -2,6 +2,7 @@
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
+let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var TSMock = artifacts.require("./common/mocks/TokenStrategyMock.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
@@ -162,7 +163,14 @@ contract('TokensFactory', accounts => {
 
         tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
-        symbolRegistry = await SR.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        SRStorage = await ES.new(componentsRegistry.address.valueOf());
+        assert.notEqual(
+            SRStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Symbol registry storage was not deployed"
+        );
+
+        symbolRegistry = await SR.new(componentsRegistry.address.valueOf(), SRStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             symbolRegistry.address.valueOf(),
@@ -234,6 +242,8 @@ contract('TokensFactory', accounts => {
             Core smart contracts:\n
             ComponentsRegistry: ${componentsRegistry.address}
             PermissionModule: ${permissionModule.address}
+            SRStorage: ${SRStorage.address}
+            SymbolRegistry: ${symbolRegistry.address}
             TokensFactory: ${TokensFactory.address}
             CAT20Strategy: ${CAT20Strategy.address}
             TokenStrategyMock1:${TokenStrategyMock.address}
