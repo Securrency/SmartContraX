@@ -4,6 +4,7 @@ var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegis
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
+var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
@@ -48,6 +49,8 @@ contract("CAT20Token", accounts => {
     let CAT20Strategy;
     let permissionModule;
     let componentsRegistry;
+    let SRStorage;
+    let TFStorage;
 
     let zeroAddress = "0x0000000000000000000000000000000000000000";
 
@@ -176,7 +179,15 @@ contract("CAT20Token", accounts => {
 
         tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
 
-        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        TFStorage = await TFS.new(componentsRegistry.address.valueOf());
+
+        assert.notEqual(
+            TFStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Tokens factory storage was not deployed"
+        );
+
+        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), TFStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -218,7 +229,8 @@ contract("CAT20Token", accounts => {
         );
         
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
-        assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
+        let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
+        assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
 
         let standard = await CAT20Strategy.getTokenStandard();
 
@@ -228,7 +240,10 @@ contract("CAT20Token", accounts => {
         await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
-        let tokenAddress = tx.logs[0].args.tokenAddress;
+        topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
+            
+        assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
+        tokenAddress = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
 
         assert.notEqual(
             tokenAddress,
@@ -242,6 +257,8 @@ contract("CAT20Token", accounts => {
         console.log(`
             Core smart contracts:\n
             ComponentsRegistry: ${componentsRegistry.address}
+            SRStorage: ${SRStorage.address}
+            TFStorage: ${TFStorage.address}
             PermissionModule: ${permissionModule.address}
             TokensFactory: ${TokensFactory.address}
             CAT20Strategy: ${CAT20Strategy.address}

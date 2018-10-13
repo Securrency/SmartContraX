@@ -3,6 +3,7 @@ var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
+var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var TSMock = artifacts.require("./common/mocks/TokenStrategyMock.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
@@ -49,6 +50,8 @@ contract('TokensFactory', accounts => {
     let CAT20Strategy;
     let permissionModule;
     let componentsRegistry;
+    let SRStorage;
+    let TFStorage;
 
     let invalidTokenStandard = "ST-JGAqabJmEZsm1PXh3DmN";
 
@@ -180,7 +183,15 @@ contract('TokensFactory', accounts => {
 
         tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
 
-        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        TFStorage = await TFS.new(componentsRegistry.address.valueOf());
+
+        assert.notEqual(
+            TFStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Tokens factory storage was not deployed"
+        );
+
+        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), TFStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -243,6 +254,7 @@ contract('TokensFactory', accounts => {
             ComponentsRegistry: ${componentsRegistry.address}
             PermissionModule: ${permissionModule.address}
             SRStorage: ${SRStorage.address}
+            TFStorage: ${TFStorage.address}
             SymbolRegistry: ${symbolRegistry.address}
             TokensFactory: ${TokensFactory.address}
             CAT20Strategy: ${CAT20Strategy.address}
@@ -257,15 +269,17 @@ contract('TokensFactory', accounts => {
     describe("Test tokens factory", async() => {
         it("Should add new token strategy to the tokens factory", async() => {
             let tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
-            assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
+
+            let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
         });
 
         it("Should add CAT20Verification to transfer module", async() => {
             let standard = await CAT20Strategy.getTokenStandard();
             let tx = await transferModule.addVerificationLogic(CAT20Verification.address.valueOf(), standard);
-
-            assert.equal(tx.logs[0].args.standard, standard);
-            assert.equal(tx.logs[0].args.tvAddress, CAT20Verification.address.valueOf());
+            
+            let topic = "0xef956dc4297ee86f5af7cb96c4208936ea515472ea1f5b315d8b9125c83c1ae8";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
         });
 
         it ("Should fail to add existing token strategy", async() => {
@@ -295,12 +309,14 @@ contract('TokensFactory', accounts => {
         it("Should update token strategy", async() => {
             // add then update and remove mock token strategy
             let tx = await TokensFactory.addTokenStrategy(TokenStrategyMock.address, { from : token_owner });
-            assert.equal(tx.logs[0].args.strategy, TokenStrategyMock.address);
+            let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
 
             standard = await TokenStrategyMock.getTokenStandard();
 
             tx = await TokensFactory.updateTokenStrategy(standard, TokenStrategyMock2.address, { from : token_owner });
-            assert.equal(tx.logs[0].args.newStrategy, TokenStrategyMock2.address);
+            topic = "0x0710dab9466831af48228f774c9e3c4c164c3c007b5529999eba93e70be606ed";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
         }); 
 
         it("Should fail to update strategy with invalid address", async() => {
@@ -317,7 +333,7 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should fail to update not existing strategy", async() => {
-            let errorThrown = false;
+            let errorThrown = false;    
             let standard = await TokenStrategyMock2.getTokenStandard();
             try {
                 await TokensFactory.updateTokenStrategy(invalidTokenStandard, TokensFactory.address, { from : token_owner });
@@ -332,7 +348,10 @@ contract('TokensFactory', accounts => {
         it("Should remove token strategy", async() => {
             let standard = await TokenStrategyMock2.getTokenStandard();
             let tx = await TokensFactory.removeTokenStrategy(standard, { from : token_owner });
-            assert.equal(tx.logs[0].args.strategy, TokenStrategyMock2.address);
+
+            let topic = "0x4f51b575075efcaeb6bd9a33be406fec2d196ac6e3afa739a19e0f9051c884f6";
+            // console.log(tx.receipt.logs[0].topics);
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
         });
 
         it("Should fail to remove not exists strategy", async() => {
@@ -350,8 +369,14 @@ contract('TokensFactory', accounts => {
         it("Should return the list of supported token standards", async() => {
             let standard = await CAT20Strategy.getTokenStandard();
 
-            let standards = await TokensFactory.getSupportedStandards();
-            assert.equal(standards[0], standard);
+            let standards = [];
+            let length = await TFStorage.supportedStandardsLength();
+            for (let i = 0; i < length; i++) {
+                let item = await TFStorage.getStandardByIndex(i);
+                standards.push(item);
+            }
+
+            assert.notEqual(standards.indexOf(standard), -1);
         });
 
         it("Should deploy a new token", async() => {
@@ -361,17 +386,16 @@ contract('TokensFactory', accounts => {
             await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
 
             tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
-
-            deployedTokenAddress = tx.logs[0].args.tokenAddress;
+            let topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
+            
+            assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
+            deployedTokenAddress = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
 
             assert.notEqual(
                 deployedTokenAddress,
                 zeroAddress,
                 "New token was not deployed"
             );
-
-            assert.equal(tx.logs[0].args.name, name);
-            assert.equal(tx.logs[0].args.symbol, symbol);
 
             CAT20Token = await DSToken.at(deployedTokenAddress);
         });
@@ -386,14 +410,16 @@ contract('TokensFactory', accounts => {
 
             let tx = await TokensFactory.createToken(name, symbol2, decimals, totalSupply, standard, { from : token_owner });
 
+            let topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
+            
+            assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
+            deployedTokenAddress = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
+
             assert.notEqual(
                 deployedTokenAddress,
                 zeroAddress,
                 "Second token was not deployed"
             );
-
-            assert.equal(tx.logs[0].args.name, name);
-            assert.equal(tx.logs[0].args.symbol, symbol2);
         });
 
         it("Should returns registered token standard", async() => {
@@ -480,24 +506,18 @@ contract('TokensFactory', accounts => {
             let complianceRoleName = "Compliance";
 
             let tx = await permissionModule.addRoleForSpecificToken(token_owner, CAT20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
-                
-            assert.equal(tx.logs[0].args.wallet, token_owner);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
+            let roleAddedTopic = "0x5a5a613a5ad7aa18ff1166bf1a95ae66ccb7233d352bc8afe49bde4ec724fab2";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(roleAddedTopic), -1);
 
             tx = await whiteList.addToWhiteList(token_owner, CAT20Token.address.valueOf(), { from: token_owner });
-
-            assert.equal(tx.logs[0].args.who, token_owner);
-            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
+            let wlAddedTpic = "0x938c63ac3d228b23f6bee7618fefc6790522e338ac202c958a2ea9eb9706c5d1";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(wlAddedTpic), -1);
 
             tx = await whiteList.addToWhiteList(token_holder_1, CAT20Token.address.valueOf(), { from: token_owner });
-
-            assert.equal(tx.logs[0].args.who, token_holder_1);
-            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(wlAddedTpic), -1);
 
             tx = await whiteList.addToWhiteList(token_holder_2, CAT20Token.address.valueOf(), { from: token_owner });
-
-            assert.equal(tx.logs[0].args.who, token_holder_2);
-            assert.equal(tx.logs[0].args.tokenAddress, CAT20Token.address.valueOf());
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(wlAddedTpic), -1);
         })
 
         it("Should transfer tokens from the owner account to account " + token_holder_1, async() => {
@@ -526,6 +546,227 @@ contract('TokensFactory', accounts => {
             let balance = await CAT20Token.balanceOf(token_holder_2);
             
             assert.equal(balance.toNumber(), toApprove);
+        });
+    });
+
+    describe("Tokens factory storage (methods allowed only for the tokens factory)", async() => {
+        it("Should fail to emit an event that strategy was added", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.emitStrategyAdded(standard, accounts[0], { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to emit an event that strategy was removed", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.emitStrategyRemoved(standard, accounts[0], { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to emit an event that strategy was updated", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.emitStrategyUpdated(standard, accounts[0], accounts[1], { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to emit event that token was created", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.emitCreatedToken(
+                    accounts[0],
+                    accounts[0],
+                    "name",
+                    "TEST",
+                    "",
+                    18,
+                    100000,
+                    standard, 
+                    { from: accounts[0] }
+                );
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to save new strategy", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.saveDeploymentStrategy(accounts[0], standard, 1, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to set issuer for the token", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.setIssuerForToken(accounts[0], accounts[0], { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to set standard of the token", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.setTokenStandard(accounts[0], standard, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to add deployemnt strategy", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.addDeploymentStrategy(standard, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to update deployemnt strategy by index", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.updateStrategyByindex(standard, 0, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to update address of the deployment token strategy", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.updateStrategyAddress(standard, accounts[1], { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to update index of the deployment token strategy", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.updateStrategyIndex(standard, 1, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to update length of the supported standards list", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.updateSupportedStandardsLength(1, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to remove standard from the standards list", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.removeStandard(0, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+
+        it("Should fail to remove deployment strategy", async() => {
+            let errorThrown = false;
+            try {
+                await TFStorage.removeDeploymentStrategy(standard, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> Allowed only for the Tokens Factory.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!"); 
+        });
+    });
+
+    describe("TFStorage public methods", async() => {
+        it("Shuold return length of the supported standards list", async() => {
+            let length = await TFStorage.supportedStandardsLength();
+
+            assert.notEqual(parseInt(length), 0);
+        });
+
+        it("Should return standard by the standard index", async() => {
+            let standard = await CAT20Strategy.getTokenStandard();
+            let returned = await TFStorage.getStandardByIndex(0);
+            
+            assert.equal(standard, returned);
+        });
+
+        it("Should get the index of the standard", async() => {
+            let returned = await TFStorage.getStandardIndex(standard);
+
+            assert.equal(returned, 0);
+        });
+
+        it("Should get address of the standard deployment strategy", async() => {
+            let standard = await CAT20Strategy.getTokenStandard();
+            let returned = await TFStorage.getStandardAddress(standard);
+
+            assert.notEqual(returned, zeroAddress);
+        });
+
+        it("Should get a token standard", async() => {
+            let standard = await CAT20Strategy.getTokenStandard();
+            let tokenStandard = await TFStorage.getTokenStandard(deployedTokenAddress);
+            
+            assert.equal(standard, tokenStandard);
+        });
+
+        it("Should get issuer address", async() => {
+            let issuer = await TFStorage.getIssuerAddress(deployedTokenAddress);
+
+            assert.equal(issuer, accounts[0]);
         });
     });
 });

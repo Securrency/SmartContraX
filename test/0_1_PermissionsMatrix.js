@@ -3,6 +3,7 @@ var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegis
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
+var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
 
@@ -44,6 +45,8 @@ function makeRole() {
 contract('PermissionModule (Permissions matrix)', accounts => {
     let permissionModule;
     let componentsRegistry;
+    let SRStorage;
+    let TFStorage;
 
     // roles
     let ownerRoleName = "Owner";
@@ -169,7 +172,17 @@ contract('PermissionModule (Permissions matrix)', accounts => {
 
         tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
 
-        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
+
+        TFStorage = await TFS.new(componentsRegistry.address.valueOf());
+
+        assert.notEqual(
+            TFStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Tokens factory storage was not deployed"
+        );
+
+        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), TFStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             TokensFactory.address.valueOf(),
@@ -197,7 +210,8 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         tx = componentsRegistry.registerNewComponent(transferModule.address.valueOf());
 
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : accounts[0] });
-        assert.equal(tx.logs[0].args.strategy, CAT20Strategy.address);
+        let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
+        assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
 
         let standard = await CAT20Strategy.getTokenStandard();
 
@@ -206,7 +220,10 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         await symbolRegistry.registerSymbol(hexSymbol, "", { from : accounts[0] });
             
         tx = await TokensFactory.createToken("TEST NAME", symbol, 18, 100000000, standard, { from : accounts[0] });
-        testToken = tx.logs[0].args.tokenAddress;
+        topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
+            
+        assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
+        testToken = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
 
         assert.notEqual(
             testToken,
