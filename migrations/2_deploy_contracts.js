@@ -1,6 +1,7 @@
 var SymbolRegistry = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 var SRStorage = artifacts.require("./registry-layer/symbol-registry/eternal-storage/SRStorage.sol");
 var TokensFactory = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
+var TFStorage = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var CAT20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var CAT721Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT721Strategy.sol");
 var ERC20Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/ERC20Strategy.sol");
@@ -32,6 +33,7 @@ module.exports = function(deployer, network, accounts) {
   var PermissionModuleDeployed;
   var ComponentsRegistryDeployed;
   var SRStorageDeployed;
+  var TFStorageDeployed;
   
   deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
@@ -47,7 +49,11 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       SymbolRegistryDeployed = instance;
-      return deployer.deploy(TokensFactory, ComponentsRegistryDeployed.address, {gas: 3100000})
+      return deployer.deploy(TFStorage, ComponentsRegistryDeployed.address, {gas: 4100000})
+    })
+    .then((instance) => {
+      TFStorageDeployed = instance;
+      return deployer.deploy(TokensFactory, ComponentsRegistryDeployed.address, TFStorageDeployed.address, {gas: 4100000})
     })
     .then((instance) => {
       tokensFactoryDeployed = instance;
@@ -114,13 +120,13 @@ module.exports = function(deployer, network, accounts) {
       return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], "System", {gas:300000});
     })
     .then(() => {
-      return tokensFactoryDeployed.addTokenStrategy(CAT20StrategyDeployed.address, {gas: 120000});
+      return tokensFactoryDeployed.addTokenStrategy(CAT20StrategyDeployed.address, {gas: 160000});
     })
     .then(() => {
-      return tokensFactoryDeployed.addTokenStrategy(ERC20StrategyDeployed.address, {gas: 120000});
+      return tokensFactoryDeployed.addTokenStrategy(ERC20StrategyDeployed.address, {gas: 160000});
     })
     .then(() => {
-      return tokensFactoryDeployed.addTokenStrategy(CAT721StrategyDeployed.address, {gas: 120000});
+      return tokensFactoryDeployed.addTokenStrategy(CAT721StrategyDeployed.address, {gas: 160000});
     })
     .then(() => {
       return CAT20StrategyDeployed.getTokenStandard();
