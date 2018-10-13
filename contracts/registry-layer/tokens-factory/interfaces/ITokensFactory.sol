@@ -41,9 +41,9 @@ contract ITokensFactory {
     function updateTokenStrategy(bytes32 standard, address newAddress) public;
 
     /**
-    * @notice Return an array of supported tokens standards
+    * @notice Returns standards list length
     */
-    function getSupportedStandards() public view returns (bytes32[]);
+    function getSupportedStandardsLength() public view returns (uint);
 
     /**
     * @notice Returns standard of the registered token 

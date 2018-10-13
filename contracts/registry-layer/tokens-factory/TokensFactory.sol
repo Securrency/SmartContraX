@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "./interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenStrategy.sol";
+import "./interfaces/ITFStorage.sol";
 import "./TokensFactoryMetadata.sol";
 import "../symbol-registry/interfaces/ISymbolRegistry.sol";
 import "../../common/libraries/BytesHelper.sol";
@@ -18,63 +19,25 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
     // define libraries
     using SafeMath for uint256;
     using BytesHelper for string;
-
-    // Initialize the storage which will store supported tokens tandards
-    bytes32[] supportedStandards;
-
-    // Describe tokens deployment strategy
-    struct TokenStrategy {
-        address strategyAddress;
-        uint index;
-    }
-
-    // Declare storge for tokens strategies
-    mapping(bytes32 => TokenStrategy) tokensStrategies;
-
-    // Declare storage for registered tokens
-    mapping(address => bytes32) registeredTokens;
-
-    // Declare storage for issuers
-    mapping(address => address) issuers;
-
-    // Emit when added new token strategy
-    event StrategyAdded(bytes32 standard, address strategy);
-
-    // Emit when token strategy removed from tokens factory
-    event StrategyRemoved(bytes32 standard, address strategy);
-
-    // Emit when strategy was updates
-    event StrategyUpdated(
-        bytes32 indexed standard,
-        address oldStrategy,
-        address newStrategy
-    );
-
-    // Emit when created new token
-    event CreatedToken(
-        address indexed tokenAddress,
-        address indexed issuer,
-        string name,
-        string symbol,
-        bytes issuerName,
-        uint8 decimals,
-        uint totalSupply,
-        bytes32 standard
-    );
+    
+    // Tokens factory eternal storage address
+    address tfStorage;
 
     /**
     * @notice Add symbol registry
     */
-    constructor(address _componentsRegistry) 
+    constructor(address _componentsRegistry, address storageAddress) 
         public 
         WithComponentsRegistry(_componentsRegistry) 
     {
         componentName = TOKENS_FACTORY_NAME;
         componentId = TOKENS_FACTORY_ID;
+
+        tfStorage = storageAddress;
     }
 
     /**
-    * @notice This function create new token depending on his standard
+    * @notice This function creates new token depending on his standard
     * @param name Name of the future token
     * @param symbol Symbol of the future token
     * @param decimals The quantity of the future token decimals
@@ -91,7 +54,7 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
         public
         verifyPermission(msg.sig, msg.sender)
     {
-        address strategy = tokensStrategies[tokenStandard].strategyAddress;
+        address strategy = TFStorage().getStandardAddress(tokenStandard);
 
         require(bytes(name).length > 0, "Name length should always greater 0.");
         require(strategy != address(0), "Token strategy not found.");
@@ -119,17 +82,15 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
             token
         );
 
-        registeredTokens[token] = tokenStandard;
-        issuers[token] = msg.sender;
+        TFStorage().setIssuerForToken(msg.sender, token);
+        TFStorage().setTokenStandard(token, tokenStandard);
 
-        bytes memory issuerName = symbolRegistry.getIssuerNameBySymbol(bytesSymbol);
-
-        emit CreatedToken(
+        TFStorage().emitCreatedToken(
             token,
             msg.sender,
             name,
             symbol,
-            issuerName,
+            symbolRegistry.getIssuerNameBySymbol(bytesSymbol),
             decimals,
             totalSupply,
             tokenStandard
@@ -148,19 +109,20 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
 
         require(standard != bytes32(""), "Invalid tokens strategy.");
         require(
-            tokensStrategies[standard].strategyAddress == address(0),
+            TFStorage().getStandardAddress(standard) == address(0),
             "Strategy already present."
         );
         
-        uint index = supportedStandards.length;
-        supportedStandards.push(standard);
+        uint index = TFStorage().supportedStandardsLength();
+        TFStorage().addDeploymentStrategy(standard);
 
-        tokensStrategies[standard] = TokenStrategy({
-            strategyAddress: tokenStrategy,
-            index: index
-        });
+        TFStorage().saveDeploymentStrategy(
+            tokenStrategy,
+            standard,
+            index
+        );
 
-        emit StrategyAdded(standard, tokenStrategy);
+        TFStorage().emitStrategyAdded(standard, tokenStrategy);
     }
 
     /**
@@ -171,25 +133,24 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
         public
         verifyPermission(msg.sig, msg.sender) 
     {
-        require(tokensStrategies[standard].strategyAddress != address(0), "Strategy not found.");
+        address removedStrategy = TFStorage().getStandardAddress(standard);
+        require(removedStrategy != address(0), "Strategy not found.");
 
-        uint index = tokensStrategies[standard].index;
-        address removedStrategy = tokensStrategies[standard].strategyAddress;
-        
-        if (supportedStandards.length > 1) {
-            uint last = supportedStandards.length.sub(1);
-            bytes32 standardToUpdate = supportedStandards[last];
+        uint index = TFStorage().getStandardIndex(standard);
+        uint last = TFStorage().supportedStandardsLength().sub(1);
 
-            supportedStandards[index] = standardToUpdate;
-            tokensStrategies[standardToUpdate].index = index;
+        if (last > 0) {
+            bytes32 standardToUpdate = TFStorage().getStandardByIndex(index);
+
+            TFStorage().updateStrategyByindex(standardToUpdate, index);
+            TFStorage().updateStrategyIndex(standardToUpdate, index);
         }
 
-        delete supportedStandards[index];
-        supportedStandards.length = supportedStandards.length.sub(1);
+        TFStorage().removeStandard(last);
+        TFStorage().updateSupportedStandardsLength(last);
+        TFStorage().removeDeploymentStrategy(standard);
 
-        delete tokensStrategies[standard];
-        
-        emit StrategyRemoved(standard, removedStrategy);
+        TFStorage().emitStrategyRemoved(standard, removedStrategy);        
     }
 
     /**
@@ -201,19 +162,19 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
         public 
         verifyPermission(msg.sig, msg.sender) 
     {
+        address tokenStrategyOld = TFStorage().getStandardAddress(standard);
         require(tokenStrategyNew != address(0), "Invalid address of the new token strategy.");
-        require(tokensStrategies[standard].strategyAddress != address(0), "Strategy not found.");
+        require(tokenStrategyOld != address(0), "Strategy not found.");
         
-        tokensStrategies[standard].strategyAddress = tokenStrategyNew;
-
-        emit StrategyUpdated(standard, tokenStrategyNew, tokenStrategyNew);
+        TFStorage().updateStrategyAddress(standard, tokenStrategyNew);
+        TFStorage().emitStrategyUpdated(standard, tokenStrategyOld, tokenStrategyNew);
     }
 
     /**
     * @notice Return an array of supported tokens standards
     */
-    function getSupportedStandards() public view returns (bytes32[]) {
-        return supportedStandards;
+    function getSupportedStandardsLength() public view returns (uint) {
+        return TFStorage().supportedStandardsLength();
     }
 
     /**
@@ -221,7 +182,7 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
     * @param tokenAddress Address of registered token
     */
     function getTokenStandard(address tokenAddress) public view returns (bytes32) {
-        return registeredTokens[tokenAddress];
+        return TFStorage().getTokenStandard(tokenAddress);
     }
 
     /**
@@ -229,7 +190,7 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
     * @param token Token address
     */
     function getIssuerByToken(address token) public view returns (address) {
-        return issuers[token];
+        return TFStorage().getIssuerAddress(token);
     }
 
     /**
@@ -237,6 +198,13 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
     * @param standard A standard for verification
     */
     function isSupported(bytes32 standard) public view returns (bool) {
-        return tokensStrategies[standard].strategyAddress != address(0);
+        return TFStorage().getStandardAddress(standard) != address(0);
+    }
+
+    /**
+    * @notice Returns tokens factory eternal storge instance
+    */
+    function TFStorage() internal view returns (ITFStorage) {
+        return ITFStorage(tfStorage);
     }
 }
