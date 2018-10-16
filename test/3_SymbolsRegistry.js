@@ -4,6 +4,7 @@ let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SR
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
+var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
 
 function createId(signature) {
     let hash = web3.sha3(signature);
@@ -25,10 +26,15 @@ contract('SymbolsRegistry', accounts => {
     let permissionModule;
     let componentsRegistry;
     let SRStorage;
+    let PMStorage;
     let symbol = "TEST";
     let testIssuerName = "Issuer name";
     let newIssuerName = "new Issuer name";
     let hexSymbol;
+
+    let ownerRoleName = "Owner";
+    let systemRoleName = "System";
+    let registrationRoleName = "Registration";
     before(async() => {
         componentsRegistry = await CR.new();
         assert.notEqual(
@@ -37,7 +43,17 @@ contract('SymbolsRegistry', accounts => {
             "Components Registry contract was not deployed"
         );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        PMStorage = await PMST.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        let tx;
+        let status;
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),
@@ -45,48 +61,27 @@ contract('SymbolsRegistry', accounts => {
             "PermissionModule contract was not deployed"
         );
 
-        let ownerRoleName = "Owner";
-        let systemRoleName = "System";
-        let registrationRoleName = "Registration";
+        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
-        let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
-
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+        tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+        status = await PMStorage.getRoleStatus(systemRoleName);
+        assert.equal(status, true);
 
         tx = await permissionModule.createRole(registrationRoleName, systemRoleName, {from: accounts[0]});
-
-        assert.equal(registrationRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+        status = await PMStorage.getRoleStatus(registrationRoleName);
+        assert.equal(status, true);
 
         let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, regSymbolId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
-
         let updateExpIntId = createId("updateExpirationInterval(uint256)");
         tx = await permissionModule.addMethodToTheRole(updateExpIntId, systemRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, updateExpIntId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
 
         tx = await permissionModule.addRoleToTheWallet(accounts[1], registrationRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[1]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
-
-        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
         
         SRStorage = await ES.new(componentsRegistry.address.valueOf());
         assert.notEqual(

@@ -1,4 +1,5 @@
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
+var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
@@ -47,6 +48,7 @@ contract('PermissionModule (Permissions matrix)', accounts => {
     let componentsRegistry;
     let SRStorage;
     let TFStorage;
+    let PMStorage;
 
     // roles
     let ownerRoleName = "Owner";
@@ -86,7 +88,14 @@ contract('PermissionModule (Permissions matrix)', accounts => {
             "Components Registry contract was not deployed"
         );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf());
+        PMStorage = await PMST.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),
@@ -99,61 +108,46 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         let registrationRoleName = "Registration";
         let issuerRoleName = "Issuer";
 
-        let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+        let tx;
+        let status;
 
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+
+        tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+        status = await PMStorage.getRoleStatus(systemRoleName);
+        assert.equal(status, true);
 
         tx = await permissionModule.createRole(registrationRoleName, systemRoleName, {from: accounts[0]});
-
-        assert.equal(registrationRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+        status = await PMStorage.getRoleStatus(registrationRoleName);
+        assert.equal(status, true);
 
         tx = await permissionModule.createRole(issuerRoleName, systemRoleName, {from: accounts[0]});
-
-        assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+        status = await PMStorage.getRoleStatus(issuerRoleName);
+        assert.equal(status, true);
 
         let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
-
-        assert.equal(tx.logs[0].args.methodId, regSymbolId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
+        status = await PMStorage.getMethodStatus(registrationRoleName, regSymbolId);
+        assert.equal(status, true);
 
         let createTokenId = createId("createToken(string,string,uint8,uint256,bytes32)");
         tx = await permissionModule.addMethodToTheRole(createTokenId, issuerRoleName, { from: accounts[0] });
-
-        assert.equal(tx.logs[0].args.methodId, createTokenId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
+        status = await PMStorage.getMethodStatus(issuerRoleName, createTokenId);
+        assert.equal(status, true);
 
         let addStrategyId = createId("addTokenStrategy(address)");
         tx = await permissionModule.addMethodToTheRole(addStrategyId, systemRoleName, { from: accounts[0] });
-
-        assert.equal(tx.logs[0].args.methodId, addStrategyId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
+        status = await PMStorage.getMethodStatus(systemRoleName, addStrategyId);
+        assert.equal(status, true);
 
         let setTM = createId("setTransferModule(address)");
         tx = await permissionModule.addMethodToTheRole(setTM, systemRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, setTM);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], issuerRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
-
-        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
         SRStorage = await ES.new(componentsRegistry.address.valueOf());
         assert.notEqual(
@@ -232,39 +226,12 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         );
 
         tx = await permissionModule.removeMethodFromTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
-
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
-        assert.equal(tx.logs[0].args.methodId, regSymbolId);
-
         tx = await permissionModule.removeMethodFromTheRole(createTokenId, issuerRoleName, { from: accounts[0] });
-
-        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
-        assert.equal(tx.logs[0].args.methodId, createTokenId);
-
         tx = await permissionModule.removeMethodFromTheRole(addStrategyId, systemRoleName, { from: accounts[0] });
-
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-        assert.equal(tx.logs[0].args.methodId, addStrategyId);
-
         tx = await permissionModule.removeMethodFromTheRole(setTM, systemRoleName, { from: accounts[0] });
-
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-        assert.equal(tx.logs[0].args.methodId, setTM);
-
         tx = await permissionModule.removeRoleFromTheWallet(accounts[0], issuerRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
-
         tx = await permissionModule.removeRoleFromTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
-
         tx = await permissionModule.removeRoleFromTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
     });
     
     describe("Create roles", async() => {
@@ -272,48 +239,47 @@ contract('PermissionModule (Permissions matrix)', accounts => {
             // init system role
             let tx = await permissionModule.createRole(systemRole, ownerRoleName, {from: owner});
 
-            assert.equal(systemRole, bytes32ToString(tx.logs[0].args.name));
-            assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+            status = await PMStorage.getRoleStatus(systemRole);
+            assert.equal(status, true);
         });//
 
         it("Should create registration role", async() => {
             let tx = await permissionModule.createRole(registrationRole, systemRole, {from: owner});
 
-            assert.equal(registrationRole, bytes32ToString(tx.logs[0].args.name))
-            assert.equal(systemRole, bytes32ToString(tx.logs[0].args.parent));
+            status = await PMStorage.getRoleStatus(registrationRole);
+            assert.equal(status, true);
         });
 
         it("Should create issuer role", async() => {
             // init issuer role
             let tx = await permissionModule.createRole(issuerRole, systemRole, {from: owner});
 
-            assert.equal(issuerRole, bytes32ToString(tx.logs[0].args.name))
-            assert.equal(systemRole, bytes32ToString(tx.logs[0].args.parent));
+            status = await PMStorage.getRoleStatus(issuerRole);
+            assert.equal(status, true);
         });
 
         it("Should create compliance role", async() => {
             // init compliance role
             let tx = await permissionModule.createRole(complianceRole, issuerRole, {from: owner});
 
-            assert.equal(complianceRole, bytes32ToString(tx.logs[0].args.name))
-            assert.equal(issuerRole, bytes32ToString(tx.logs[0].args.parent));
+            status = await PMStorage.getRoleStatus(complianceRole);
+            assert.equal(status, true);
         });
 
         it("Should create whitelist role", async() => {
             // init whitelist role
             let tx = await permissionModule.createRole(whitelistRole, issuerRole, {from: owner});
 
-            assert.equal(whitelistRole, bytes32ToString(tx.logs[0].args.name))
-            assert.equal(issuerRole, bytes32ToString(tx.logs[0].args.parent));
-
+            status = await PMStorage.getRoleStatus(whitelistRole);
+            assert.equal(status, true);
         });
 
         it("Should create rollback role", async() => {
             // init rollback role
             let tx = await permissionModule.createRole(rollbackRole, issuerRole, {from: owner});
 
-            assert.equal(rollbackRole, bytes32ToString(tx.logs[0].args.name))
-            assert.equal(issuerRole, bytes32ToString(tx.logs[0].args.parent));
+            status = await PMStorage.getRoleStatus(rollbackRole);
+            assert.equal(status, true);
         });
     });
 
@@ -322,63 +288,63 @@ contract('PermissionModule (Permissions matrix)', accounts => {
             // system methods
             let tx = await permissionModule.addMethodToTheRole(systemMethods[0], systemRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, systemMethods[0]);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), systemRole);
+            status = await PMStorage.getMethodStatus(systemRole, systemMethods[0]);
+            assert.equal(status, true);
 
             tx = await permissionModule.addMethodToTheRole(systemMethods[1], systemRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, systemMethods[1]);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), systemRole);
+            status = await PMStorage.getMethodStatus(systemRole, systemMethods[1]);
+            assert.equal(status, true);
         });
 
         it("Should add methods to the registration role", async() => {
             // registration methods
             let tx = await permissionModule.addMethodToTheRole(registrationMethods[0], registrationRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, registrationMethods[0]);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRole);
+            status = await PMStorage.getMethodStatus(registrationRole, registrationMethods[0]);
+            assert.equal(status, true);
         });
 
         it("Should add methods to the issuer role", async() => {
             // issuer methods
             let tx = await permissionModule.addMethodToTheRole(issuerMethods[0], issuerRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, issuerMethods[0]);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRole);
+            status = await PMStorage.getMethodStatus(issuerRole, issuerMethods[0]);
+            assert.equal(status, true);
 
             tx = await permissionModule.addMethodToTheRole(issuerMethods[1], issuerRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, issuerMethods[1]);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRole);
+            status = await PMStorage.getMethodStatus(issuerRole, issuerMethods[0]);
+            assert.equal(status, true);
         });
 
         it("Should add methods to the compliance role", async() => {
             // compliance methods
             let tx = await permissionModule.addMethodToTheRole(complianceMethods[0], complianceRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, complianceMethods[0]);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRole);
+            status = await PMStorage.getMethodStatus(complianceRole, complianceMethods[0]);
+            assert.equal(status, true);
 
             tx = await permissionModule.addMethodToTheRole(complianceMethods[1], complianceRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, complianceMethods[1]);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRole);
+            status = await PMStorage.getMethodStatus(complianceRole, complianceMethods[1]);
+            assert.equal(status, true);
         });
 
         it("Should add methods to the whitelist role", async() => {
             // whitelist methods
             let tx = await permissionModule.addMethodToTheRole(whitelistMethod, whitelistRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, whitelistMethod);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), whitelistRole);
+            status = await PMStorage.getMethodStatus(whitelistRole, whitelistMethod);
+            assert.equal(status, true);
         });
 
         it("Should add methods to the rollback role", async() => {
             // rollback methods
             let tx = await permissionModule.addMethodToTheRole(rollbackMethod, rollbackRole, { from: owner });
 
-            assert.equal(tx.logs[0].args.methodId, rollbackMethod);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), rollbackRole);
+            status = await PMStorage.getMethodStatus(rollbackRole, rollbackMethod);
+            assert.equal(status, true);
         });
     });
     
@@ -386,27 +352,39 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         it("Should add wallets to the system role", async() => {
             let tx = await permissionModule.addRoleToTheWallet(systemAcc1, systemRole, { from: owner });
                 
-            assert.equal(tx.logs[0].args.wallet, systemAcc1);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), systemRole);
+            status = await PMStorage.verifyRole(systemAcc1, systemRole);
+            assert.equal(status, true);
 
             tx = await permissionModule.addRoleToTheWallet(systemAcc2, systemRole, { from: owner });
                 
-            assert.equal(tx.logs[0].args.wallet, systemAcc2);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), systemRole);
+            status = await PMStorage.verifyRole(systemAcc2, systemRole);
+            assert.equal(status, true);
         });
 
         it("Should add wallet to the registration role", async() => {
-            let tx = await permissionModule.addRoleToTheWallet(registrationAcc1, registrationRole, { from: systemAcc1 });
+            // let length = await PMStorage.getRolesLength();
+            // length = parseInt(length);
+
+            // let role;
+            // let roles = [];
+            // for (let i = 0; i < length; i++) {
+            //     role = await PMStorage.getRoleByTheIndex(i);
+            //     roles.push(bytes32ToString(role));
+            // }
+
+            // console.log(roles, "Roles: ", registrationAcc1, registrationRole);
+
+            let tx = await permissionModule.addRoleToTheWallet(registrationAcc1, registrationRole, { from: owner });
                 
-            assert.equal(tx.logs[0].args.wallet, registrationAcc1);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRole);
+            status = await PMStorage.verifyRole(registrationAcc1, registrationRole);
+            assert.equal(status, true);
         });
 
         it("Should add wallet to the issuer role", async() => {
-            let tx = await permissionModule.addRoleToTheWallet(issuerAcc1, issuerRole, { from: systemAcc2 });
+            let tx = await permissionModule.addRoleToTheWallet(issuerAcc1, issuerRole, { from: owner });
                 
-            assert.equal(tx.logs[0].args.wallet, issuerAcc1);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRole);
+            status = await PMStorage.verifyRole(issuerAcc1, issuerRole);
+            assert.equal(status, true);
         });
     });
     // token dependent
@@ -414,28 +392,28 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         it("Should add wallet to the compliance role", async() => {
             let tx = await permissionModule.addRoleForSpecificToken(complianceAcc1, testToken, complianceRole, { from: issuerAcc1 });
                 
-            assert.equal(tx.logs[0].args.wallet, complianceAcc1);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRole);
+            status = await PMStorage.getTokenDependentRoleStatus(complianceAcc1, testToken, complianceRole);
+            assert.equal(status, true);
         });
 
         it("Should add wallet to the whitelist role", async() => {
             let tx = await permissionModule.addRoleForSpecificToken(whitelistAcc1, testToken, whitelistRole, { from: issuerAcc1 });
                 
-            assert.equal(tx.logs[0].args.wallet, whitelistAcc1);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), whitelistRole);
+            status = await PMStorage.getTokenDependentRoleStatus(whitelistAcc1, testToken, whitelistRole);
+            assert.equal(status, true);
 
             tx = await permissionModule.addRoleForSpecificToken(whitelistAcc2, testToken, whitelistRole, { from: issuerAcc1 });
                 
-            assert.equal(tx.logs[0].args.wallet, whitelistAcc2);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), whitelistRole);
+            status = await PMStorage.getTokenDependentRoleStatus(whitelistAcc2, testToken, whitelistRole);
+            assert.equal(status, true);
 
         });
 
         it("Should add wallet to the rollback role", async() => {
             let tx = await permissionModule.addRoleForSpecificToken(rollbackAcc1, testToken, rollbackRole, { from: issuerAcc1 });
                 
-            assert.equal(tx.logs[0].args.wallet, rollbackAcc1);
-            assert.equal(bytes32ToString(tx.logs[0].args.role), rollbackRole);
+            status = await PMStorage.getTokenDependentRoleStatus(rollbackAcc1, testToken, rollbackRole);
+            assert.equal(status, true);
         });
     });
 

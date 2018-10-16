@@ -4,6 +4,7 @@ var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegis
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
 var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
+var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var TSMock = artifacts.require("./common/mocks/TokenStrategyMock.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
@@ -52,6 +53,7 @@ contract('TokensFactory', accounts => {
     let componentsRegistry;
     let SRStorage;
     let TFStorage;
+    let PMStorage;
 
     let invalidTokenStandard = "ST-JGAqabJmEZsm1PXh3DmN";
 
@@ -66,7 +68,14 @@ contract('TokensFactory', accounts => {
             "Components Registry contract was not deployed"
         );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        PMStorage = await PMST.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),
@@ -80,91 +89,56 @@ contract('TokensFactory', accounts => {
         let issuerRoleName = "Issuer";
         let complianceRoleName = "Compliance";
 
-        let tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+        let tx;
+        let status;
 
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(ownerRoleName, bytes32ToString(tx.logs[0].args.parent));
+        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+
+        tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+        status = await PMStorage.getRoleStatus(systemRoleName);
+        assert.equal(status, true);
 
         tx = await permissionModule.createRole(registrationRoleName, systemRoleName, {from: accounts[0]});
-
-        assert.equal(registrationRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+        status = await PMStorage.getRoleStatus(registrationRoleName);
+        assert.equal(status, true);
 
         tx = await permissionModule.createRole(issuerRoleName, systemRoleName, {from: accounts[0]});
-
-        assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(systemRoleName, bytes32ToString(tx.logs[0].args.parent));
+        status = await PMStorage.getRoleStatus(issuerRoleName);
+        assert.equal(status, true);
 
         tx = await permissionModule.createRole(complianceRoleName, issuerRoleName, {from: accounts[0]});
-
-        assert.equal(complianceRoleName, bytes32ToString(tx.logs[0].args.name))
-        assert.equal(issuerRoleName, bytes32ToString(tx.logs[0].args.parent));
+        status = await PMStorage.getRoleStatus(complianceRoleName);
+        assert.equal(status, true);
 
         let regSymbolId = createId("registerSymbol(bytes,bytes)");
         tx = await permissionModule.addMethodToTheRole(regSymbolId, registrationRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, regSymbolId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
-
         let createTokenId = createId("createToken(string,string,uint8,uint256,bytes32)");
         tx = await permissionModule.addMethodToTheRole(createTokenId, issuerRoleName, { from: accounts[0] });
-
-        assert.equal(tx.logs[0].args.methodId, createTokenId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
 
         let addStrategyId = createId("addTokenStrategy(address)");
         tx = await permissionModule.addMethodToTheRole(addStrategyId, systemRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, addStrategyId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-
         let removeStrategyId = createId("removeTokenStrategy(bytes32)");
         tx = await permissionModule.addMethodToTheRole(removeStrategyId, systemRoleName, { from: accounts[0] });
-
-        assert.equal(tx.logs[0].args.methodId, removeStrategyId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
         let updateStrategyId = createId("updateTokenStrategy(bytes32,address)");
         tx = await permissionModule.addMethodToTheRole(updateStrategyId, systemRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, updateStrategyId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-
         let setTM = createId("setTransferModule(address)");
         tx = await permissionModule.addMethodToTheRole(setTM, systemRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, setTM);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-
         let addVL = createId("addVerificationLogic(address,bytes32)");
         tx = await permissionModule.addMethodToTheRole(addVL, systemRoleName, { from: accounts[0] });
-        
-        assert.equal(tx.logs[0].args.methodId, addVL);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
-
 
         let addToWLId = createId("addToWhiteList(address,address)");
         tx = await permissionModule.addMethodToTheRole(addToWLId, complianceRoleName, { from: accounts[0] });
 
-        assert.equal(tx.logs[0].args.methodId, addToWLId);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), complianceRoleName);
-
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), systemRoleName);
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), registrationRoleName);
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], issuerRoleName, { from: accounts[0] });
-            
-        assert.equal(tx.logs[0].args.wallet, accounts[0]);
-        assert.equal(bytes32ToString(tx.logs[0].args.role), issuerRoleName);
-
-        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
         SRStorage = await ES.new(componentsRegistry.address.valueOf());
         assert.notEqual(
@@ -255,6 +229,7 @@ contract('TokensFactory', accounts => {
             PermissionModule: ${permissionModule.address}
             SRStorage: ${SRStorage.address}
             TFStorage: ${TFStorage.address}
+            PMStorage: ${PMStorage.address}
             SymbolRegistry: ${symbolRegistry.address}
             TokensFactory: ${TokensFactory.address}
             CAT20Strategy: ${CAT20Strategy.address}
