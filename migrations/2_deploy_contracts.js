@@ -13,6 +13,7 @@ var CAT20Verification = artifacts.require("./request-verification-layer/transfer
 var CAT721Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT721Verification.sol");
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
+var PMStorage = artifacts.require("./request-verification-layer/permission-module/eternal-storages/PMStorage.sol");
 
 function createId(signature) {
   let hash = web3.sha3(signature);
@@ -34,11 +35,16 @@ module.exports = function(deployer, network, accounts) {
   var ComponentsRegistryDeployed;
   var SRStorageDeployed;
   var TFStorageDeployed;
+  var PMStorageDeployed;
   
   deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
     ComponentsRegistryDeployed = instance;
-    return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, {gas: 3200000})
+    return deployer.deploy(PMStorage, ComponentsRegistryDeployed.address, {gas: 3100000})
+    .then((instance) => {
+      PMStorageDeployed = instance;
+      return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, PMStorageDeployed.address, {gas: 6200000})
+    })
     .then((instance) => {
       PermissionModuleDeployed = instance;
       return deployer.deploy(SRStorage, ComponentsRegistryDeployed.address, {gas: 3100000})
