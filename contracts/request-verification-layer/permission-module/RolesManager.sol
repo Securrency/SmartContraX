@@ -1,15 +1,17 @@
 pragma solidity ^0.4.24;
 
 import "./interfaces/IRolesManager.sol";
-import "./PermissionModuleStorage.sol";
+import "./interfaces/IPMStorage.sol";
+import "../../common/libraries/SafeMath8.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
 * @title Roles Manager
 */
-contract RolesManager is PermissionModuleStorage, IRolesManager {
+contract RolesManager is IRolesManager {
     // define libraries
     using SafeMath for uint256;
+    using SafeMath8 for uint8;
 
     // Predefined name of the owner role
     bytes32 ownerRole = bytes32("Owner");
@@ -17,44 +19,14 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
     // Roles limit for the wallet
     uint8 constant rolesLimit = 20;
 
-    /**
-    * @notice Write info to the log when new role was created
-    * @param name Name of the new role
-    * @param parent Name of the parent role
-    */
-    event CreatedRole(bytes32 name, bytes32 parent);
-
-    /**
-    * @notice Write info to the log when role was deactivated
-    * @param name Name of the role which was deactivated
-    */
-    event DeactivatedRole(bytes32 name);
-
-    /**
-    * @notice Write info to the log when role was activated
-    * @param name Name of the role which was activated
-    */
-    event ActivatedRole(bytes32 name);
-
-    /**
-    * @notice Write info to the log when method was added to the role
-    * @param methodId Method identifier
-    * @param role Role
-    */
-    event MethodAdded(bytes4 methodId, bytes32 role);
-
-    /**
-    * @notice Write info to the log when method was added to the role
-    * @param methodId Method identifier
-    * @param role Role
-    */
-    event MethodRemoved(bytes4 methodId, bytes32 role);
+    // Address of the Permission module storage
+    address pmStorage;
 
     /**
     * @notice Verify sender
     */
     modifier onlyOwner() {
-        require(walletRoles[msg.sender][ownerRole], "Allowed only for the owner.");
+        require(PMStorage().verifyRole(msg.sender, ownerRole), "Allowed only for the owner.");
         _;
     }
 
@@ -62,7 +34,8 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
     * @notice Verify role
     */
     modifier validRole(bytes32 role) {
-        require((role != 0x00 && roles[role] != 0x00) || role == ownerRole, "Invalid role.");
+        bytes32 parentRole = PMStorage().getParentRole(role);
+        require((role != 0x00 && parentRole != 0x00) || role == ownerRole, "Invalid role.");
         _;
     }
 
@@ -70,22 +43,16 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
     * @notice Verify permissions on the role management
     */
     modifier canWorkWithRole(bytes32 role) {
-        bytes32 parentRole = roles[role];
-        require(walletRoles[msg.sender][parentRole], "Role management not allowed.");
+        bytes32 parentRole = PMStorage().getParentRole(role);
+        require(PMStorage().verifyRole(msg.sender, ownerRole), "Role management not allowed.");
         _;
     }
 
     /**
     * @notice Initialze permission module
     */ 
-    constructor() public {
-        roles[ownerRole] = 0x00;
-        roleStatus[ownerRole] = true;
-        walletRoles[msg.sender][ownerRole] = true;
-        listOfTheWalletRoles[msg.sender][0] = ownerRole;
-        indexesOfTheWalletRoles[msg.sender][ownerRole] = 0;
-        walletRolesIndex[msg.sender] = 1;
-        listOfTheRoles.push(ownerRole);
+    constructor(address storageAddress) public {
+        pmStorage = storageAddress;
     }
 
     /**
@@ -93,17 +60,20 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
     * @param roleName Name of the new role
     * @param parent Name of the new role parent
     */
-    function createRole(bytes32 roleName, bytes32 parent) public onlyOwner() {
+    function createRole(bytes32 roleName, bytes32 parent) 
+        public 
+        onlyOwner() 
+    {
         require(roleName != 0x00, "Invalid role.");
         require(parent != 0x00, "Invalid parent role.");
-        require(roleStatus[parent], "Parent role is not active.");
-        require(roles[roleName] == 0x00, "Role already exists.");
+        require(PMStorage().getRoleStatus(parent), "Parent role is not active.");
+        require(PMStorage().getParentRole(roleName) == 0x00, "Role already exists.");
         
-        roles[roleName] = parent;
-        roleStatus[roleName] = true;
-        listOfTheRoles.push(roleName);
+        PMStorage().setParentRole(roleName, parent);
+        PMStorage().setRoleStatus(roleName, true);        
+        PMStorage().addRoleToTheList(roleName);
 
-        emit CreatedRole(roleName, parent);
+        PMStorage().emitCreatedRole(roleName, parent);
     }
 
     /**
@@ -111,11 +81,11 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
     * @param name Role name
     */
     function deactivateRole(bytes32 name) public onlyOwner() validRole(name) {
-        require(roleStatus[name], "Role is not active.");
+        require(PMStorage().getRoleStatus(name), "Role is not active.");
         
-        roleStatus[name] = false;
+        PMStorage().setRoleStatus(name, false);  
 
-        emit DeactivatedRole(name);
+        PMStorage().emitDeactivatedRole(name);
     }
 
     /**
@@ -123,11 +93,10 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
     * @param name Role name
     */
     function activateRole(bytes32 name) public onlyOwner() validRole(name) {
-        require(!roleStatus[name], "Role is active.");
+        require(!PMStorage().getRoleStatus(name), "Role is active.");
 
-        roleStatus[name] = true;
-
-        emit ActivatedRole(name);
+        PMStorage().setRoleStatus(name, true);
+        PMStorage().emitActivatedRole(name);
     }
     
     /**
@@ -144,13 +113,14 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
         validRole(roleName) 
     {
         require(methodId != 0x00, "Invalid method id.");
-        require(!roleMethods[roleName][methodId], "Method already added to the role.");
+        require(!PMStorage().getMethodStatus(roleName, methodId), "Method already added to the role.");
 
-        roleMethods[roleName][methodId] = true;
-        indexesOfTheRoleMethods[roleName][methodId] = listOfTheRoleMethods[roleName].length;
-        listOfTheRoleMethods[roleName].push(methodId);
+        PMStorage().setMethodStatus(roleName, methodId, true);
+        uint length = PMStorage().getMethodsLength(roleName);
+        PMStorage().setMetodIndex(roleName, methodId, length);
+        PMStorage().addMethod(roleName, methodId);
 
-        emit MethodAdded(methodId, roleName);
+        PMStorage().emitMethodAdded(methodId, roleName);
     }
 
     /**
@@ -167,34 +137,44 @@ contract RolesManager is PermissionModuleStorage, IRolesManager {
         validRole(roleName) 
     {
         require(methodId != 0x00, "Invalid method id.");
-        require(roleMethods[roleName][methodId], "Method is not supported.");
+        require(PMStorage().getMethodStatus(roleName, methodId), "Method is not supported.");
 
-        roleMethods[roleName][methodId] = false;
+        PMStorage().setMethodStatus(roleName, methodId, false);
 
-        uint index = indexesOfTheRoleMethods[roleName][methodId];
-        uint last = listOfTheRoleMethods[roleName].length.sub(1);
+        uint index = PMStorage().getMethodIndex(roleName, methodId);
+        uint last = PMStorage().getMethodsLength(roleName).sub(1);
+
+        if (last > 0) {
+            bytes4 idToUpdate = PMStorage().getMethodByIndex(roleName, last);
+            PMStorage().setMetodIndex(roleName, idToUpdate, index);
+            PMStorage().addMethodToIndex(roleName, idToUpdate, index);
+        }
         
-        indexesOfTheRoleMethods[roleName][listOfTheRoleMethods[roleName][last]] = index;
-        listOfTheRoleMethods[roleName][index] = listOfTheRoleMethods[roleName][last];
+        PMStorage().deleteMethodFromTheList(roleName, last);
+        PMStorage().deleteMethodIndex(roleName, methodId);
+        PMStorage().setMethodsListLength(roleName, last);
 
-        delete listOfTheRoleMethods[roleName][last];
-        delete indexesOfTheRoleMethods[roleName][methodId];
-        listOfTheRoleMethods[roleName].length = last;
-
-        emit MethodRemoved(methodId, roleName);
+        PMStorage().emitMethodRemoved(methodId, roleName);
     }
 
     /**
     * @notice Returns list of all supported roles
     */
     function getListOfAllRoles() public view returns (bytes32[]) {
-        return listOfTheRoles;
+        return PMStorage().getListOfAllRoles();
     }
 
     /**
     * @notice Returns list of all supported methods by role
     */
     function getSupportedMethodsByRole(bytes32 roleName) public view returns (bytes4[]) {
-        return listOfTheRoleMethods[roleName];
+        return PMStorage().getSupportedMethodsByRole(roleName);
+    }
+
+    /**
+    * @notice Returns permission module storage instance
+    */
+    function PMStorage() internal view returns (IPMStorage) {
+        return IPMStorage(pmStorage);
     }
 }

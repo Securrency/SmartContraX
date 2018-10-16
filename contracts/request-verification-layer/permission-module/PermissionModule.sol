@@ -12,10 +12,10 @@ import "../../common/component/SystemComponent.sol";
 */
 contract PermissionModule is NetworkRolesManager, TokenRolesManager, SystemComponent, PermissionModuleMetadata {  
     // Initialize module
-    constructor(address _componentsRegistry) 
+    constructor(address _componentsRegistry, address storageAddress) 
         public
         WithComponentsRegistry(_componentsRegistry)
-        RolesManager()
+        RolesManager(storageAddress)
     {
         componentName = PERMISSION_MODULE_NAME;
         componentId = PERMISSION_MODULE_ID;

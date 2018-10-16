@@ -12,21 +12,6 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     using SafeMath8 for uint8;
 
     /**
-    * @notice Write info to the log when the new role was added to the wallet
-    */
-    event RoleAdded(address indexed wallet, bytes32 role);
-
-    /**
-    * @notice Write info to the log when the role was deleted
-    */
-    event RoleDeleted(address indexed wallet, bytes32 role);
-
-    /**
-    * @notice Write info to the log about ownership transfer
-    */
-    event TransferedOwnership(address oldOwner, address newOwner);
-
-    /**
     * @notice Add a role to the wallet
     * @param wallet Wallet address
     * @param roleName Name of the role which will be added to the wallet
@@ -39,11 +24,12 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         validRole(roleName)
         canWorkWithRole(roleName)
     {
-        require(!walletRoles[wallet][roleName], "Role already added.");
+        bool roleStatus = PMStorage().getWalletRoleStatus(wallet, roleName);
+        require(!roleStatus, "Role already added.");
 
-        uint8 index = walletRolesIndex[wallet];
+        uint8 index = PMStorage().getWalletRoleIndex(wallet);
         require(index <= rolesLimit, "The limit for number of roles has been reached.");
-    
+
         addRole(wallet, roleName);
     }
 
@@ -60,7 +46,8 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         validRole(roleName)
         canWorkWithRole(roleName)
     {
-        require(walletRoles[wallet][roleName], "The wallet has no this role.");
+        bool roleStatus = PMStorage().getWalletRoleStatus(wallet, roleName);
+        require(roleStatus, "The wallet has no this role.");
 
         removeRole(wallet, roleName);
     }
@@ -71,12 +58,14 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     */
     function transferOwnership(address newOwner) public onlyOwner() {
         require(newOwner != address(0), "Invalid new owner address.");
-        require(walletRolesIndex[newOwner] <= rolesLimit, "The limit for number of roles has been reached.");
+        
+        uint8 index = PMStorage().getWalletRoleIndex(newOwner);
+        require(index <= rolesLimit, "The limit for number of roles has been reached.");
 
         removeRole(msg.sender, ownerRole);
         addRole(newOwner, ownerRole);
 
-        emit TransferedOwnership(msg.sender, newOwner);
+        PMStorage().emitTransferedOwnership(msg.sender, newOwner);
     }
 
     /**
@@ -92,23 +81,14 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
         view
         returns (bool) 
     {
-        uint8 index = walletRolesIndex[sender];
-        bytes32 role;
-        for (uint8 i = 0; i < index; i++) {
-            role = listOfTheWalletRoles[sender][i];
-            if (roleMethods[role][methodId] && roleStatus[role]) {
-                return true;
-            }
-        }
-
-        return false;
+        return PMStorage().checkPermission(methodId, sender);
     }
 
     /**
     * @notice Returns list of all roles of the wallet
     */
     function getWalletRoles(address wallet) public view returns (bytes32[20]) {
-        return listOfTheWalletRoles[wallet];
+        return PMStorage().getWalletRoles(wallet);
     }
 
     /**
@@ -117,15 +97,15 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     * @param role Name of the role which will be added to the wallet
     */
     function addRole(address wallet, bytes32 role) internal {
-        walletRoles[wallet][role] = true;
+        PMStorage().setWalletRoleStatus(wallet, role, true);
 
-        uint8 index = walletRolesIndex[wallet];
-        listOfTheWalletRoles[wallet][index] = role;
+        uint8 index = PMStorage().getWalletRoleIndex(wallet);
+        PMStorage().setWalletRoleToTheList(wallet, role, index);
+        
+        PMStorage().setWalletRoleIndex(wallet, role, index);
+        PMStorage().setWalletRolesIndex(wallet, index.add(1));
 
-        indexesOfTheWalletRoles[wallet][role] = index;
-        walletRolesIndex[wallet]++;
-
-        emit RoleAdded(wallet, role);
+        PMStorage().emitRoleAdded(wallet, role);
     }
 
     /**
@@ -134,20 +114,22 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     * @param role Name of the role which will be removed from the wallet
     */
     function removeRole(address wallet, bytes32 role) internal {
-        walletRoles[wallet][role] = false;
+        PMStorage().setWalletRoleStatus(wallet,role,false);
 
-        uint8 index = indexesOfTheWalletRoles[wallet][role];
-        uint8 last = walletRolesIndex[wallet].sub(1);
-
-        if(last != 0) {
-            indexesOfTheWalletRoles[wallet][listOfTheWalletRoles[wallet][last]] = index;
-            listOfTheWalletRoles[wallet][index] = listOfTheWalletRoles[wallet][last];
-        }
+        uint8 index = PMStorage().getWalletRoleIndexInTheList(wallet,role);
+        uint8 last = PMStorage().getWalletRoleIndex(wallet).sub(1);
         
-        delete indexesOfTheWalletRoles[wallet][role];
-        delete listOfTheWalletRoles[wallet][last];
-        walletRolesIndex[wallet] = last;
+        if(last != 0) {
+            bytes32 roleToUpdate = PMStorage().getWalletRoleFromTheList(wallet,last);
 
-        emit RoleDeleted(wallet, role);
+            PMStorage().setWalletRoleIndex(wallet,roleToUpdate,index);
+            PMStorage().setWalletRoleToTheList(wallet,roleToUpdate,index);
+        }
+
+        PMStorage().deleteWalletRoleIndex(wallet,role);
+        PMStorage().deleteWalletRole(wallet,last);
+        PMStorage().setWalletRolesIndex(wallet,last);
+
+        PMStorage().emitRoleDeleted(wallet,role);
     }
 }

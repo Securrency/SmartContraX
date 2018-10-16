@@ -15,16 +15,6 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
     using SafeMath8 for uint8;
 
     /**
-    * @notice Write info to the log when the new role was added to the wallet
-    */
-    event TokenDependetRoleAdded(address indexed wallet, address indexed token, bytes32 role);
-
-    /**
-    * @notice Write info to the log when the role was deleted
-    */
-    event TokenDependetRoleDeleted(address indexed wallet, address indexed token, bytes32 role);
-
-    /**
     * @notice Verify token issuer
     * @param token Address of the requested token
     */
@@ -50,19 +40,34 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
         onlyIssuer(token)
     {
         require(token != address(0), "Invalid token address.");
-        require(!tokenDependentRoles[wallet][token][roleName], "Role already added.");
 
-        uint8 index = tokenDependentRolesIndex[wallet][token];
+        bool walletHasRole = PMStorage().getTokenDependentRoleStatus(wallet, token, roleName); 
+        require(!walletHasRole, "Role already added.");
+
+        uint8 index = PMStorage().getTokenDependentRolesIndex(wallet,token);
         require(index <= rolesLimit, "The limit for number of roles has been reached.");
 
-        tokenDependentRoles[wallet][token][roleName] = true;
+        PMStorage().setTokenDependentRoleStatus(
+            wallet,
+            token,
+            roleName,
+            true
+        );
+        PMStorage().setToTheTokenDependentList(
+            wallet,
+            token,
+            roleName,
+            index
+        );
+        PMStorage().setTokenDependentRoleIndex(
+            wallet,
+            token,
+            roleName,
+            index
+        );
 
-        listOfTheTokenDependentRoles[wallet][token][index] = roleName;
-
-        indexesOfTheTokenDependentRoles[wallet][token][roleName] = index;
-        tokenDependentRolesIndex[wallet][token]++;
-
-        emit TokenDependetRoleAdded(wallet, token, roleName);
+        PMStorage().setTokenDependentRolesIndex(wallet,token,index.add(1));
+        PMStorage().emitTokenDependetRoleAdded(wallet, token, roleName);
     }
 
     /**
@@ -81,23 +86,25 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
         onlyIssuer(token)
     {
         require(token != address(0), "Invalid token address.");
-        require(tokenDependentRoles[wallet][token][roleName], "The wallet has no this role.");
+        
+        bool walletHasRole = PMStorage().getTokenDependentRoleStatus(wallet, token, roleName); 
+        require(walletHasRole, "The wallet has no this role.");
 
-        tokenDependentRoles[wallet][token][roleName] = false;
+        PMStorage().setTokenDependentRoleStatus(wallet,token,roleName,false);
 
-        uint8 index = indexesOfTheTokenDependentRoles[wallet][token][roleName];
-        uint8 last =  tokenDependentRolesIndex[wallet][token].sub(1);
+        uint8 index = PMStorage().getIndexOfTheTokeDependentRole(wallet,token,roleName);
+        uint8 last = PMStorage().getTokenDependentRolesIndex(wallet,token).sub(1);
 
-        if (last != 0) {
-            indexesOfTheTokenDependentRoles[wallet][token][listOfTheTokenDependentRoles[wallet][token][last]] = index;
-            listOfTheTokenDependentRoles[wallet][token][index] = listOfTheTokenDependentRoles[wallet][token][last];
+        if (last > 0) {
+            bytes32 roleToUpdate = PMStorage().getTokenDependentRoleByIndex(wallet, token, last);
+            PMStorage().setTokenDependentRoleIndex(wallet,token,roleToUpdate,index);
+            PMStorage().setToTheTokenDependentList(wallet,token,roleToUpdate,index);
         }
 
-        delete indexesOfTheTokenDependentRoles[wallet][token][roleName];
-        delete listOfTheTokenDependentRoles[wallet][token][last];
-        tokenDependentRolesIndex[wallet][token] = last;
-
-        emit TokenDependetRoleDeleted(wallet, token, roleName);
+        PMStorage().delTokenDependentRoleIndex(wallet,token,roleName);
+        PMStorage().delTokenDependentRole(wallet,token,last);
+        PMStorage().setTokenDependentRolesIndex(wallet,token,last);
+        PMStorage().emitTokenDependetRoleDeleted(wallet, token, roleName);
     }
 
     /**
@@ -115,16 +122,7 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
         view
         returns (bool)
     {
-        uint8 index =  tokenDependentRolesIndex[sender][token];
-        bytes32 role;
-        for (uint8 i = 0; i < index; i++) {
-            role = listOfTheTokenDependentRoles[sender][token][i];
-            if (roleMethods[role][methodId] && roleStatus[role]) {
-                return true;
-            }
-        }
-
-        return false;
+        return PMStorage().checkTokenPermission(methodId, sender, token);
     }
 
     /**
@@ -138,6 +136,6 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
         view
         returns (bytes32[20])
     {
-        return listOfTheTokenDependentRoles[wallet][token];
+        return PMStorage().getWalletRolesForToken(wallet, token);
     }
 }
