@@ -30,6 +30,8 @@ let chainName;
 let moduleAbi;
 let transferModuleAddress;
 let transferModule;
+let storageAddress;
+let FCStorage;
 
 async function initializeWeb3() {
     let network = readlineSync.question("Network for listening (default ropsten): ");
@@ -82,6 +84,21 @@ async function initializeTransferModule(networkId) {
     }
 }
 
+async function initializeFCStorage(networkId) {
+    try {
+        let file = JSON.parse(require('fs').readFileSync('./build/contracts/FCStorage.json').toString());
+        storageAbi = file.abi;
+        storageAddress = file.networks[networkId].address;
+
+        FCStorage = new web3.eth.Contract(storageAbi, storageAddress);
+        FCStorage.setProvider(web3.currentProvider);
+    } catch(err) {
+        console.log(err);
+        console.log('\x1b[31m%s\x1b[0m',"Couldn't find contracts' artifacts. Make sure that token is compiled and deployed.");
+        return;
+    }
+}
+
 async function run() {
     console.log(` 
   ____                    ____ _           _            ____     _   _____    ____   ___  
@@ -100,6 +117,7 @@ async function run() {
     });
 
     initializeTransferModule(networkId);
+    initializeFCStorage(networkId);
     initializeToken(CAT20);
     
     watch();
@@ -108,7 +126,7 @@ async function run() {
 async function watch() {
     setTimeout(function(){ 
         console.log(chainName, lastBlock);
-        transferModule.getPastEvents('SendedToOtherChain', {
+        FCStorage.getPastEvents('SendedToOtherChain', {
             fromBlock: lastBlock,
             toBlock: 'latest'
         }, async function(error, events) {
