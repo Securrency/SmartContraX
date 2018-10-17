@@ -144,6 +144,9 @@ contract('TransferModule', accounts => {
         let addVL = createId("addVerificationLogic(address,bytes32)");
         tx = await permissionModule.addMethodToTheRole(addVL, systemRoleName, { from: accounts[0] });
 
+        let regCompId = createId("registerNewComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
+
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });

@@ -1,11 +1,24 @@
 let CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 let CM = artifacts.require("./common/mocks/ComponentMock.sol");
+var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
+var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+
+function createId(signature) {
+    let hash = web3.sha3(signature);
+
+    return hash.substring(0, 10);
+}
 
 contract("Components registry", accounts => {
+    let permissionModule;
     let componentsRegistry;
     let component1;
     let component2;
     let component3;
+    let PMStorage;
+
+    let ownerRoleName = "Owner";
+    let systemRoleName = "System";
 
     before(async() => {
         componentsRegistry = await CR.new();
@@ -35,6 +48,44 @@ contract("Components registry", accounts => {
             "0x0000000000000000000000000000000000000000",
             "Component contract was not deployed"
         );
+
+        PMStorage = await PMST.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            permissionModule.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module contract was not deployed"
+        );
+
+        let tx = await componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+
+        tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
+        status = await PMStorage.getRoleStatus(systemRoleName);
+        assert.equal(status, true);
+
+        tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
+
+        let regCompId = createId("registerNewComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
+        status = await PMStorage.getMethodStatus(systemRoleName, regCompId);
+        assert.equal(status, true);
+
+        let updateCompId = createId("updateComponent(address,address)");
+        tx = await permissionModule.addMethodToTheRole(updateCompId, systemRoleName, { from: accounts[0] });
+        status = await PMStorage.getMethodStatus(systemRoleName, updateCompId);
+        assert.equal(status, true);
+
+        let remCompId = createId("removeComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(remCompId, systemRoleName, { from: accounts[0] });
+        status = await PMStorage.getMethodStatus(systemRoleName, remCompId);
+        assert.equal(status, true);
     });
 
     describe("Test components registry", async() => {

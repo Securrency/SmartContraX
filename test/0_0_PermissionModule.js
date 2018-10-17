@@ -133,6 +133,11 @@ contract('PermissionModule', accounts => {
         status = await PMStorage.getMethodStatus(systemRoleName, addStrategyId);
         assert.equal(status, true);
 
+        let regCompId = createId("registerNewComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
+        status = await PMStorage.getMethodStatus(systemRoleName, regCompId);
+        assert.equal(status, true);
+
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
         status = await PMStorage.verifyRole(accounts[0], systemRoleName);
         assert.equal(status, true);

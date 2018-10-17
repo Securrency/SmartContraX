@@ -144,6 +144,21 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         status = await PMStorage.getMethodStatus(systemRoleName, addStrategyId);
         assert.equal(status, true);
 
+        let regCompId = createId("registerNewComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
+        status = await PMStorage.getMethodStatus(systemRoleName, regCompId);
+        assert.equal(status, true);
+
+        let updateCompId = createId("updateComponent(address,address)");
+        tx = await permissionModule.addMethodToTheRole(updateCompId, systemRoleName, { from: accounts[0] });
+        status = await PMStorage.getMethodStatus(systemRoleName, updateCompId);
+        assert.equal(status, true);
+
+        let remCompId = createId("removeComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(remCompId, systemRoleName, { from: accounts[0] });
+        status = await PMStorage.getMethodStatus(systemRoleName, remCompId);
+        assert.equal(status, true);
+
         let setTM = createId("setTransferModule(address)");
         tx = await permissionModule.addMethodToTheRole(setTM, systemRoleName, { from: accounts[0] });
 

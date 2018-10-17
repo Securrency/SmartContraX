@@ -133,6 +133,9 @@ contract("CAT20Token", accounts => {
         let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
         tx = await permissionModule.addMethodToTheRole(rollbackId, complianceRoleName, { from: accounts[0] });
 
+        let regCompId = createId("registerNewComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
+
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], registrationRoleName, { from: accounts[0] });

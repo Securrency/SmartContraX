@@ -135,6 +135,9 @@ contract('TokensFactory', accounts => {
         let addVL = createId("addVerificationLogic(address,bytes32)");
         tx = await permissionModule.addMethodToTheRole(addVL, systemRoleName, { from: accounts[0] });
 
+        let regCompId = createId("registerNewComponent(address)");
+        tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
+
         let addToWLId = createId("addToWhiteList(address,address)");
         tx = await permissionModule.addMethodToTheRole(addToWLId, complianceRoleName, { from: accounts[0] });
 
