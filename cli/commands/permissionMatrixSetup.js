@@ -74,7 +74,8 @@ async function run(netowrk) {
         "removeTokenStrategy(bytes32)",
         "updateTokenStrategy(bytes32,address)",
         "updateComponent(address,address)",
-        "removeComponent(address)"
+        "removeComponent(address)",
+        "acceptTokensFromOtherChain(address,address,address,bytes32,bytes32,bytes32,uint256,uint256)",
     ];
 
     let ownerMethods = [];
@@ -94,6 +95,9 @@ async function run(netowrk) {
         "removeFromWhiteList(address,address)",
         "addArrayToWhiteList(address[],address)",
         "createRollbackTransaction(address,address,address,uint256,uint256,string)",
+        "mint(address,uint256)",
+        "mint(address)",
+        "crossChainTransfer(uint256,bytes32,bytes32)",
     ];
 
     let rolesData = [
