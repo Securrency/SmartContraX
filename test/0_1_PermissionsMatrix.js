@@ -4,6 +4,8 @@ var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegis
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
+var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
+var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
@@ -49,6 +51,8 @@ contract('PermissionModule (Permissions matrix)', accounts => {
     let SRStorage;
     let TFStorage;
     let PMStorage;
+    let TCStorage;
+    let FCStorage;
 
     // roles
     let ownerRoleName = "Owner";
@@ -194,7 +198,21 @@ contract('PermissionModule (Permissions matrix)', accounts => {
             "CAT20Strategy contract was not deployed"
         ); 
         
-        let transferModule = await TM.new(componentsRegistry.address.valueOf(), { from: accounts[0] });
+        TCStorage = await TCS.new(componentsRegistry.address, { from: accounts[0] });
+        assert.notEqual(
+            TCStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "TCStorage contract was not deployed"
+        );
+
+        FCStorage = await FCS.new(componentsRegistry.address, { from: accounts[0] });
+        assert.notEqual(
+            FCStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "FCStorage contract was not deployed"
+        );
+
+        transferModule = await TM.new(componentsRegistry.address.valueOf(), TCStorage.address.valueOf(), FCStorage.address.valueOf(), { from: accounts[0] });
         assert.notEqual(
             transferModule.address.valueOf(),
             "0x0000000000000000000000000000000000000000",

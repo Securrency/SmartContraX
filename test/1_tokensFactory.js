@@ -5,6 +5,8 @@ var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol"
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
 var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
+var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var TSMock = artifacts.require("./common/mocks/TokenStrategyMock.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
@@ -54,6 +56,8 @@ contract('TokensFactory', accounts => {
     let SRStorage;
     let TFStorage;
     let PMStorage;
+    let TCStorage;
+    let FCStorage;
 
     let invalidTokenStandard = "ST-JGAqabJmEZsm1PXh3DmN";
 
@@ -189,7 +193,21 @@ contract('TokensFactory', accounts => {
             "CAT20Vierification contract was not deployed"
         );
 
-        transferModule = await TM.new(componentsRegistry.address.valueOf(), { from: token_owner });
+        TCStorage = await TCS.new(componentsRegistry.address, { from: token_owner });
+        assert.notEqual(
+            TCStorage.address.valueOf(),
+            zeroAddress,
+            "TCStorage contract was not deployed"
+        );
+
+        FCStorage = await FCS.new(componentsRegistry.address, { from: token_owner });
+        assert.notEqual(
+            FCStorage.address.valueOf(),
+            zeroAddress,
+            "FCStorage contract was not deployed"
+        );
+
+        transferModule = await TM.new(componentsRegistry.address.valueOf(), TCStorage.address.valueOf(), FCStorage.address.valueOf(), { from: token_owner });
         assert.notEqual(
             transferModule.address.valueOf(),
             zeroAddress,
@@ -237,7 +255,9 @@ contract('TokensFactory', accounts => {
             TokenStrategyMock2:${TokenStrategyMock2.address}
             WhiteList: ${whiteList.address}
             CAT20Vierification: ${CAT20Verification.address}
-            TransferModule: ${transferModule.address}\n
+            TransferModule: ${transferModule.address}
+            TCStorage: ${TCStorage.address}
+            FCStorage: ${FCStorage.address}\n
         `);
     });
 

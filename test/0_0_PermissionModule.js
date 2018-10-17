@@ -1,5 +1,7 @@
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
+var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
@@ -49,6 +51,8 @@ contract('PermissionModule', accounts => {
     let SRStorage;
     let TFStorage;
     let PMStorage;
+    let TCStorage;
+    let FCStorage;
 
     let owner = accounts[0];
 
@@ -184,7 +188,21 @@ contract('PermissionModule', accounts => {
             "CAT20Strategy contract was not deployed"
         ); 
         
-        let transferModule = await TM.new(componentsRegistry.address.valueOf(), { from: accounts[0] });
+        TCStorage = await TCS.new(componentsRegistry.address, { from: accounts[0] });
+        assert.notEqual(
+            TCStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "TCStorage contract was not deployed"
+        );
+
+        FCStorage = await FCS.new(componentsRegistry.address, { from: accounts[0] });
+        assert.notEqual(
+            FCStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "FCStorage contract was not deployed"
+        );
+
+        transferModule = await TM.new(componentsRegistry.address.valueOf(), TCStorage.address.valueOf(), FCStorage.address.valueOf(), { from: accounts[0] });
         assert.notEqual(
             transferModule.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
