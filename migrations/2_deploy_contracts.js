@@ -8,6 +8,8 @@ var ERC20Strategy = artifacts.require("./registry-layer/tokens-factory/deploymen
 var ComponentsRegistry = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 
 var TransferModule = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
+var TCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
+var FCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var WhiteList = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-service/WhiteList.sol");
 var CAT20Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT20Verification.sol");
 var CAT721Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT721Verification.sol");
@@ -36,6 +38,8 @@ module.exports = function(deployer, network, accounts) {
   var SRStorageDeployed;
   var TFStorageDeployed;
   var PMStorageDeployed;
+  var TCStorageDeployed;
+  var FCStorageDeployed;
   
   deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
@@ -71,7 +75,15 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       CAT20VerificationDeployed = instance;
-      return deployer.deploy(TransferModule, ComponentsRegistryDeployed.address, {gas: 5200000});
+      return deployer.deploy(TCStorage, ComponentsRegistryDeployed.address, {gas: 6200000});
+    })
+    .then((instance) => {
+      TCStorageDeployed = instance;
+      return deployer.deploy(FCStorage, ComponentsRegistryDeployed.address, {gas: 6200000});
+    })
+    .then((instance) => {
+      FCStorageDeployed = instance;
+      return deployer.deploy(TransferModule, ComponentsRegistryDeployed.address, TCStorageDeployed.address, FCStorageDeployed.address, {gas: 6200000});
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
