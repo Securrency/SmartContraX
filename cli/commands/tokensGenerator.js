@@ -69,7 +69,7 @@ async function run() {
     if (totalSupply == "") totalSupply = 0;
 
     let tokenStandard =  readlineSync.question('Token standard: ');
-    if (tokenStandard == "") tokenStandard = "ST-20";
+    if (tokenStandard == "") tokenStandard = "CAT-20";
 
     let issuer = readlineSync.question('Issuer: ');
     if (issuer == '') issuer = accounts[0];
@@ -113,9 +113,16 @@ async function run() {
         );
     })
     .on('receipt', function(receipt) {
+        let tokenAddress = receipt.events['2'].raw.topics[1];
+        if (tokenStandard != '0x4341542d373231') {
+            tokenAddress = receipt.events['3'].raw.topics[1];
+        }
+
+        tokenAddress = tokenAddress.replace("000000000000000000000000", "");
+        
         console.log(`
         Congratulations! The transaction was successfully completed.
-        Token address: ${receipt.events['CreatedToken'].returnValues.tokenAddress}\n`
+        Token address: ${tokenAddress}\n`
         );
         process.exit(0);
     })
