@@ -73,6 +73,8 @@ async function run(netowrk) {
         "updateExpirationInterval(uint256)",
         "removeTokenStrategy(bytes32)",
         "updateTokenStrategy(bytes32,address)",
+        "updateComponent(address,address)",
+        "removeComponent(address)"
     ];
 
     let ownerMethods = [];

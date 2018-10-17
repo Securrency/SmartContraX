@@ -108,15 +108,6 @@ module.exports = function(deployer, network, accounts) {
       return ComponentsRegistryDeployed.initializePermissionModule(PermissionModuleDeployed.address, {gas: 120000});
     })
     .then(() => {
-      return ComponentsRegistryDeployed.registerNewComponent(TransferModuleDeployed.address, {gas: 120000});
-    })
-    .then(() => {
-      return ComponentsRegistryDeployed.registerNewComponent(tokensFactoryDeployed.address, {gas: 120000});
-    })
-    .then(() => {
-      return ComponentsRegistryDeployed.registerNewComponent(SymbolRegistryDeployed.address, {gas: 120000});
-    })
-    .then(() => {
       return PermissionModuleDeployed.createRole("System", "Owner", {gas: 300000});
     })
     .then(() => {
@@ -135,7 +126,19 @@ module.exports = function(deployer, network, accounts) {
       return PermissionModuleDeployed.addMethodToTheRole(createId("removeChain(bytes32)"), "System", {gas: 500000});
     })
     .then(() => {
+      return PermissionModuleDeployed.addMethodToTheRole(createId("registerNewComponent(address)"), "System", {gas: 500000});
+    })
+    .then(() => {
       return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], "System", {gas:300000});
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.registerNewComponent(TransferModuleDeployed.address, {gas: 120000});
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.registerNewComponent(tokensFactoryDeployed.address, {gas: 120000});
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.registerNewComponent(SymbolRegistryDeployed.address, {gas: 120000});
     })
     .then(() => {
       return tokensFactoryDeployed.addTokenStrategy(CAT20StrategyDeployed.address, {gas: 160000});

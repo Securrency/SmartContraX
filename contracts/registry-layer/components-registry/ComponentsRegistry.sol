@@ -3,6 +3,7 @@ pragma solidity ^0.4.24;
 import "./interfaces/IComponentsRegistry.sol";
 import "../../common/component/interfaces/IComponent.sol";
 import "../../request-verification-layer/permission-module/PermissionModuleMetadata.sol";
+import "../../request-verification-layer/permission-module/interfaces/IPermissionModule.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
@@ -38,12 +39,25 @@ contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
     event ComponentRemoved(address indexed componentAddress);
 
     /**
+    * @notice Verify permission on the method execution
+    */
+    modifier verifyPermission(address sender, bytes4 sig) {
+        address permissionModule = components[PERMISSION_MODULE_ID].componentAddress;
+        require(
+            IPermissionModule(permissionModule).allowed(sig, sender, address(0)), 
+            "Declined by Permission Module."
+        );
+        _;
+    }
+
+    /**
     * @notice Update existing component
     * @param oldAddress Component to update
     * @param newAddress New component address
     */
     function updateComponent(address oldAddress, address newAddress) 
-        external 
+        external
+        verifyPermission(msg.sender, msg.sig) 
     {
         require(oldAddress != newAddress, "Invalid addresses.");
 
@@ -63,7 +77,8 @@ contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
     * @param componentAddress Address of the new component
     */
     function registerNewComponent(address componentAddress) 
-        public 
+        public
+        verifyPermission(msg.sender, msg.sig) 
     {
         require(componentAddress != address(0), "Invalid component address");
 
@@ -79,7 +94,8 @@ contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
     * @param componentAddress Address of the component which will be removed
     */
     function removeComponent(address componentAddress) 
-        public 
+        public
+        verifyPermission(msg.sender, msg.sig) 
     {
         require(componentAddress != address(0), "Invalid address.");
 
