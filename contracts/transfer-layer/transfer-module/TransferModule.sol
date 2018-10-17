@@ -39,9 +39,15 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
     * @notice Initialize contract
     * @param _componentsRegistry Address of the components registry
     */
-    constructor(address _componentsRegistry) 
+    constructor(
+            address _componentsRegistry, 
+            address _toChainStorage, 
+            address _fromChainStorage
+    ) 
         public
         WithComponentsRegistry(_componentsRegistry)
+        ToChain(_toChainStorage)
+        FromChain(_fromChainStorage)
     {
         componentName = TRANSFER_MODULE_NAME;
         componentId = TRANSFER_MODULE_ID;

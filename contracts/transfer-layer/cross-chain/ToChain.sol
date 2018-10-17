@@ -1,34 +1,19 @@
 pragma solidity ^0.4.24;
 
 import "./interfaces/IToChain.sol";
+import "./interfaces/ITCStorage.sol";
 
 /**
 * @title Accept tokens from other chain
 */
 contract ToChain is IToChain {
-    // Declare storage for the used transactions
-    mapping(bytes32 => bool) processedTx;
+    // To chain tranasctions storage
+    address tcStorage;
 
-    /**
-    * @notice Write info to the log when cross chain transfer was accepted
-    * @param fromTokenAddress Token address in the previous chain
-    * @param sendedFrom Sender address in the previous chain
-    * @param recipient Recipient address
-    * @param tokenAddress Token address in the current chain
-    * @param fromChain Original chain
-    * @param originalTxHash Tx hash which initiate cross chain transfer
-    * @param value Amount of tokens || token id for the CAT-721 token
-    */
-    event AcceptedFromOtherChain(
-        address indexed fromTokenAddress,
-        address indexed recipient,
-        uint indexed txId,
-        address tokenAddress,
-        bytes32 sendedFrom,
-        bytes32 fromChain,
-        bytes32 originalTxHash,
-        uint value
-    );
+    // Initialize contract with storage
+    constructor(address storageAddress) public {
+        tcStorage = storageAddress;
+    }
 
     /**
     * @notice Receipt tokens from the other chain
@@ -52,11 +37,12 @@ contract ToChain is IToChain {
     ) 
         internal
     {
-        require(!processedTx[originalTxHash], "Transaction already processed.");
+        bool txStatus = TCStorage().getOriginalTxStatus(originalTxHash);
+        require(!txStatus, "Transaction already processed.");
 
-        processedTx[originalTxHash] = true;
+        TCStorage().updateOriginalTxStatus(originalTxHash, true);
 
-        emit AcceptedFromOtherChain(
+        TCStorage().emitAcceptedFromOtherChain(
             fromTokenAddress,
             recipient,
             txId,
@@ -73,6 +59,13 @@ contract ToChain is IToChain {
     * @param originalTxHash Transaction hash in the parent blockchain
     */
     function crossChainTxIsProcessed(bytes32 originalTxHash) public view returns (bool) {
-        return processedTx[originalTxHash];
+        return TCStorage().getOriginalTxStatus(originalTxHash);
+    }
+
+    /**
+    * @notice Returns instance of the to chain transactions storage
+    */
+    function TCStorage() internal view returns (ITCStorage) {
+        return ITCStorage(tcStorage);
     }
 }

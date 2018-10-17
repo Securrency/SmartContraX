@@ -1,30 +1,19 @@
 pragma solidity ^0.4.24;
 
 import "./interfaces/IFromChain.sol";
+import "./interfaces/IFCStorage.sol";
 
 /**
 * @title Provide transfer from the chain
 */
 contract FromChain is IFromChain {
-    // Store cross chain transaction id
-    uint public id = 1;
+    // Address of the from chain transactions storage
+    address fcStorage;
 
-    /**
-    * @notice Write info to the log when cross chain transfer was initiated
-    * @param tokenAddress Token address
-    * @param sender Tokens owner
-    * @param chain Target chain
-    * @param targetAddress Recipient wallet in the other chain
-    * @param value Amount of tokens || token id for the CAT-721 token
-    */
-    event SendedToOtherChain(
-        address indexed tokenAddress,
-        address indexed sender,
-        uint indexed txId,
-        bytes32 chain,
-        bytes32 targetAddress,
-        uint value
-    );
+    // Initialize contract with strage address
+    constructor(address storageAddress) public {
+        fcStorage = storageAddress;
+    }
 
     /**
     * @notice Move tokens from chain
@@ -43,11 +32,12 @@ contract FromChain is IFromChain {
     ) 
         internal
     {
-        uint txId = id;
+        uint txId = FCStorage().getTransactionId();
+        uint newId = txId++;
 
-        id++;
+        FCStorage().setTransactionId(newId);
 
-        emit SendedToOtherChain(
+        FCStorage().emitSendedToOtherChain(
             tokenAddress,
             sender,
             txId,
@@ -55,5 +45,12 @@ contract FromChain is IFromChain {
             targetAddress,
             value
         );
+    }
+
+    /**
+    * @notice Returns instance of the from chain transactions storage
+    */
+    function FCStorage() internal view returns (IFCStorage) {
+        return IFCStorage(fcStorage);
     }
 }
