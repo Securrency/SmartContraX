@@ -4,6 +4,7 @@ import "../cross-chain/CrossChainService.sol";
 import "./interfaces/ITransferModule.sol";
 import "./TransferModuleMetadata.sol";
 import "../../request-verification-layer/transfer-verification-system/interfaces/ITransferVerification.sol";
+import "../../request-verification-layer/transfer-verification-system/interfaces/ITrancheTransferVerification.sol";
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "../../registry-layer/tokens-factory/interfaces/IMultiChainToken.sol";
 import "../../common/component/SystemComponent.sol";
@@ -166,6 +167,43 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
             to,
             sender,
             msg.sender,
+            tokens
+        );
+    }
+
+    /**
+    * @notice Verify tokens transfer in the tranche. 
+    * @notice Selecting verification logic depending on the token standard.
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param tranche Tranche
+    * @param tokens The amount of tokens to be transferred 
+    */
+    function verifyTrancheTransfer(
+        address from,
+        address to,
+        address sender,
+        bytes32 tranche,
+        uint tokens
+    )
+        public
+        onlyRegistredToken(msg.sender)
+        view
+        returns (bool)
+    {
+        bytes32 standard = tfInstance().getTokenStandard(msg.sender);
+        address verification = transferVerifications[standard];
+
+        if(verification == address(0)) {
+            return true;
+        }
+
+        return ITrancheTransferVerification(verification).verifyTransfer(
+            from,
+            to,
+            sender,
+            msg.sender,
+            tranche,
             tokens
         );
     }
