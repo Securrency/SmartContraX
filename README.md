@@ -34,7 +34,7 @@ Components:
 * **Transfer Module** receives requests and sends them to the token factory to get to know the information about the token. Tokens factory accepts the token address and approves that this token exists to provide its standard. Later when the information is received from Token factory transfer module sends it on verification to the "transfer verification layer" where the token is getting verified according to the whitelists, rules engine etc services which have been provided in the standard.
 * **Cross Chain service** allow transfer tokens to the other chain. Before it checks who's transaction initiator, whether it's "Transfer module" or not.  If the request comes from "Transfer module", **"FromChain"** records the transaction to the blockchain: token address, token owner, target chain, targetAddress Recipient wallet in the other chain, value Amount of tokens or token id for the CAT-721 token. **"ToChain"** gets the direct requests from the verified third party (Securrency)  and sends third-party's wallet to the Permission module to check whether this wallet is allowed to perform cross chain transaction or not. "FromChain" module records the following information into the blockchain: 
   - _fromTokenAddress_ Token address in the previous chain 
-  - _sendedFrom_ Sender address in the previous chain
+  - _sentFrom_ Sender address in the previous chain
   - _recipient_  address 
   - _tokenAddress_ Token address in the current chain 
   - _from_ Original chain

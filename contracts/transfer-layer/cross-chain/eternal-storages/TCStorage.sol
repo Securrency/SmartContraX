@@ -14,7 +14,7 @@ contract TCStorage is BaseStorage, ITCStorage {
     /**
     * @notice Write info to the log when cross chain transfer was accepted
     * @param fromTokenAddress Token address in the previous chain
-    * @param sendedFrom Sender address in the previous chain
+    * @param sentFrom Sender address in the previous chain
     * @param recipient Recipient address
     * @param tokenAddress Token address in the current chain
     * @param fromChain Original chain
@@ -26,7 +26,7 @@ contract TCStorage is BaseStorage, ITCStorage {
         address indexed recipient,
         uint indexed txId,
         address tokenAddress,
-        bytes32 sendedFrom,
+        bytes32 sentFrom,
         bytes32 fromChain,
         bytes32 originalTxHash,
         uint value
@@ -41,7 +41,7 @@ contract TCStorage is BaseStorage, ITCStorage {
     /**
     * @notice Write info to the log when cross chain transfer was accepted
     * @param fromTokenAddress Token address in the previous chain
-    * @param sendedFrom Sender address in the previous chain
+    * @param sentFrom Sender address in the previous chain
     * @param recipient Recipient address
     * @param tokenAddress Token address in the current chain
     * @param fromChain Original chain
@@ -53,7 +53,7 @@ contract TCStorage is BaseStorage, ITCStorage {
         address recipient,
         uint txId,
         address tokenAddress,
-        bytes32 sendedFrom,
+        bytes32 sentFrom,
         bytes32 fromChain,
         bytes32 originalTxHash,
         uint value
@@ -66,7 +66,7 @@ contract TCStorage is BaseStorage, ITCStorage {
             recipient,
             txId,
             tokenAddress,
-            sendedFrom,
+            sentFrom,
             fromChain,
             originalTxHash,
             value

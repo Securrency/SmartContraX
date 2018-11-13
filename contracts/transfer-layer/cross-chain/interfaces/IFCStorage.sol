@@ -13,7 +13,7 @@ contract IFCStorage {
     * @param targetAddress Recipient wallet in the other chain
     * @param value Amount of tokens || token id for the CAT-721 token
     */
-    function emitSendedToOtherChain(
+    function emitSentToOtherChain(
         address tokenAddress,
         address sender,
         uint txId,

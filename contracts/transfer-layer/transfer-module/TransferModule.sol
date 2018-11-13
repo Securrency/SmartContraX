@@ -86,7 +86,7 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
     /**
     * @notice Receipt tokens from the other chain
     * @param fromTokenAddress Token address in the previous chain
-    * @param sendedFrom Sender address in the previous chain
+    * @param sentFrom Sender address in the previous chain
     * @param recipient Recipient address
     * @param tokenAddress Token address in the current chain
     * @param fromChain Original chain
@@ -97,7 +97,7 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
         address fromTokenAddress,
         address recipient,
         address tokenAddress,
-        bytes32 sendedFrom,
+        bytes32 sentFrom,
         bytes32 fromChain,
         bytes32 originalTxHash,
         uint value,
@@ -112,7 +112,7 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
         );
         require(fromTokenAddress != address(0), "Invalid address.");
         require(recipient != address(0), "Invalid address.");
-        require(sendedFrom.length > 0, "Invalid sender address.");
+        require(sentFrom.length > 0, "Invalid sender address.");
         require(isSupported(fromChain), "Chain is not supported.");
         require(originalTxHash.length > 0, "Invalid original tx hash.");
         require(value > 0, "Invalid value.");
@@ -121,14 +121,14 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
             value,
             fromChain,
             recipient,
-            sendedFrom
+            sentFrom
         );
 
         receivedFromOtherChain(
             fromTokenAddress,
             recipient,
             tokenAddress,
-            sendedFrom,
+            sentFrom,
             fromChain,
             originalTxHash,
             value,

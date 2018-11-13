@@ -18,7 +18,7 @@ contract ToChain is IToChain {
     /**
     * @notice Receipt tokens from the other chain
     * @param fromTokenAddress Token address in the previous chain
-    * @param sendedFrom Sender address in the previous chain
+    * @param sentFrom Sender address in the previous chain
     * @param recipient Recipient address
     * @param tokenAddress Token address in the current chain
     * @param fromChain Original chain
@@ -29,7 +29,7 @@ contract ToChain is IToChain {
         address fromTokenAddress,
         address recipient,
         address tokenAddress,
-        bytes32 sendedFrom,
+        bytes32 sentFrom,
         bytes32 fromChain,
         bytes32 originalTxHash,
         uint value,
@@ -47,7 +47,7 @@ contract ToChain is IToChain {
             recipient,
             txId,
             tokenAddress,
-            sendedFrom,
+            sentFrom,
             fromChain,
             originalTxHash,
             value

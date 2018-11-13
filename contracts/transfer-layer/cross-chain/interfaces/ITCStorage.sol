@@ -8,7 +8,7 @@ contract ITCStorage {
     /**
     * @notice Write info to the log when cross chain transfer was accepted
     * @param fromTokenAddress Token address in the previous chain
-    * @param sendedFrom Sender address in the previous chain
+    * @param sentFrom Sender address in the previous chain
     * @param recipient Recipient address
     * @param tokenAddress Token address in the current chain
     * @param fromChain Original chain
@@ -20,7 +20,7 @@ contract ITCStorage {
         address recipient,
         uint txId,
         address tokenAddress,
-        bytes32 sendedFrom,
+        bytes32 sentFrom,
         bytes32 fromChain,
         bytes32 originalTxHash,
         uint value

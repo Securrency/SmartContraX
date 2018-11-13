@@ -126,7 +126,7 @@ async function run() {
 async function watch() {
     setTimeout(function(){ 
         console.log(chainName, lastBlock);
-        FCStorage.getPastEvents('SendedToOtherChain', {
+        FCStorage.getPastEvents('SentToOtherChain', {
             fromBlock: lastBlock,
             toBlock: 'latest'
         }, async function(error, events) {
@@ -172,7 +172,7 @@ async function watch() {
                 });
 
                 let recipient = events[i]["returnValues"]["4"].replace("000000000000000000000000", "");
-                let sendedFrom = events[i]["returnValues"]["1"];
+                let sentFrom = events[i]["returnValues"]["1"];
                 let originalTxHash = events[i].transactionHash;
                 let value = events[i]["returnValues"]["5"];
 
@@ -182,7 +182,7 @@ async function watch() {
                     fromTokenAddress,
                     recipient,
                     tokenAddress,
-                    sendedFrom,
+                    sentFrom,
                     web3.utils.toHex(chainName),
                     originalTxHash,
                     value,

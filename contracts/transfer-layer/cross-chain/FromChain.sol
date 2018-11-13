@@ -37,7 +37,7 @@ contract FromChain is IFromChain {
 
         FCStorage().setTransactionId(newId);
 
-        FCStorage().emitSendedToOtherChain(
+        FCStorage().emitSentToOtherChain(
             tokenAddress,
             sender,
             txId,
