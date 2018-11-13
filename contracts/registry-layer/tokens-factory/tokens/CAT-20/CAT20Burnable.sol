@@ -28,6 +28,8 @@ contract CAT20Burnale is SecuritiesStandardToken {
     * @param value The amount of token to be burned
     */
     function burn(uint value) public {
+        require(value > 0, "Invalid value.");
+
         _burn(msg.sender, value);
     }
 
@@ -42,6 +44,9 @@ contract CAT20Burnale is SecuritiesStandardToken {
         external
         verifyPermission(msg.sig, msg.sender)
     {
+        require(from != address(0), "Invalid token holder address");
+        require(value > 0, "Invalid value.");
+
         _burn(from, value);
 
         emit BurnedByIssuer(from, msg.sender, value, data);
@@ -53,7 +58,7 @@ contract CAT20Burnale is SecuritiesStandardToken {
     * @param value The amount of token to be burned.
     */
     function _burn(address from, uint value) internal {
-        require(value <= balances[from]);
+        require(value <= balances[from], "Insufficient funds.");
 
         // Stats updates
         balances[from] = balances[from].sub(value);
