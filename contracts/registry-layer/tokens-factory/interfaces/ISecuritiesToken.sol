@@ -28,4 +28,20 @@ contract ISecuritiesToken {
     * @notice Return token issuer address
     */
     function getIssuerAddress() public view returns (address);
+
+    /**
+    * @notice Clawback method which provides an allowance for the issuer 
+    * @notice to move tokens between any accounts
+    * @param from Address from which tokens will be removed
+    * @param to The recipient address
+    * @param value Value which will be transferred
+    * @param data Any additional info about transfer
+    */
+    function clawback(
+        address from,
+        address to,
+        uint value,
+        bytes32 data
+    )
+        external;
 }

@@ -130,6 +130,9 @@ contract("CAT20Token", accounts => {
         let addToWLId = createId("addToWhiteList(address,address)");
         tx = await permissionModule.addMethodToTheRole(addToWLId, complianceRoleName, { from: accounts[0] });
 
+        let cl = createId("clawback(address,address,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(cl, complianceRoleName, { from: accounts[0] });
+
         let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
         tx = await permissionModule.addMethodToTheRole(rollbackId, complianceRoleName, { from: accounts[0] });
 
@@ -277,6 +280,7 @@ contract("CAT20Token", accounts => {
             tx = await whiteList.addToWhiteList(token_owner, CAT20Token.address.valueOf(), { from: token_owner });
             tx = await whiteList.addToWhiteList(token_holder_1, CAT20Token.address.valueOf(), { from: token_owner });
             tx = await whiteList.addToWhiteList(token_holder_2, CAT20Token.address.valueOf(), { from: token_owner });
+            tx = await whiteList.addToWhiteList(accounts[9], CAT20Token.address.valueOf(), { from: token_owner });
         })
 
         it("Should transfer tokens from the owner account to account " + token_holder_1, async() => {
@@ -314,6 +318,25 @@ contract("CAT20Token", accounts => {
 
             let status = await CAT20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
+        });
+
+        it("Clawback", async() => {
+            let tx = await CAT20Token.clawback(token_holder_2, accounts[9], toTransfer, "", { from: token_owner });
+
+            assert.equal(tx.logs[0].args.from, token_holder_2);
+            assert.equal(tx.logs[0].args.to, accounts[9]);
+        });
+
+        it("Should fail to create clawback", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.clawback(accounts[9], token_holder_2, toTransfer, "", { from: token_holder_2 });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
         });
     });
 

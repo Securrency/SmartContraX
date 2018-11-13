@@ -98,6 +98,7 @@ async function run(netowrk) {
         "mint(address,uint256)",
         "mint(address)",
         "crossChainTransfer(uint256,bytes32,bytes32)",
+        "clawback(address,address,uint256,bytes32)",
     ];
 
     let rolesData = [

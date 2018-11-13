@@ -16,25 +16,56 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     using SafeMath for uint256;
 
     /**
+    * @notice Write details about clawback to the log
+    * @param from Address from which tokens will be removed
+    * @param to Recipient address
+    * @param tokens Tokens to transfer
+    * @param data Any additional info about transfer
+    */
+    event Clawback(address indexed from, address indexed to, uint tokens, bytes32 data);
+
+    /**
+    * @notice Verify transfer
+    * @param from Address from which tokens will be removed
+    * @param to Recipient address
+    * @param sender Address of the transaction initiator
+    * @param tokens Tokens to transfer
+    */
+    modifier allowedTx(
+        address from,
+        address to,
+        address sender,
+        uint tokens
+    ) {
+        bool allowed = tmInstance().verifyTransfer(
+            from,
+            to,
+            sender,
+            tokens
+        );
+
+        require(allowed, "Transfer was declined.");
+
+        _;
+    }
+
+    /**
     * @notice Transfer tokens from chain
     * @param value Tokens to be transfered
     * @param chain Target chain name
     * @param recipient Target address 
     */
-    function crossChainTransfer(uint value, bytes32 chain, bytes32 recipient) external {
-        require(balances[msg.sender] >= value, "Insufficient funds.");
-        require(value > 0, "Invalid value.");
-
-        ITransferModule transferModule = tmInstance();
-
-        bool allowed = transferModule.verifyTransfer(
+    function crossChainTransfer(uint value, bytes32 chain, bytes32 recipient) 
+        external 
+        allowedTx(
             msg.sender,
             msg.sender,
             msg.sender,
             value
-        );
-
-        require(allowed, "Transfer was declined.");
+        )
+    {
+        require(balances[msg.sender] >= value, "Insufficient funds.");
+        require(value > 0, "Invalid value.");
 
         balances[msg.sender] = balances[msg.sender].sub(value);
         totalSupply_ = totalSupply_.sub(value);
@@ -42,7 +73,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         emit Transfer(msg.sender, address(0), value);
         emit FromChain(chain, value, msg.sender, recipient);
 
-        transferModule.sendTokensFromChain(
+        tmInstance().sendTokensFromChain(
             msg.sender,
             chain,
             recipient,
@@ -90,15 +121,16 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param to The address which you want to transfer to
     * @param value the amount of tokens to be transferred
     */
-    function transfer(address to, uint256 value) public returns (bool) {
-        bool allowed = tmInstance().verifyTransfer(
+    function transfer(address to, uint256 value) 
+        public 
+        allowedTx(
             msg.sender,
             to,
             msg.sender,
             value
-        );
-
-        require(allowed, "Transfer was declined.");
+        )
+        returns (bool)
+    {
         createCheckpoint(msg.sender, to, value, msg.sender);
 
         return super.transfer(to, value);
@@ -110,15 +142,16 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param to The address which you want to transfer to
     * @param value the amount of tokens to be transferred
     */
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {
-        bool allowed = tmInstance().verifyTransfer(
+    function transferFrom(address from, address to, uint256 value) 
+        public
+        allowedTx(
             from,
             to,
             msg.sender,
             value
-        );
-
-        require(allowed, "Transfer was declined.");
+        )
+        returns (bool) 
+    {
         createCheckpoint(from, to, value, msg.sender);
 
         return super.transferFrom(from, to, value);
@@ -140,6 +173,36 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
 
         emit Transfer(address(0), recipient, value);
         emit ToChain(chain, value, recipient, sender);
+    }
+
+    /**
+    * @notice Clawback method which provides an allowance for the issuer 
+    * @notice to move tokens between any accounts
+    * @param from Address from which tokens will be removed
+    * @param to Recipient address
+    * @param tokens Tokens to transfer
+    * @param data Any additional info about transfer
+    */
+    function clawback(
+        address from,
+        address to,
+        uint tokens,
+        bytes32 data
+    )
+        external
+        verifyPermissionForCurrentToken(msg.sig)
+        allowedTx(
+            from,
+            to,
+            msg.sender,
+            tokens
+        )
+    {
+        require(to != address(0), "Invalid recipient address.");
+
+        updatedBalances(from, to, tokens);
+
+        emit Clawback(from, to, tokens, data);
     }
 
     /**

@@ -44,6 +44,7 @@ contract("CAT721Token", accounts => {
     const totalSupply = 0;
 
     const tokenId = 1;
+    const testTokenId = 10;
 
     let CAT721Token;
     let whiteList;
@@ -129,6 +130,9 @@ contract("CAT721Token", accounts => {
 
         let mintId = createId("mint(address,uint256)");
         tx = await permissionModule.addMethodToTheRole(mintId, complianceRoleName, { from: accounts[0] });
+
+        let cl = createId("clawback(address,address,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(cl, complianceRoleName, { from: accounts[0] });
 
         let regCompId = createId("registerNewComponent(address)");
         tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
@@ -386,6 +390,31 @@ contract("CAT721Token", accounts => {
 
             let status = await CAT721Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
+        });
+
+        it("Clawback", async() => {
+            let tx = await CAT721Token.mint(token_holder_1, testTokenId);
+
+            assert.equal(tx.logs[0].args._to, token_holder_1);
+            assert.equal(tx.logs[0].args._tokenId, testTokenId);
+
+            tx = await CAT721Token.clawback(token_holder_1, token_holder_2, testTokenId, "", { from: token_owner });
+            
+            assert.equal(tx.logs[1].args.from, token_holder_1);
+            assert.equal(tx.logs[1].args.to, token_holder_2);
+            assert.equal(tx.logs[1].args.token, testTokenId);
+        });
+
+        it("Should fail to create clawback", async() => {
+            let errorThrown = false;
+            try {
+                await CAT721Token.clawback(token_holder_2, token_holder_1, testTokenId, "", { from: token_holder_1 });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
         });
     });
 });

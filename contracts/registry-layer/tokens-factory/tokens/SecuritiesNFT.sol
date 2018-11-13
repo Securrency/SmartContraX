@@ -11,6 +11,40 @@ import "openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 */
 contract SecuritiesNFT is SecuritiesToken, Protected, TransferModuleInstance, ERC721Token {
     /**
+    * @notice Write details about clawback to the log
+    * @param from Address from which tokens will be removed
+    * @param to The recipient address
+    * @param token Token identifier
+    * @param data Any additional info about transfer
+    */
+    event Clawback(address indexed from, address indexed to, uint token, bytes32 data);
+
+    /**
+    * @notice Verify transfer
+    * @param from Address from which tokens will be removed
+    * @param to The recipient address
+    * @param sender Address of the transaction initiator
+    * @param token Token identifier
+    */
+    modifier allowedTx(
+        address from,
+        address to,
+        address sender,
+        uint token
+    ) {
+        bool allowed = tmInstance().verifyTransfer(
+            from,
+            to,
+            sender,
+            token
+        );
+
+        require(allowed, "Transfer was declined.");
+
+        _;
+    }
+
+    /**
     * @notice Allows create rollback transaction for tokens
     * @notice tokens will be send back to the old owner, will be emited "RollbackTransaction" event
     * @param from Address from which we rollback tokens
@@ -48,22 +82,56 @@ contract SecuritiesNFT is SecuritiesToken, Protected, TransferModuleInstance, ER
     * @param to The address which you want to transfer to
     * @param tokenId NFT id
     */
-    function transferFrom(address from, address to, uint256 tokenId) public {
-        bool allowed = tmInstance().verifyTransfer(
+    function transferFrom(address from, address to, uint256 tokenId) 
+        public
+        allowedTx(
             from,
             to,
             msg.sender,
             tokenId
-        );
-
-        require(allowed, "Transfer was declined.");
+        ) 
+    {
         createCheckpoint(from, to, tokenId, msg.sender);
 
         super.transferFrom(from, to, tokenId);
     }
 
+    /**
+    * @notice Clawback method which provides an allowance for the issuer 
+    * @notice to move tokens between any accounts
+    * @param from Address from which tokens will be removed
+    * @param to The recipient address
+    * @param token Token identifier
+    * @param data Any additional info about transfer
+    */
+    function clawback(
+        address from,
+        address to,
+        uint token,
+        bytes32 data
+    )
+        external
+        verifyPermissionForCurrentToken(msg.sig)
+        allowedTx(
+            from,
+            to,
+            msg.sender,
+            token
+        )
+    {
+        require(to != address(0), "Invalid recipient address.");
 
+        updateBalances(from, to, token);
 
+        emit Clawback(from, to, token, data);
+    }
+
+    /**
+    * @notice Update token holders balances
+    * @param from Address from which we rollback tokens
+    * @param to Tokens owner
+    * @param tokenId Token identifier
+    */
     function updateBalances(address from, address to, uint256 tokenId) internal {
         clearApproval(from, tokenId);
         removeTokenFrom(from, tokenId);
