@@ -9,7 +9,7 @@ var PMST = artifacts.require("./request-verification-layer/permission-module/ete
 var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
 var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var CAT721S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT721Strategy.sol");
-var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT721Token.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-721/CAT721Token.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");

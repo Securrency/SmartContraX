@@ -1,7 +1,8 @@
 pragma solidity ^0.4.24;
 
 import "./TokenDeploymentStrategy.sol";
-import "../tokens/ERC20Token.sol";
+import "../tokens/ERC-20/ERC20Token.sol";
+
 
 /**
 * @title ERC-20 token deployment strategy

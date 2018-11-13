@@ -8,7 +8,7 @@ var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStor
 var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
-var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20/CAT20Token.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 

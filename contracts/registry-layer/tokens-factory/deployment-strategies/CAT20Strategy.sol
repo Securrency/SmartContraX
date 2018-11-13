@@ -1,8 +1,9 @@
 pragma solidity ^0.4.24;
 
 import "./TokenDeploymentStrategy.sol";
-import "../tokens/CAT20Token.sol";
+import "../tokens/CAT-20/CAT20Token.sol";
 import "../../../request-verification-layer/permission-module/Protected.sol";
+
 
 /**
 * @title CAT-20 token deployment strategy

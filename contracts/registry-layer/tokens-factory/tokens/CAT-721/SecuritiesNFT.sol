@@ -1,9 +1,9 @@
 pragma solidity ^0.4.24;
 
-import "../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
-import "../../../request-verification-layer/permission-module/Protected.sol";
-import "../../components-registry/instances/TransferModuleInstance.sol";
-import "./SecuritiesToken.sol";
+import "../../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
+import "../../../../request-verification-layer/permission-module/Protected.sol";
+import "../../../components-registry/instances/TransferModuleInstance.sol";
+import "../_common/SecuritiesToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
 
 /**

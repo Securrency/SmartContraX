@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
-import "../interfaces/IMultiChainToken.sol";
+import "../../interfaces/IMultiChainToken.sol";
+
 
 /**
 * @title Multi chain token

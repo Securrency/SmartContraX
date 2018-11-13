@@ -8,7 +8,7 @@ var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol"
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
 var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
-var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT20Token.sol");
+var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20/CAT20Token.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 

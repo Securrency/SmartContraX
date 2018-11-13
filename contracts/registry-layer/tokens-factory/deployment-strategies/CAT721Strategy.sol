@@ -1,8 +1,9 @@
 pragma solidity ^0.4.24;
 
 import "./TokenDeploymentStrategy.sol";
-import "../tokens/CAT721Token.sol";
+import "../tokens/CAT-721/CAT721Token.sol";
 import "../../../request-verification-layer/permission-module/Protected.sol";
+
 
 /**
 * @title CAT-721 token (NFT) deployment strategy
