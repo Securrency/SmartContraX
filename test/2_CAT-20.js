@@ -136,6 +136,9 @@ contract("CAT20Token", accounts => {
         let mt = createId("mint(address,uint256)");
         tx = await permissionModule.addMethodToTheRole(mt, complianceRoleName, { from: accounts[0] });
 
+        let iBurn = createId("issuerBurn(address,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(iBurn, complianceRoleName, { from: accounts[0] });
+
         let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
         tx = await permissionModule.addMethodToTheRole(rollbackId, complianceRoleName, { from: accounts[0] });
 
@@ -366,6 +369,26 @@ contract("CAT20Token", accounts => {
                 assert(isException(error), error.toString());
             }
             assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should burn tokens", async() => {
+            let toMint = web3.toWei(20);
+            await CAT20Token.mint(token_holder_2, toMint);
+
+            let tx = await CAT20Token.burn(toMint, { from: token_holder_2 });
+
+            assert.equal(tx.logs[0].args.from, token_holder_2);
+            assert.equal(tx.logs[0].args.value, toMint);
+        });
+
+        it("An issuer should burn tokens", async() => {
+            let toMint = web3.toWei(20);
+            await CAT20Token.mint(token_holder_2, toMint);
+
+            let tx = await CAT20Token.issuerBurn(token_holder_2, toMint, "", { from: token_owner });
+
+            assert.equal(tx.logs[0].args.from, token_holder_2);
+            assert.equal(tx.logs[0].args.value, toMint);
         });
 
         it("Clawback", async() => {
