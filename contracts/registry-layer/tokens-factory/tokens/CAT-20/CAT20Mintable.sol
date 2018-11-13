@@ -27,6 +27,9 @@ contract CAT20Mintable is SecuritiesStandardToken {
         verifyPermission(msg.sig, msg.sender)
         returns (bool)
     {
+        require(to != address(0), "Invalid recipient address.");
+        require(amount > 0, "Invalid amount.");
+        
         // Stats updates
         totalSupply_ = totalSupply_.add(amount);
         balances[to] = balances[to].add(amount);
