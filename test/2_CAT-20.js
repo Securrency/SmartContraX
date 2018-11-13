@@ -133,6 +133,9 @@ contract("CAT20Token", accounts => {
         let cl = createId("clawback(address,address,uint256,bytes32)");
         tx = await permissionModule.addMethodToTheRole(cl, complianceRoleName, { from: accounts[0] });
 
+        let mt = createId("mint(address,uint256)");
+        tx = await permissionModule.addMethodToTheRole(mt, complianceRoleName, { from: accounts[0] });
+
         let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
         tx = await permissionModule.addMethodToTheRole(rollbackId, complianceRoleName, { from: accounts[0] });
 
@@ -318,6 +321,51 @@ contract("CAT20Token", accounts => {
 
             let status = await CAT20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
+        });
+
+        it("Mint tokens", async() => {
+            let toMint = web3.toWei(20);
+            let tx = await CAT20Token.mint(accounts[8], toMint);
+
+            assert.equal(tx.logs[0].args.to, accounts[8]);
+        });
+
+        it("Should fail to mint tokens", async() => {
+            let toMint = web3.toWei(1000);
+            let errorThrown = false;
+            try {
+                await CAT20Token.mint(token_holder_2, toMint, { from: token_holder_2 });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail to mint tokens for invalid address", async() => {
+            let toMint = web3.toWei(1000);
+            let errorThrown = false;
+            try {
+                await CAT20Token.mint("0x0000000000000000000000000000000000000000", toMint);
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Invalid recipient address.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail to mint tokens with 0 amount", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.mint(token_holder_2, 0);
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Invalid amount.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
         });
 
         it("Clawback", async() => {
