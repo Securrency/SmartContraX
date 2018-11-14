@@ -1,17 +1,18 @@
 pragma solidity ^0.4.24;
 
 import "../../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
-import "../../../../request-verification-layer/permission-module/Protected.sol";
 import "../../../components-registry/instances/TransferModuleInstance.sol";
 import "../_common/MultiChainToken.sol";
 import "../_common/SecuritiesToken.sol";
+import "../_services/Pausable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 /**
 * @title Securities Standart Token
 */
-contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Protected, TransferModuleInstance {
+contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Pausable, TransferModuleInstance {
     // define libraries
     using SafeMath for uint256;
 
@@ -56,7 +57,8 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param recipient Target address 
     */
     function crossChainTransfer(uint value, bytes32 chain, bytes32 recipient) 
-        external 
+        external
+        notPaused() 
         allowedTx(
             msg.sender,
             msg.sender,
@@ -122,7 +124,8 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param value the amount of tokens to be transferred
     */
     function transfer(address to, uint256 value) 
-        public 
+        public
+        notPaused()
         allowedTx(
             msg.sender,
             to,
@@ -144,6 +147,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     */
     function transferFrom(address from, address to, uint256 value) 
         public
+        notPaused()
         allowedTx(
             from,
             to,
