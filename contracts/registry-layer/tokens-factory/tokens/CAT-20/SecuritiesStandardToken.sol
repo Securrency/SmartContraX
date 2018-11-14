@@ -5,6 +5,7 @@ import "../../../components-registry/instances/TransferModuleInstance.sol";
 import "../_common/MultiChainToken.sol";
 import "../_common/SecuritiesToken.sol";
 import "../_services/Pausable.sol";
+import "../_services/FungibleTokensHolder.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -12,7 +13,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /**
 * @title Securities Standart Token
 */
-contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Pausable, TransferModuleInstance {
+contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Pausable, FungibleTokensHolder, TransferModuleInstance {
     // define libraries
     using SafeMath for uint256;
 
@@ -38,6 +39,9 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         address sender,
         uint tokens
     ) {
+        uint activeBalance = balances[from].sub(tokensOnHold[from]);
+        require(activeBalance >= tokens, "Insufficient funds.");
+
         bool allowed = tmInstance().verifyTransfer(
             from,
             to,
@@ -58,7 +62,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     */
     function crossChainTransfer(uint value, bytes32 chain, bytes32 recipient) 
         external
-        notPaused() 
+        notPaused()
         allowedTx(
             msg.sender,
             msg.sender,
@@ -66,7 +70,6 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
             value
         )
     {
-        require(balances[msg.sender] >= value, "Insufficient funds.");
         require(value > 0, "Invalid value.");
 
         balances[msg.sender] = balances[msg.sender].sub(value);
