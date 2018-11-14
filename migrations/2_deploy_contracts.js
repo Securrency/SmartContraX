@@ -87,7 +87,7 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
-      return deployer.deploy(CAT20Strategy, ComponentsRegistryDeployed.address, {gas: 3700000}); 
+      return deployer.deploy(CAT20Strategy, ComponentsRegistryDeployed.address, {gas: 5100000}); 
     })
     .then((instance) => {
       CAT20StrategyDeployed = instance;

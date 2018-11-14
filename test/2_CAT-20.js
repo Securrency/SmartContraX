@@ -148,6 +148,12 @@ contract("CAT20Token", accounts => {
         let unp = createId("unpause()");
         tx = await permissionModule.addMethodToTheRole(unp, complianceRoleName, { from: accounts[0] });
 
+        let mToHold = createId("moveTokensOnHold(address,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(mToHold, complianceRoleName, { from: accounts[0] });
+
+        let mFromHold = createId("moveTokensFromHold(address,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(mFromHold, complianceRoleName, { from: accounts[0] });
+
         let regCompId = createId("registerNewComponent(address)");
         tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
 
@@ -466,6 +472,45 @@ contract("CAT20Token", accounts => {
             }
             assert.ok(errorThrown, "Transaction should fail!");
 
+        });
+
+        it("Should move tokens on hold", async() => {
+            let toMint = web3.toWei(20);
+            await CAT20Token.mint(token_holder_1, toMint);
+
+            let tx = await CAT20Token.moveTokensOnHold(token_holder_1, toMint / 2, "");
+            
+            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
+            assert.equal(tx.logs[0].args.value, toMint / 2);
+        });
+
+        it("Retuns correct number of tokens on hold", async() => {
+            let modvedOnHold = web3.toWei(10);
+
+            let onHold = await CAT20Token.getNumberOfTokensOnHold(token_holder_1);
+
+            assert.equal(onHold, modvedOnHold);
+        });
+
+        it("Should fialed to move token on hold from not authorized account", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.moveTokensOnHold(token_holder_1, 1, "", { from: accounts[9] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should move tokens from hold", async() => {
+            let toMint = web3.toWei(20);
+
+            let tx = await CAT20Token.moveTokensFromHold(token_holder_1, toMint / 2, "");
+            
+            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
+            assert.equal(tx.logs[0].args.value, toMint / 2);
         });
     });
 
