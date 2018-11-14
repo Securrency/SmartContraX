@@ -37,7 +37,7 @@ contract Pausable is Protected {
     */
     function pause() 
         external 
-        verifyPermission(msg.sig, msg.sender) 
+        verifyPermissionForCurrentToken(msg.sig)
         notPaused() 
     {
         paused = true;
@@ -49,7 +49,7 @@ contract Pausable is Protected {
     */
     function unpause() 
         external
-        verifyPermission(msg.sig, msg.sender) 
+        verifyPermissionForCurrentToken(msg.sig)
         onlyPaused()
     {
         paused = false;

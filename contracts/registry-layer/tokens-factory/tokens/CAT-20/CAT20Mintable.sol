@@ -24,7 +24,7 @@ contract CAT20Mintable is SecuritiesStandardToken {
         uint256 amount
     )
         public
-        verifyPermission(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
         returns (bool)
     {
         require(to != address(0), "Invalid recipient address.");

@@ -54,7 +54,7 @@ contract FungibleTokensHolder is IFungibleTokensHolder, Protected {
     */
     function moveTokensOnHold(address tokenHolder, uint amount, bytes32 data) 
         external
-        verifyPermission(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
         valid(tokenHolder, amount)
     {
         // Stats update
@@ -73,7 +73,7 @@ contract FungibleTokensHolder is IFungibleTokensHolder, Protected {
     */
     function moveTokensFromHold(address tokenHolder, uint amount, bytes32 data)
         external
-        verifyPermission(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
         valid(tokenHolder, amount)
     {
         require(tokensOnHold[tokenHolder] >= amount, "The amount is greater than the number of tokens on hold.");

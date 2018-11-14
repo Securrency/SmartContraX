@@ -42,7 +42,7 @@ contract CAT20Burnale is SecuritiesStandardToken {
     */
     function issuerBurn(address from, uint value, bytes32 data)
         external
-        verifyPermission(msg.sig, msg.sender)
+        verifyPermissionForCurrentToken(msg.sig)
     {
         require(from != address(0), "Invalid token holder address");
         require(value > 0, "Invalid value.");
