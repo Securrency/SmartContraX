@@ -142,6 +142,12 @@ contract("CAT20Token", accounts => {
         let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
         tx = await permissionModule.addMethodToTheRole(rollbackId, complianceRoleName, { from: accounts[0] });
 
+        let p = createId("pause()");
+        tx = await permissionModule.addMethodToTheRole(p, complianceRoleName, { from: accounts[0] });
+
+        let unp = createId("unpause()");
+        tx = await permissionModule.addMethodToTheRole(unp, complianceRoleName, { from: accounts[0] });
+
         let regCompId = createId("registerNewComponent(address)");
         tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
 
@@ -408,6 +414,58 @@ contract("CAT20Token", accounts => {
                 assert(isException(error), error.toString());
             }
             assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should set token on pause", async() => {
+            let tx = await CAT20Token.pause({ from: token_owner });
+
+            assert.notEqual(tx.logs[0], "undefined");
+        });
+
+        it("Should be failed to transfer tokens", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.transfer(token_holder_1, toTransfer, { from: token_owner });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transactions are stoped by an issuer.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should be failed to transfer approved tokens", async() => {
+            let toApprove = web3.toWei(1);
+            await CAT20Token.approve(token_holder_1, toApprove, {from: token_owner});
+
+            let errorThrown = false;
+            try {
+                await CAT20Token.transferFrom(token_owner, token_holder_1, toApprove, { from: token_holder_1 });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transactions are stoped by an issuer.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Must take off the pause", async() => {
+            let tx = await CAT20Token.unpause({ from: token_owner });
+
+            assert.notEqual(tx.logs[0], "undefined");
+        });
+
+        it("Should fialed to set token on pause", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.pause({ from: accounts[9] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+
         });
     });
 
