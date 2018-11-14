@@ -45,25 +45,6 @@ contract FungibleTokensHolder is IFungibleTokensHolder, Protected {
         
         _;
     }
-    
-    /**
-    * @notice Allows for the issuer account move tokens on hold
-    * @param tokenHolder Token holder account
-    * @param amount Number of tokens that will be moved on hold
-    * @param data Additional info
-    */
-    function moveTokensOnHold(address tokenHolder, uint amount, bytes32 data) 
-        external
-        verifyPermissionForCurrentToken(msg.sig)
-        valid(tokenHolder, amount)
-    {
-        // Stats update
-        totalOnHold = totalOnHold.add(amount);
-        tokensOnHold[tokenHolder] = tokensOnHold[tokenHolder].add(amount);
-
-        // Write info to the log
-        emit MovedOnHold(tokenHolder, amount, data);
-    }
 
     /**
     * @notice Allows for the issuer account move tokens from hold
@@ -99,5 +80,23 @@ contract FungibleTokensHolder is IFungibleTokensHolder, Protected {
     */
     function totalTokensOnHold() external view returns (uint) {
         totalOnHold;
+    }
+
+    /**
+    * @notice Allows for the issuer account move tokens on hold
+    * @param tokenHolder Token holder account
+    * @param amount Number of tokens that will be moved on hold
+    * @param data Additional info
+    */
+    function _moveTokensOnHold(address tokenHolder, uint amount, bytes32 data) 
+        internal
+        valid(tokenHolder, amount)
+    {
+        // Stats update
+        totalOnHold = totalOnHold.add(amount);
+        tokensOnHold[tokenHolder] = tokensOnHold[tokenHolder].add(amount);
+
+        // Write info to the log
+        emit MovedOnHold(tokenHolder, amount, data);
     }
 }

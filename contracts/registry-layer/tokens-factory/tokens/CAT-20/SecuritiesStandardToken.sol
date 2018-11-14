@@ -213,6 +213,20 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     }
 
     /**
+    * @notice Allows for the issuer account move tokens on hold
+    * @param tokenHolder Token holder account
+    * @param amount Number of tokens that will be moved on hold
+    * @param data Additional info
+    */
+    function moveTokensOnHold(address tokenHolder, uint amount, bytes32 data) 
+        external
+        verifyPermissionForCurrentToken(msg.sig) 
+    {
+        require(balances[tokenHolder] >= amount, "Insufficient funds on balance.");
+        _moveTokensOnHold(tokenHolder, amount, data);
+    }
+
+    /**
     * @notice Update token holders balances
     * @param from Address from which we rollback tokens
     * @param to Tokens owner
