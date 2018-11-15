@@ -44,7 +44,7 @@ contract RolesManager is IRolesManager {
     */
     modifier canWorkWithRole(bytes32 role) {
         bytes32 parentRole = PMStorage().getParentRole(role);
-        require(PMStorage().verifyRole(msg.sender, ownerRole), "Role management not allowed.");
+        require(PMStorage().verifyRole(msg.sender, parentRole), "Role management not allowed.");
         _;
     }
 
