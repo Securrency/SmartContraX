@@ -148,9 +148,28 @@ contract('SymbolsRegistry', accounts => {
             assert.ok(errorThrown, "Transaction should fail!");
         });
 
-        it("Should successful transfer symbol ownership", async() => {
-            let tx = await symbolRegistry.transferOwnership(hexSymbol, accounts[1], newIssuerName, { from: accounts[0] });
+        it("Should successful create request ont the symbol ownership transfer", async() => {
+            let tx = await symbolRegistry.transferOwnership(hexSymbol, accounts[1], { from: accounts[0] });
 
+            let topic = "0x8c631de9ce57758839cd680c6d21c0032d0036b20ded488f41326a800cd6a8de";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        });
+
+        it("Should be failed to accept symbol ownership", async() => {
+            let errorThrown = false;
+            try {
+                await symbolRegistry.acceptSymbolOwnership(hexSymbol, newIssuerName, { from: accounts[2] });
+            } catch (error) {
+                errorThrown = true
+                console.log(`         tx revert -> The sender has no right on the symbol.`.grey);
+                assert(isException(error), error.toString());;
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should successful accept symbol ownership", async() => {
+            let tx = await symbolRegistry.acceptSymbolOwnership(hexSymbol, newIssuerName, { from: accounts[1] });
+            
             let topic = "0x38f7ca9ae00747ca9704a1e9296eb432e0d56c4d9372224ce5c9e298f6874ec5";
             assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
 

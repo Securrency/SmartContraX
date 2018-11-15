@@ -110,25 +110,42 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     }
 
     /**
-    * @notice Change symbol owner
+    * @notice Create request on the symbol ownership transferring
+    * @param symbol Symbol
     * @param newOwner Address of the new symbol owner
-    * @param issuerName Name of the issuer
     */
-    function transferOwnership(bytes symbol, address newOwner, bytes issuerName) 
+    function transferOwnership(bytes symbol, address newOwner) 
         public
         onlySymbolOwner(symbol, msg.sender)
     {
         require(newOwner != address(0), "Invalid new owner address.");
-        
         symbol = symbol.toUpperBytes();
 
+        SRStorage().createRequestOnOwnershipTransfer(symbol, newOwner);
+        SRStorage().emitOwnershipTransferRequest(symbol, newOwner);
+    }
+
+    /**
+    * @notice Accept symbol ownership
+    * @param symbol Symbol
+    * @param issuerName Name of the issuer
+    */
+    function acceptSymbolOwnership(bytes symbol, bytes issuerName) public {
+        symbol = symbol.toUpperBytes();
+
+        require(
+            SRStorage().getRecipientOfTheSymbolOwnership(symbol) == msg.sender, 
+            "The sender has no right on the symbol."
+        );
+        
         address oldOwner = SRStorage().getSymbolOwner(symbol);
         
-        SRStorage().udpateSymbolOwner(symbol, newOwner);
+        SRStorage().udpateSymbolOwner(symbol, msg.sender);
         SRStorage().updateSymbolIssuerName(symbol, issuerName);
+        SRStorage().deleteRequestOnOwnershipTransfer(symbol);
         SRStorage().emitTransferedOwnership(
             oldOwner,
-            newOwner,
+            msg.sender,
             symbol,
             issuerName
         );

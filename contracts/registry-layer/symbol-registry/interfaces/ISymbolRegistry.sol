@@ -18,11 +18,18 @@ contract ISymbolRegistry {
     function renewSymbol(bytes symbol) public;
 
     /**
-    * @notice Change symbol owner
+    * @notice Create request on the symbol ownership transferring
+    * @param symbol Symbol
     * @param newOwner Address of the new symbol owner
+    */
+    function transferOwnership(bytes symbol, address newOwner) public;
+
+    /**
+    * @notice Accept symbol ownership
+    * @param symbol Symbol
     * @param issuerName Name of the issuer
     */
-    function transferOwnership(bytes symbol, address newOwner, bytes issuerName) public;
+    function acceptSymbolOwnership(bytes symbol, bytes issuerName) public;
 
     /**
     * @notice Checks symbol in system 

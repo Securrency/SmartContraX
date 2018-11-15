@@ -44,6 +44,11 @@ contract ISRStorage {
     */
     function emitRegisteredToken(address tokenAddress, bytes symbol) public;
 
+    /**
+    * @notice Emit event OwnershipTransferRequest
+    */
+    function emitOwnershipTransferRequest(bytes symbol, address newOwner) public;
+
     /// Methods which updates the storage. Allowed only for the Symbol Registry.
 
     /**
@@ -100,7 +105,27 @@ contract ISRStorage {
     */
     function updateExpirationInterval(uint interval) public; 
 
+    /**
+    * @notice Create request on the symbol ownership transferring
+    * @param symbol Symbol
+    * @param newOwner Address of the new symbol owner
+    */
+    function createRequestOnOwnershipTransfer(bytes symbol, address newOwner) public;
+
+    /**
+    * @notice Delete request on the symbol ownership transferring
+    * @param symbol Symbol
+    */
+    function deleteRequestOnOwnershipTransfer(bytes symbol) public;
+
     /// Getters. Public methods which are allowed for anyone.
+
+    /**
+    * @notice Returns new symbol owner address.
+    * @notice If there is no new owner will be returned address(0)
+    * @param symbol Symbol
+    */
+    function getRecipientOfTheSymbolOwnership(bytes symbol) public view returns (address);
 
     /**
     * @notice Returns address of the symbol owner

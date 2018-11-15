@@ -11,6 +11,10 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     // Interval for symbol expiration
     uint internal exprationInterval = 604800;
 
+    // Declare storage for symbol ownership transfer
+    // symbol -> new owner
+    mapping(bytes => address) ownershipTransfer;
+
     // Write info to the log when was transferred symbol ownership
     event TransferedOwnership(
         address oldOwner,
@@ -34,6 +38,9 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
 
     // Write info to the log when token was registered
     event RegisteredToken(address tokenAddress, bytes symbol);
+
+    // Write info to the log about new ownership transfer request
+    event OwnershipTransferRequest(bytes symbol, address newOwner);
 
     // Describe symbol struct
     struct Symbol {
@@ -72,6 +79,16 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
 
     /// Events emmiters. Write info about any state changes to the log.
     /// Allowed only for the Symbol Registry.
+
+    /**
+    * @notice Emit event OwnershipTransferRequest
+    */
+    function emitOwnershipTransferRequest(bytes symbol, address newOwner) 
+        public
+        onlySymbolRegistry(msg.sender)
+    {
+        emit OwnershipTransferRequest(symbol, newOwner);
+    }
 
     /**
     * @notice Emit event TransferedOwnership 
@@ -230,7 +247,39 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
         exprationInterval = interval;
     }
 
+    /**
+    * @notice Create request on the symbol ownership transferring
+    * @param symbol Symbol
+    * @param newOwner Address of the new symbol owner
+    */
+    function createRequestOnOwnershipTransfer(bytes symbol, address newOwner) 
+        public
+        onlySymbolRegistry(msg.sender)
+    {
+        ownershipTransfer[symbol] = newOwner;
+    }
+
+    /**
+    * @notice Delete request on the symbol ownership transferring
+    * @param symbol Symbol
+    */
+    function deleteRequestOnOwnershipTransfer(bytes symbol) 
+        public
+        onlySymbolRegistry(msg.sender)
+    {
+        delete ownershipTransfer[symbol];
+    }
+
     /// Getters. Public methods which are allowed for anyone.
+
+    /**
+    * @notice Returns new symbol owner address.
+    * @notice If there is no new owner will be returned address(0)
+    * @param symbol Symbol
+    */
+    function getRecipientOfTheSymbolOwnership(bytes symbol) public view returns (address) {
+        return ownershipTransfer[symbol];
+    }
 
     /**
     * @notice Returns address of the symbol owner
