@@ -23,6 +23,11 @@ contract IPMNetworkRolesStorage {
     */
     function emitTransferedOwnership(address oldOwner, address newOwner) public;
 
+    /**
+    * @notice Emit event OwnershipTransferRequest
+    */
+    function emitOwnershipTransferRequest(address newOwner) public;
+
     /// Methods which updates the storage. Allowed only for the Permission Module.
 
     /**
@@ -61,6 +66,28 @@ contract IPMNetworkRolesStorage {
     * @param index Index
     */
     function setWalletRolesIndex(address wallet, uint8 index) public;
+
+    /**
+    * @notice Create request on the symbol ownership transferring
+    * @param newOwner Address of the new symbol owner
+    */
+    function createRequestOnOwnershipTransfer(address newOwner) public;
+
+    /**
+    * @notice Delete request on the symbol ownership transferring
+    */
+    function deleteRequestOnOwnershipTransfer() public;
+
+    /**
+    * @notice Set address which wants transfer ownership
+    * @param owner Address which wants transfer ownership
+    */
+    function setOldOwner(address owner) public;
+
+    /**
+    * @notice Set address which wants transfer ownership
+    */
+    function deleteOldOwner() public;
 
     /// Getters. Public methods which are allowed for anyone.
 
@@ -109,4 +136,14 @@ contract IPMNetworkRolesStorage {
     * @param index Index of the role
     */
     function getWalletRoleFromTheList(address wallet, uint8 index) public view returns (bytes32);
+
+    /**
+    * @notice Returns address of the feature network owner
+    */
+    function getFutureOwner() public view returns (address);
+
+    /**
+    * @notice Returns address which wants transfer ownership
+    */
+    function getOldOwner() public view returns (address);
 }

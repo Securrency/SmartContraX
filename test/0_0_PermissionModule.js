@@ -849,6 +849,24 @@ contract('PermissionModule', accounts => {
 
         it("Should transfer ownership", async() => {
             let tx = await permissionModule.transferOwnership(accounts[1], { from: owner });
+            let topic = "0x1399338fbdd61ce69ad7a59b8913751ad69b17ec3e2dd9cf2bb5dc5caea2ea8b";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        });
+
+        it("Should be failed to accept ownership from an account without permission", async() => {
+            let errorThrown = false;
+            try {
+                await permissionModule.acceptOwnership({ from: accounts[2] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Allowed only for the owner.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should accept ownership", async() => {
+            let tx = await permissionModule.acceptOwnership({ from: accounts[1] });
             status = await PMStorage.verifyRole(accounts[1], "Owner");
             assert.equal(status, true);
         });
@@ -873,6 +891,12 @@ contract('PermissionModule', accounts => {
 
         it("Should transfer ownership back to the previous owner", async() => {
             let tx = await permissionModule.transferOwnership(owner, { from: accounts[1] });
+            let topic = "0x1399338fbdd61ce69ad7a59b8913751ad69b17ec3e2dd9cf2bb5dc5caea2ea8b";
+            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        });
+
+        it("Previous owner should accept ownership", async() => {
+            let tx = await permissionModule.acceptOwnership({ from: owner });
             status = await PMStorage.verifyRole(owner, "Owner");
             assert.equal(status, true);
         });

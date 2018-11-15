@@ -44,7 +44,7 @@ module.exports = function(deployer, network, accounts) {
   deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
     ComponentsRegistryDeployed = instance;
-    return deployer.deploy(PMStorage, ComponentsRegistryDeployed.address, {gas: 3100000})
+    return deployer.deploy(PMStorage, ComponentsRegistryDeployed.address, {gas: 3500000})
     .then((instance) => {
       PMStorageDeployed = instance;
       return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, PMStorageDeployed.address, {gas: 6200000})

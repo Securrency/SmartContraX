@@ -16,10 +16,15 @@ contract INetworkRolesManager {
     function removeRoleFromTheWallet(address wallet, bytes32 roleName) public;
 
     /**
-    * @notice Transfer ownership
-    * @param newOwner Address of the new owner
+    * @notice Create request on the ownership transferring
+    * @param newOwner An address of the new owner
     */
     function transferOwnership(address newOwner) public;
+
+    /**
+    * @notice Accept network ownership
+    */
+    function acceptOwnership() public;
 
     /**
     * @notice Returns list of all roles of the wallet

@@ -53,19 +53,36 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     }
 
     /**
-    * @notice Transfer ownership
-    * @param newOwner Address of the new owner
+    * @notice Create request on the ownership transferring
+    * @param newOwner An address of the new owner
     */
     function transferOwnership(address newOwner) public onlyOwner() {
         require(newOwner != address(0), "Invalid new owner address.");
         
-        uint8 index = PMStorage().getWalletRoleIndex(newOwner);
+        PMStorage().createRequestOnOwnershipTransfer(newOwner);
+        PMStorage().setOldOwner(msg.sender);
+        PMStorage().emitOwnershipTransferRequest(newOwner);
+    }
+
+    /**
+    * @notice Accept network ownership
+    */
+    function acceptOwnership() public {
+        require(
+            PMStorage().getFutureOwner() == msg.sender,
+            "You have no rights on the network."
+        );
+
+        uint8 index = PMStorage().getWalletRoleIndex(msg.sender);
         require(index <= rolesLimit, "The limit for number of roles has been reached.");
+        address oldOwner = PMStorage().getOldOwner();
 
-        removeRole(msg.sender, ownerRole);
-        addRole(newOwner, ownerRole);
-
-        PMStorage().emitTransferedOwnership(msg.sender, newOwner);
+        removeRole(oldOwner, ownerRole);
+        addRole(msg.sender, ownerRole);
+        
+        PMStorage().deleteRequestOnOwnershipTransfer();
+        PMStorage().deleteOldOwner();
+        PMStorage().emitTransferedOwnership(oldOwner, msg.sender);   
     }
 
     /**

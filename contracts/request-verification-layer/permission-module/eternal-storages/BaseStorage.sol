@@ -16,6 +16,12 @@ contract BaseStorage is PermissionModuleAddress {
         _;
     }
 
+    // Store address which wants transfer ownership
+    address oldOwner;
+
+    // Stores future owner address
+    address futureOwner;
+
     // Predefined name of the owner role
     bytes32 ownerRole = bytes32("Owner");
 

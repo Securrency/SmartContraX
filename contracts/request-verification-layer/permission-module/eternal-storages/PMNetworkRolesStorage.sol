@@ -22,6 +22,11 @@ contract PMNetworkRolesStorage is IPMNetworkRolesStorage, BaseStorage {
     * @notice Write info to the log about ownership transfer
     */
     event TransferedOwnership(address oldOwner, address newOwner);
+
+    /**
+    * @notice Write info to the log about new ownership transfer request
+    */
+    event OwnershipTransferRequest(address newOwner);
     
     /// Events emmiters. Write info about any state changes to the log.
     /// Allowed only for the Permission Module.
@@ -56,7 +61,60 @@ contract PMNetworkRolesStorage is IPMNetworkRolesStorage, BaseStorage {
         emit TransferedOwnership(oldOwner, newOwner);
     }
 
+    /**
+    * @notice Emit event OwnershipTransferRequest
+    */
+    function emitOwnershipTransferRequest(address newOwner) 
+        public
+        onlyPermissionModule(msg.sender)
+    {
+        emit OwnershipTransferRequest(newOwner);
+    }
+
+
     /// Methods which updates the storage. Allowed only for the Permission Module.
+
+    /**
+    * @notice Create request on the ownership transferring
+    * @param newOwner Address of the new owner
+    */
+    function createRequestOnOwnershipTransfer(address newOwner) 
+        public
+        onlyPermissionModule(msg.sender)
+    {
+        futureOwner = newOwner;
+    }
+
+    /**
+    * @notice Delete request on the ownership transferring
+    */
+    function deleteRequestOnOwnershipTransfer() 
+        public
+        onlyPermissionModule(msg.sender)
+    {
+        futureOwner = address(0);
+    }
+
+    /**
+    * @notice Set an address which wants transfer ownership
+    * @param owner An address which wants transfer ownership
+    */
+    function setOldOwner(address owner) 
+        public
+        onlyPermissionModule(msg.sender)
+    {
+        oldOwner = owner;
+    }
+
+    /**
+    * @notice Set an address which wants transfer ownership
+    */
+    function deleteOldOwner() 
+        public
+        onlyPermissionModule(msg.sender)
+    {
+        oldOwner = address(0);
+    }
 
     /**
     * @notice Set status of the role
@@ -188,5 +246,19 @@ contract PMNetworkRolesStorage is IPMNetworkRolesStorage, BaseStorage {
     */
     function getWalletRoleFromTheList(address wallet, uint8 index) public view returns (bytes32) {
         return listOfTheWalletRoles[wallet][index];
+    }
+
+    /**
+    * @notice Returns address of the feature network owner
+    */
+    function getFutureOwner() public view returns (address) {
+        return futureOwner;
+    }
+    
+    /**
+    * @notice Returns address which wants transfer ownership
+    */
+    function getOldOwner() public view returns (address) {
+        return oldOwner;
     }
 }
