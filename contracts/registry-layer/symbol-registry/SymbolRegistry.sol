@@ -27,7 +27,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     modifier verifySymbol(bytes symbol) {
         require(
             symbol.length > 0 && symbol.length < 6, 
-            "Symbol length should always between 0 & 6"
+            "Symbol length should always between 1 & 5"
         );
         _;
     }
