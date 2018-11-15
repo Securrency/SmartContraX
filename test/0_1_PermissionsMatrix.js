@@ -395,26 +395,14 @@ contract('PermissionModule (Permissions matrix)', accounts => {
         });
 
         it("Should add wallet to the registration role", async() => {
-            // let length = await PMStorage.getRolesLength();
-            // length = parseInt(length);
-
-            // let role;
-            // let roles = [];
-            // for (let i = 0; i < length; i++) {
-            //     role = await PMStorage.getRoleByTheIndex(i);
-            //     roles.push(bytes32ToString(role));
-            // }
-
-            // console.log(roles, "Roles: ", registrationAcc1, registrationRole);
-
-            let tx = await permissionModule.addRoleToTheWallet(registrationAcc1, registrationRole, { from: owner });
+            let tx = await permissionModule.addRoleToTheWallet(registrationAcc1, registrationRole, { from: systemAcc1 });
                 
             status = await PMStorage.verifyRole(registrationAcc1, registrationRole);
             assert.equal(status, true);
         });
 
         it("Should add wallet to the issuer role", async() => {
-            let tx = await permissionModule.addRoleToTheWallet(issuerAcc1, issuerRole, { from: owner });
+            let tx = await permissionModule.addRoleToTheWallet(issuerAcc1, issuerRole, { from: systemAcc1 });
                 
             status = await PMStorage.verifyRole(issuerAcc1, issuerRole);
             assert.equal(status, true);
