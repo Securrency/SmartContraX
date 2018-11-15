@@ -39,8 +39,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         address sender,
         uint tokens
     ) {
-        uint activeBalance = balances[from].sub(tokensOnHold[from]);
-        require(activeBalance >= tokens, "Insufficient funds.");
+        require(balances[from] >= tokensOnHold[from] + tokens, "Insufficient funds.");
 
         bool allowed = tmInstance().verifyTransfer(
             from,
