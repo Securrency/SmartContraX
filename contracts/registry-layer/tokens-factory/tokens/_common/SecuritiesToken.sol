@@ -36,6 +36,7 @@ contract SecuritiesToken is TxCheckpoints, ISecuritiesToken {
     * @param from Address from which we rollback tokens
     * @param to Tokens owner
     * @param tokens Quantity of the tokens that will be rollbacked
+    * @param sender Transaction initiator
     * @param checkpointId Checkpoint identifier
     * @param originalTxHash Hash of the original transaction which maked a tokens transfer
     */
@@ -72,6 +73,8 @@ contract SecuritiesToken is TxCheckpoints, ISecuritiesToken {
     * @param from Address from which we write off tokens
     * @param to Tokens owner
     * @param tokens Quantity of the tokens that will be rollbacked
+    * @param sender Transaction initiator
+    * @param checkpointId Transaction checkpoint identifier
     * @param originalTxHash Hash of the original transaction which maked a tokens transfer
     */
     function processCheckpoint(

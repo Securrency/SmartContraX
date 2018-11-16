@@ -51,6 +51,7 @@ contract SecuritiesNFT is SecuritiesToken, Protected, TransferModuleInstance, ER
     * @param to Tokens owner
     * @param sender Original transaction sender
     * @param tokens Quantity of the tokens that will be rollbacked
+    * @param checkpointId Transaction checkpoint identifier
     * @param originalTxHash Hash of the original transaction which maked a tokens transfer
     */
     function createRollbackTransaction(

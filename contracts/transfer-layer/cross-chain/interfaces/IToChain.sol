@@ -13,6 +13,7 @@ contract IToChain {
     * @param fromChain Original chain
     * @param originalTxHash Tx hash which initiate cross chain transfer
     * @param value Amount of tokens
+    * @param txId Cross chain transaction id (defined by cross chain service in the chain from which tokens were transferred)
     */
     function receivedFromOtherChain(
         address fromTokenAddress,

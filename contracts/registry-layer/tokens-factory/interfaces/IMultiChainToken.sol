@@ -17,6 +17,7 @@ contract IMultiChainToken {
     * @param value Tokens to receive
     * @param chain From chain
     * @param recipient Tokens recipient
+    * @param sender Sender address in the chain from which tokens were transferred
     */
     function acceptFromOtherChain(
         uint value,

@@ -14,9 +14,10 @@ contract TCStorage is BaseStorage, ITCStorage {
     /**
     * @notice Write info to the log when cross chain transfer was accepted
     * @param fromTokenAddress Token address in the previous chain
-    * @param sentFrom Sender address in the previous chain
     * @param recipient Recipient address
+    * @param txId Cross chain transaction id (defined by cross chain service in the chain from which tokens were transferred)
     * @param tokenAddress Token address in the current chain
+    * @param sentFrom Sender address in the previous chain
     * @param fromChain Original chain
     * @param originalTxHash Tx hash which initiate cross chain transfer
     * @param value Amount of tokens || token id for the CAT-721 token
@@ -41,9 +42,10 @@ contract TCStorage is BaseStorage, ITCStorage {
     /**
     * @notice Write info to the log when cross chain transfer was accepted
     * @param fromTokenAddress Token address in the previous chain
-    * @param sentFrom Sender address in the previous chain
     * @param recipient Recipient address
+    * @param txId Cross chain transaction id (defined by cross chain service in the chain from which tokens were transferred)
     * @param tokenAddress Token address in the current chain
+    * @param sentFrom Sender address in the previous chain
     * @param fromChain Original chain
     * @param originalTxHash Tx hash which initiate cross chain transfer
     * @param value Amount of tokens || token id for the CAT-721 token

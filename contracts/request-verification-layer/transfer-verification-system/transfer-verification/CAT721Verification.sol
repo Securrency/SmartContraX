@@ -22,6 +22,7 @@ contract CAT721Verification is ITransferVerification {
     * @notice Selecting verification logic depending on the token standard.
     * @param from The address transfer from
     * @param to The address transfer to
+    * @param sender Transaction initiator
     * @param tokenAddress Address ot the token
     */
     function verifyTransfer(

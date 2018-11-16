@@ -92,6 +92,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param to Tokens owner
     * @param sender Original transaction sender
     * @param tokens Quantity of the tokens that will be rollbacked
+    * @param checkpointId Transaction checkpoint identifier
     * @param originalTxHash Hash of the original transaction which maked a tokens transfer
     */
     function createRollbackTransaction(
@@ -146,6 +147,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @notice Generate addiotional info for rollback
     * @param to The address which you want to transfer to
     * @param value the amount of tokens to be transferred
+    * @param from The address from which will be transferred token
     */
     function transferFrom(address from, address to, uint256 value) 
         public

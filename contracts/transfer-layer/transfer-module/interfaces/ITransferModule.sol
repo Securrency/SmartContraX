@@ -13,6 +13,7 @@ contract ITransferModule {
     * @param fromChain Original chain
     * @param originalTxHash Tx hash which initiate cross chain transfer
     * @param value Amount of tokens
+    * @param txId Cross chain transaction id (defined by cross chain service in the chain from which tokens were transferred)
     */
     function acceptTokensFromOtherChain(
         address fromTokenAddress,
@@ -46,6 +47,7 @@ contract ITransferModule {
     * @notice Selecting verification logic depending on the token standard.
     * @param from The address transfer from
     * @param to The address transfer to
+    * @param sender Transaction initiator
     * @param tokens The amount of tokens to be transferred 
     */
     function verifyTransfer(

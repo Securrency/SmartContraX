@@ -16,6 +16,7 @@ contract FCStorage is BaseStorage, IFCStorage {
     * @param tokenAddress Token address
     * @param sender Tokens owner
     * @param chain Target chain
+    * @param txId Cross chain transaction id (defined by cross chain service in the current chain)
     * @param targetAddress Recipient wallet in the other chain
     * @param value Amount of tokens || token id for the CAT-721 token
     */
@@ -38,6 +39,7 @@ contract FCStorage is BaseStorage, IFCStorage {
     * @notice Write info to the log when cross chain transfer was initiated
     * @param tokenAddress Token address
     * @param sender Tokens owner
+    * @param txId Cross chain transaction id (defined by cross chain service in the current chain)
     * @param chain Target chain
     * @param targetAddress Recipient wallet in the other chain
     * @param value Amount of tokens || token id for the CAT-721 token
