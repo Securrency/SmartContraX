@@ -1,4 +1,8 @@
-pragma solidity ^0.4.24;
+/**
+* Original work Copyright 2016 Smart Contract Solutions, Inc. 
+* Modified work Copyright 2018 SECURRENCY INC.
+*/
+pragma solidity ^0.5.0;
 
 
 /**

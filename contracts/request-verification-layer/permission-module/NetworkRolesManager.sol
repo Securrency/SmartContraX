@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/INetworkRolesManager.sol";
 import "./RolesManager.sol";
@@ -104,7 +104,7 @@ contract NetworkRolesManager is RolesManager, INetworkRolesManager {
     /**
     * @notice Returns list of all roles of the wallet
     */
-    function getWalletRoles(address wallet) public view returns (bytes32[20]) {
+    function getWalletRoles(address wallet) public view returns (bytes32[20] memory) {
         return PMStorage().getWalletRoles(wallet);
     }
 

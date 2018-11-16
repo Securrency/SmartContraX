@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 
 /**
@@ -173,7 +173,7 @@ contract IPMTokenRolesStorage {
     ) 
         public
         view
-        returns (bytes32[20]);
+        returns (bytes32[20] memory);
 
     /**
     * @notice Returns token dependent role status

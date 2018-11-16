@@ -1,9 +1,9 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/IRolesManager.sol";
 import "./interfaces/IPMStorage.sol";
 import "../../common/libraries/SafeMath8.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../common/libraries/SafeMath.sol";
 
 /**
 * @title Roles Manager
@@ -160,14 +160,14 @@ contract RolesManager is IRolesManager {
     /**
     * @notice Returns list of all supported roles
     */
-    function getListOfAllRoles() public view returns (bytes32[]) {
+    function getListOfAllRoles() public view returns (bytes32[] memory) {
         return PMStorage().getListOfAllRoles();
     }
 
     /**
     * @notice Returns list of all supported methods by role
     */
-    function getSupportedMethodsByRole(bytes32 roleName) public view returns (bytes4[]) {
+    function getSupportedMethodsByRole(bytes32 roleName) public view returns (bytes4[] memory) {
         return PMStorage().getSupportedMethodsByRole(roleName);
     }
 

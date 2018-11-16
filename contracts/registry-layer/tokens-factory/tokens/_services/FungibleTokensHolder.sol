@@ -1,8 +1,8 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../interfaces/IFungibleTokensHolder.sol";
 import "../../../../request-verification-layer/permission-module/Protected.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../../../common/libraries/SafeMath.sol";
 
 
 /**

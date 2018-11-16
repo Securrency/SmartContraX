@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 
 /**
@@ -14,8 +14,8 @@ contract ISRStorage {
     function emitTransferedOwnership(
         address oldOwner,
         address newOwner,
-        bytes symbol,
-        bytes issuerName
+        bytes memory symbol,
+        bytes memory issuerName
     ) 
         public;
 
@@ -24,15 +24,15 @@ contract ISRStorage {
     */
     function emitRegisteredSymbol(
         address owner,
-        bytes symbol,
-        bytes issuerName
+        bytes memory symbol,
+        bytes memory issuerName
     ) 
         public;
 
     /**
     * @notice Emit event Renewal
     */
-    function emitRenewal(bytes symbol) public;
+    function emitRenewal(bytes memory symbol) public;
 
     /**
     * @notice Emit event ExpirationIntervalUpdated
@@ -42,12 +42,12 @@ contract ISRStorage {
     /**
     * @notice Emit event RegisteredToken
     */
-    function emitRegisteredToken(address tokenAddress, bytes symbol) public;
+    function emitRegisteredToken(address tokenAddress, bytes memory symbol) public;
 
     /**
     * @notice Emit event OwnershipTransferRequest
     */
-    function emitOwnershipTransferRequest(bytes symbol, address newOwner) public;
+    function emitOwnershipTransferRequest(bytes memory symbol, address newOwner) public;
 
     /// Methods which updates the storage. Allowed only for the Symbol Registry.
 
@@ -55,10 +55,10 @@ contract ISRStorage {
     * @notice Save symbol info to the storage
     */
     function saveSymbol(
-        bytes symbol,
+        bytes memory symbol,
         address owner,
         address tokenAddress,
-        bytes issuerName,
+        bytes memory issuerName,
         uint registeredAt,
         uint expiredAt
     ) 
@@ -69,35 +69,35 @@ contract ISRStorage {
     * @param symbol Symbol
     * @param owner New owner address
     */
-    function udpateSymbolOwner(bytes symbol, address owner) public;
+    function udpateSymbolOwner(bytes memory symbol, address owner) public;
 
     /**
     * @notice Updates token address
     * @param symbol Symbol
     * @param token Address of the token
     */
-    function updateSymbolToken(bytes symbol, address token) public;
+    function updateSymbolToken(bytes memory symbol, address token) public;
 
     /**
     * @notice Updating issuer name
     * @param symbol Symbol
     * @param issuerName New issuer address
     */
-    function updateSymbolIssuerName(bytes symbol, bytes issuerName) public;
+    function updateSymbolIssuerName(bytes memory symbol, bytes memory issuerName) public;
 
     /**
     * @notice Updating symbols registration date
     * @param symbol Symbol
     * @param registeredAt New registration time
     */
-    function updateSymbolRegistration(bytes symbol, uint registeredAt) public;
+    function updateSymbolRegistration(bytes memory symbol, uint registeredAt) public;
 
     /**
     * @notice Updating symbols expiration date
     * @param symbol Symbol
     * @param expiredAt New expiration time
     */
-    function updateSymbolExpiration(bytes symbol, uint expiredAt) public;
+    function updateSymbolExpiration(bytes memory symbol, uint expiredAt) public;
     
     /**
     * @notice Updating symbol expiration interval
@@ -110,13 +110,13 @@ contract ISRStorage {
     * @param symbol Symbol
     * @param newOwner Address of the new symbol owner
     */
-    function createRequestOnOwnershipTransfer(bytes symbol, address newOwner) public;
+    function createRequestOnOwnershipTransfer(bytes memory symbol, address newOwner) public;
 
     /**
     * @notice Delete request on the symbol ownership transferring
     * @param symbol Symbol
     */
-    function deleteRequestOnOwnershipTransfer(bytes symbol) public;
+    function deleteRequestOnOwnershipTransfer(bytes memory symbol) public;
 
     /// Getters. Public methods which are allowed for anyone.
 
@@ -125,37 +125,37 @@ contract ISRStorage {
     * @notice If there is no new owner will be returned address(0)
     * @param symbol Symbol
     */
-    function getRecipientOfTheSymbolOwnership(bytes symbol) public view returns (address);
+    function getRecipientOfTheSymbolOwnership(bytes memory symbol) public view returns (address);
 
     /**
     * @notice Returns address of the symbol owner
     * @param symbol Symbol
     */
-    function getSymbolOwner(bytes symbol) public view returns (address);
+    function getSymbolOwner(bytes memory symbol) public view returns (address);
 
     /**
     * @notice Returns address of the symbol token
     * @param symbol Symbol
     */
-    function getSymbolToken(bytes symbol) public view returns (address);
+    function getSymbolToken(bytes memory symbol) public view returns (address);
 
     /**
     * @notice Returns symbols issuer name
     * @param symbol Symbol
     */
-    function getSymbolIssuerName(bytes symbol) public view returns (bytes);
+    function getSymbolIssuerName(bytes memory symbol) public view returns (bytes memory);
 
     /**
     * @notice Returns symbols registration date
     * @param symbol Symbol
     */
-    function getSymbolRegistration(bytes symbol) public view returns (uint);
+    function getSymbolRegistration(bytes memory symbol) public view returns (uint);
 
     /**
     * @notice Returns symbols expiration date
     * @param symbol Symbol
     */
-    function getSymbolExpiration(bytes symbol) public view returns (uint);
+    function getSymbolExpiration(bytes memory symbol) public view returns (uint);
 
     /**
     * @notice Returns current symbol expiration interval

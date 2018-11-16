@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenRolesManager.sol";
@@ -134,7 +134,7 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
     ) 
         public
         view
-        returns (bytes32[20])
+        returns (bytes32[20] memory)
     {
         return PMStorage().getWalletRolesForToken(wallet, token);
     }

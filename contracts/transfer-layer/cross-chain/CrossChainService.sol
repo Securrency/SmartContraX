@@ -1,10 +1,10 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/ICrossChainService.sol";
 import "./FromChain.sol";
 import "./ToChain.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../common/libraries/SafeMath.sol";
 
 /**
 * @title Cross chain transfer service
@@ -83,7 +83,7 @@ contract CrossChainService is ICrossChainService, Protected, FromChain, ToChain 
     /**
     * @notice Return list of the suppored chains
     */
-    function getSupportedChains() external view returns (bytes32[]) {
+    function getSupportedChains() external view returns (bytes32[] memory) {
         return chains;
     }
 

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 
 /**
@@ -34,7 +34,7 @@ contract IComponentsRegistry {
     * @notice Return component name by component id
     * @param id Component identifier
     */
-    function getNameById(bytes4 id) public view returns (bytes);
+    function getNameById(bytes4 id) public view returns (bytes memory);
 
     /**
     * @notice Get the number of components

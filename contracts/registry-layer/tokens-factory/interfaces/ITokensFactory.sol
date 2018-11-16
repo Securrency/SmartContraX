@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
 * @title Interface that token factory should implement
@@ -13,8 +13,8 @@ contract ITokensFactory {
     * @param tokenStandard Identifier of the token standard
     */
     function createToken(
-        string name,
-        string symbol,
+        string memory name,
+        string memory symbol,
         uint8 decimals,
         uint totalSupply,
         bytes32 tokenStandard

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./TokenDeploymentStrategy.sol";
 import "../tokens/CAT-721/CAT721Token.sol";
@@ -28,8 +28,8 @@ contract CAT721Strategy is TokenDeploymentStrategy, Protected  {
     * @param totalSupply The number of coins
     */
     function deploy(
-        string name,
-        string symbol,
+        string memory  name,
+        string memory  symbol,
         uint8 decimals,
         uint totalSupply,
         address tokenOwner
@@ -38,11 +38,11 @@ contract CAT721Strategy is TokenDeploymentStrategy, Protected  {
         onlyTokensFactory(msg.sender)
         returns (address)
     {
-        address token = new CAT721Token(
+        CAT721Token token = new CAT721Token(
             name,
             symbol,
             tokenOwner,
-            componentsRegistry
+            address(componentsRegistry)
         );
 
         emit CreatedToken(
@@ -50,10 +50,10 @@ contract CAT721Strategy is TokenDeploymentStrategy, Protected  {
             symbol,
             decimals,
             totalSupply,
-            token
+            address(token)
         );
 
-        return token;
+        return address(token);
     }
 
     /**

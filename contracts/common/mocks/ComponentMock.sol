@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../component/SystemComponent.sol";
 
@@ -8,7 +8,7 @@ import "../component/SystemComponent.sol";
 */
 contract ComponentMock is SystemComponent {
     // init component
-    constructor(bytes name) public {
+    constructor(bytes memory name) public {
         componentName = name;
         componentId = bytes4(keccak256(name));
     }

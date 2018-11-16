@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../interfaces/IWhiteList.sol";
 import "../../../registry-layer/components-registry/instances/TokensFactoryInstance.sol";
@@ -64,7 +64,7 @@ contract WhiteList is IWhiteList, Protected, TokensFactoryInstance {
     * @param investors Array of the investors addresses
     * @param tokenAddress Token for address attachment
     */
-    function addArrayToWhiteList(address[] investors, address tokenAddress)
+    function addArrayToWhiteList(address[] memory investors, address tokenAddress)
         public
         verifyPermissionForToken(msg.sig, msg.sender, tokenAddress)
     {

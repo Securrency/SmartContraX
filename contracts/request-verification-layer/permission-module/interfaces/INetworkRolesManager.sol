@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 contract INetworkRolesManager {
     /**
@@ -29,7 +29,7 @@ contract INetworkRolesManager {
     /**
     * @notice Returns list of all roles of the wallet
     */
-    function getWalletRoles(address wallet) public view returns (bytes32[20]);
+    function getWalletRoles(address wallet) public view returns (bytes32[20] memory);
 
     /**
     * @notice Verification of the permissions

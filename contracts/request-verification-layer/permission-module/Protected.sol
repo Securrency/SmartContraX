@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/IPermissionModule.sol";
 import "../../registry-layer/components-registry/instances/PermissionModuleInstance.sol";

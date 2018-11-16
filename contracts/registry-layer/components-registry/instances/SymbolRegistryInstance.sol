@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../symbol-registry/interfaces/ISymbolRegistry.sol";
 import "../getters/SymbolRegistryAddress.sol";

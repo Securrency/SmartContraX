@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 
 /**
@@ -128,7 +128,7 @@ contract IPMNetworkRolesStorage {
     * @notice Returns list of all roles of the wallet
     * @param wallet Wallet address
     */
-    function getWalletRoles(address wallet) public view returns (bytes32[20]);
+    function getWalletRoles(address wallet) public view returns (bytes32[20] memory);
 
     /**
     * @notice Get wallet role by the index

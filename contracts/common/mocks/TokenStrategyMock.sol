@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../registry-layer/tokens-factory/deployment-strategies/TokenDeploymentStrategy.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
@@ -24,8 +24,8 @@ contract TokenStrategyMock is TokenDeploymentStrategy, Protected {
     * @param totalSupply The number of coins
     */
     function deploy(
-        string name,
-        string symbol,
+        string memory name,
+        string memory symbol,
         uint8 decimals,
         uint totalSupply,
         address tokenOwner
@@ -33,13 +33,13 @@ contract TokenStrategyMock is TokenDeploymentStrategy, Protected {
         public 
         returns (address)
     {
-        address token = new CAT20Token(
+        CAT20Token token = new CAT20Token(
             name,
             symbol,
             decimals,
             totalSupply,
             tokenOwner,
-            componentsRegistry
+            address(componentsRegistry)
         );
 
         emit CreatedToken(
@@ -47,10 +47,10 @@ contract TokenStrategyMock is TokenDeploymentStrategy, Protected {
             symbol,
             decimals,
             totalSupply,
-            token
+            address(token)
         );
 
-        return token;
+        return address(token);
     }
 
     /**

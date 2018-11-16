@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../interfaces/ITokenStrategy.sol";
 import "../../components-registry/getters/TokensFactoryAddress.sol";

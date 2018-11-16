@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 contract IRolesManager {
     /**
@@ -37,10 +37,10 @@ contract IRolesManager {
     /**
     * @notice Returns list of all supported roles
     */
-    function getListOfAllRoles() public view returns (bytes32[]);
+    function getListOfAllRoles() public view returns (bytes32[] memory);
 
     /**
     * @notice Returns list of all supported methods by role
     */
-    function getSupportedMethodsByRole(bytes32 roleName) public view returns (bytes4[]);
+    function getSupportedMethodsByRole(bytes32 roleName) public view returns (bytes4[] memory);
 }

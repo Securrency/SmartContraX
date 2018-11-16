@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./BaseStorage.sol";
 import "../interfaces/IPMRolesManagerStorage.sol";
@@ -356,7 +356,7 @@ contract PMRolesManagerStorage is BaseStorage {
     /**
     * @notice Returns list od the all roles
     */
-    function getListOfAllRoles() public view returns (bytes32[]) {
+    function getListOfAllRoles() public view returns (bytes32[] memory) {
         return listOfTheRoles;
     }
 
@@ -406,7 +406,7 @@ contract PMRolesManagerStorage is BaseStorage {
     * @notice Supported methods by the role
     * @param role Role
     */
-    function getSupportedMethodsByRole(bytes32 role) public view returns (bytes4[]) {
+    function getSupportedMethodsByRole(bytes32 role) public view returns (bytes4[] memory) {
         return listOfTheRoleMethods[role];
     }
 

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../interfaces/ISRStorage.sol";
 import "../../components-registry/getters/SymbolRegistryAddress.sol";
@@ -83,7 +83,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     /**
     * @notice Emit event OwnershipTransferRequest
     */
-    function emitOwnershipTransferRequest(bytes symbol, address newOwner) 
+    function emitOwnershipTransferRequest(bytes memory symbol, address newOwner) 
         public
         onlySymbolRegistry(msg.sender)
     {
@@ -96,8 +96,8 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     function emitTransferedOwnership(
         address oldOwner,
         address newOwner,
-        bytes symbol,
-        bytes issuerName
+        bytes memory symbol,
+        bytes memory issuerName
     ) 
         public
         onlySymbolRegistry(msg.sender)
@@ -110,8 +110,8 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     */
     function emitRegisteredSymbol(
         address owner,
-        bytes symbol,
-        bytes issuerName
+        bytes memory symbol,
+        bytes memory issuerName
     ) 
         public
         onlySymbolRegistry(msg.sender)
@@ -122,7 +122,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     /**
     * @notice Emit event Renewal
     */
-    function emitRenewal(bytes symbol) 
+    function emitRenewal(bytes memory symbol) 
         public
         onlySymbolRegistry(msg.sender) 
     {
@@ -142,7 +142,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     /**
     * @notice Emit event RegisteredToken
     */
-    function emitRegisteredToken(address tokenAddress, bytes symbol) 
+    function emitRegisteredToken(address tokenAddress, bytes memory symbol) 
         public
         onlySymbolRegistry(msg.sender) 
     {
@@ -155,10 +155,10 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Save symbol info to the storage
     */
     function saveSymbol(
-        bytes symbol,
+        bytes memory symbol,
         address owner,
         address tokenAddress,
-        bytes issuerName,
+        bytes memory issuerName,
         uint registeredAt,
         uint expiredAt
     ) 
@@ -181,7 +181,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @param symbol Symbol
     * @param owner New owner address
     */
-    function udpateSymbolOwner(bytes symbol, address owner) 
+    function udpateSymbolOwner(bytes memory symbol, address owner) 
         public
         onlySymbolRegistry(msg.sender)
     {
@@ -193,7 +193,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @param symbol Symbol
     * @param token Address of the token
     */
-    function updateSymbolToken(bytes symbol, address token) 
+    function updateSymbolToken(bytes memory symbol, address token) 
         public 
         onlySymbolRegistry(msg.sender)
     {
@@ -205,7 +205,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @param symbol Symbol
     * @param issuerName New issuer name
     */
-    function updateSymbolIssuerName(bytes symbol, bytes issuerName) 
+    function updateSymbolIssuerName(bytes memory symbol, bytes memory issuerName) 
         public
         onlySymbolRegistry(msg.sender)
     {
@@ -217,7 +217,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @param symbol Symbol
     * @param registeredAt New registration time
     */
-    function updateSymbolRegistration(bytes symbol, uint registeredAt) 
+    function updateSymbolRegistration(bytes memory symbol, uint registeredAt) 
         public
         onlySymbolRegistry(msg.sender)
     {
@@ -229,7 +229,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @param symbol Symbol
     * @param expiredAt New expiration time
     */
-    function updateSymbolExpiration(bytes symbol, uint expiredAt) 
+    function updateSymbolExpiration(bytes memory symbol, uint expiredAt) 
         public
         onlySymbolRegistry(msg.sender) 
     {
@@ -252,7 +252,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @param symbol Symbol
     * @param newOwner Address of the new symbol owner
     */
-    function createRequestOnOwnershipTransfer(bytes symbol, address newOwner) 
+    function createRequestOnOwnershipTransfer(bytes memory symbol, address newOwner) 
         public
         onlySymbolRegistry(msg.sender)
     {
@@ -263,7 +263,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Delete request on the symbol ownership transferring
     * @param symbol Symbol
     */
-    function deleteRequestOnOwnershipTransfer(bytes symbol) 
+    function deleteRequestOnOwnershipTransfer(bytes memory symbol) 
         public
         onlySymbolRegistry(msg.sender)
     {
@@ -277,7 +277,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice If there is no new owner will be returned address(0)
     * @param symbol Symbol
     */
-    function getRecipientOfTheSymbolOwnership(bytes symbol) public view returns (address) {
+    function getRecipientOfTheSymbolOwnership(bytes memory symbol) public view returns (address) {
         return ownershipTransfer[symbol];
     }
 
@@ -285,7 +285,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Returns address of the symbol owner
     * @param symbol Symbol
     */
-    function getSymbolOwner(bytes symbol) public view returns (address) {
+    function getSymbolOwner(bytes memory symbol) public view returns (address) {
         return registeredSymbols[symbol].owner;
     }
 
@@ -293,7 +293,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Returns address of the symbol token
     * @param symbol Symbol
     */
-    function getSymbolToken(bytes symbol) public view returns (address) {
+    function getSymbolToken(bytes memory symbol) public view returns (address) {
         return registeredSymbols[symbol].tokenAddress;
     }
 
@@ -301,7 +301,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Returns symbols issuer name
     * @param symbol Symbol
     */
-    function getSymbolIssuerName(bytes symbol) public view returns (bytes) {
+    function getSymbolIssuerName(bytes memory symbol) public view returns (bytes memory) {
         return registeredSymbols[symbol].issuerName;
     }
 
@@ -309,7 +309,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Returns symbols registration date
     * @param symbol Symbol
     */
-    function getSymbolRegistration(bytes symbol) public view returns (uint) {
+    function getSymbolRegistration(bytes memory symbol) public view returns (uint) {
         return registeredSymbols[symbol].registeredAt;
     }
 
@@ -317,7 +317,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Returns symbols expiration date
     * @param symbol Symbol
     */
-    function getSymbolExpiration(bytes symbol) public view returns (uint) {
+    function getSymbolExpiration(bytes memory symbol) public view returns (uint) {
         return registeredSymbols[symbol].expiredAt;
     }
 

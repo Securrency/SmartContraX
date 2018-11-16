@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
 * @notice Interface for the contract which allows move tokens to the other chain

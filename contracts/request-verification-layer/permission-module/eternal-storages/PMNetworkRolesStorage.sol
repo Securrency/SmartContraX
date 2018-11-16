@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./BaseStorage.sol";
 import "../interfaces/IPMNetworkRolesStorage.sol";
@@ -235,7 +235,7 @@ contract PMNetworkRolesStorage is IPMNetworkRolesStorage, BaseStorage {
     * @notice Returns list of all roles of the wallet
     * @param wallet Wallet address
     */
-    function getWalletRoles(address wallet) public view returns (bytes32[20]) {
+    function getWalletRoles(address wallet) public view returns (bytes32[20] memory) {
         return listOfTheWalletRoles[wallet];
     }
 

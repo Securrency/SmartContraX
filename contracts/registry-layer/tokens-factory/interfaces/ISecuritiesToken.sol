@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
 * @title Securities token interface
@@ -19,7 +19,7 @@ contract ISecuritiesToken {
         address sender,
         uint tokens,
         uint checkpointId,
-        string originalTxHash
+        string memory originalTxHash
     ) 
         public
         returns (bool);

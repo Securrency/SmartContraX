@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../interfaces/IPMTokenRolesStorage.sol";
 import "./BaseStorage.sol";
@@ -275,7 +275,7 @@ contract PMTokenRolesStorage is IPMTokenRolesStorage, BaseStorage {
     ) 
         public
         view
-        returns (bytes32[20])
+        returns (bytes32[20] memory)
     {
         return listOfTheTokenDependentRoles[wallet][token];
     }

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
 * @notice Interface of the cross chain transfers service
@@ -19,7 +19,7 @@ contract ICrossChainService {
     /**
     * @notice Return list of the suppored chains
     */
-    function getSupportedChains() external view returns (bytes32[]);
+    function getSupportedChains() external view returns (bytes32[] memory);
 
     /**
     * @notice Return chain identifier in the network

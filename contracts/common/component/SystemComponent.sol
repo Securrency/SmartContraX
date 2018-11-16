@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/IComponent.sol";
 
@@ -23,7 +23,7 @@ contract SystemComponent is IComponent {
     /**
     * @notice Retun component name
     */
-    function getComponentName() public view returns (bytes) {
+    function getComponentName() public view returns (bytes memory) {
         return componentName;
     }
 }

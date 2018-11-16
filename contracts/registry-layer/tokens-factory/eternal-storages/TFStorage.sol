@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../interfaces/ITFStorage.sol";
 import "../../components-registry/getters/TokensFactoryAddress.sol";
@@ -100,9 +100,9 @@ contract TFStorage is TokensFactoryAddress, ITFStorage {
     function emitCreatedToken(
         address tokenAddress,
         address issuer,
-        string name,
-        string symbol,
-        bytes issuerName,
+        string memory name,
+        string memory symbol,
+        bytes memory issuerName,
         uint8 decimals,
         uint totalSupply,
         bytes32 standard

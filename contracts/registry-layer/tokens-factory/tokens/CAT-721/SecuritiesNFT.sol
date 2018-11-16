@@ -1,10 +1,10 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
 import "../../../../request-verification-layer/permission-module/Protected.sol";
 import "../../../components-registry/instances/TransferModuleInstance.sol";
 import "../_common/SecuritiesToken.sol";
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
+import "../ERC-721/ERC721Token.sol";
 
 /**
 * @title Securities NFT
@@ -59,7 +59,7 @@ contract SecuritiesNFT is SecuritiesToken, Protected, TransferModuleInstance, ER
         address sender,
         uint tokens,
         uint checkpointId,
-        string originalTxHash
+        string memory originalTxHash
     ) 
         public
         verifyPermissionForCurrentToken(msg.sig)

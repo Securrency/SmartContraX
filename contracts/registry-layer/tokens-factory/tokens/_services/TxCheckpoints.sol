@@ -1,8 +1,8 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../interfaces/ITxCheckpoints.sol";
 import "../../../../common/libraries/BytesHelper.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../../../common/libraries/SafeMath.sol";
 
 /**
 * @title Transactions checkpoints
@@ -75,7 +75,7 @@ contract TxCheckpoints is ITxCheckpoints {
         }
         
         bytes memory bytesValue = value.uintToBytes();
-        for (i = 0; i < 32; i++) {
+        for (uint8 i = 0; i < 32; i++) {
             b[bytesIndex] = bytesValue[i];
             bytesIndex++;
         }
@@ -154,7 +154,7 @@ contract TxCheckpoints is ITxCheckpoints {
     * @param checkpointId Checkpoint identifier
     * @param originalTxHash The hash of the transaction which was canceled or rollbacked 
     */
-    function deactivateCheckpoint(uint checkpointId, string originalTxHash) internal {
+    function deactivateCheckpoint(uint checkpointId, string memory originalTxHash) internal {
         require(checkpoints[checkpointId].expireDate != 0, "Invalid checkpoint.");
         require(!checkpoints[checkpointId].used, "Checkpoint is already used.");
         

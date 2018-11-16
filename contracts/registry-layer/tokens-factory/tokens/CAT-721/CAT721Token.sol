@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./SecuritiesNFT.sol";
 
@@ -7,8 +7,8 @@ import "./SecuritiesNFT.sol";
 */
 contract CAT721Token is SecuritiesNFT {
     constructor(
-        string _name,
-        string _symbol,
+        string memory _name,
+        string memory _symbol,
         address _issuer,
         address _componentsRegistry
     ) 
@@ -46,7 +46,7 @@ contract CAT721Token is SecuritiesNFT {
     function mintWithTokenURI(
         address to,
         uint256 tokenId,
-        string tokenURI
+        string memory tokenURI
     )
         public
         returns (bool)

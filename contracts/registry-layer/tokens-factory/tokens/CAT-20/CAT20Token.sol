@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
+import "../ERC-20/DetailedERC20.sol";
 import "./SecuritiesStandardToken.sol";
 import "./CAT20Mintable.sol";
 import "./CAT20Burnable.sol";
@@ -11,8 +11,8 @@ import "./CAT20Burnable.sol";
  */
 contract CAT20Token is SecuritiesStandardToken, CAT20Mintable, CAT20Burnale, DetailedERC20 {
     constructor(
-        string _name,
-        string _symbol,
+        string memory _name,
+        string memory _symbol,
         uint8 _decimals,
         uint256 _totalSupply,
         address _issuer,

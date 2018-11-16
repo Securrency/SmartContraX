@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
 * @title Interface that any token strategy should implement
@@ -13,8 +13,8 @@ contract ITokenStrategy {
     * @param tokenOwner Token owner address
     */
     function deploy(
-        string name,
-        string symbol,
+        string memory name,
+        string memory symbol,
         uint8 decimals,
         uint totalSupply,
         address tokenOwner

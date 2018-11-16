@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/ITokensFactory.sol";
 import "./interfaces/ITokenStrategy.sol";
@@ -9,7 +9,7 @@ import "../../common/libraries/BytesHelper.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
 import "../components-registry/instances/SymbolRegistryInstance.sol";
 import "../../common/component/SystemComponent.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../common/libraries/SafeMath.sol";
 
 
 /**
@@ -45,8 +45,8 @@ contract TokensFactory is ITokensFactory, Protected, SymbolRegistryInstance, Sys
     * @param tokenStandard Identifier of the token standard
     */
     function createToken(
-        string name,
-        string symbol,
+        string memory name,
+        string memory symbol,
         uint8 decimals,
         uint totalSupply,
         bytes32 tokenStandard

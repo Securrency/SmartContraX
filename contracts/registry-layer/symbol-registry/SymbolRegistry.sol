@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/ISRStorage.sol";
 import "./interfaces/ISymbolRegistry.sol";
@@ -7,7 +7,7 @@ import "../../common/libraries/BytesHelper.sol";
 import "../../request-verification-layer/permission-module/Protected.sol";
 import "../../common/component/SystemComponent.sol";
 import "../../registry-layer/components-registry/getters/TokensFactoryAddress.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../common/libraries/SafeMath.sol";
 
 /**
 * @title Symbol Registry
@@ -24,7 +24,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     * @notice Verify symbol
     * @param symbol Symbol
     */
-    modifier verifySymbol(bytes symbol) {
+    modifier verifySymbol(bytes memory symbol) {
         require(
             symbol.length > 0 && symbol.length < 6, 
             "Symbol length should always between 1 & 5"
@@ -37,7 +37,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     * @param symbol Symbol
     * @param sender Address to verify
     */
-    modifier onlySymbolOwner(bytes symbol, address sender) {
+    modifier onlySymbolOwner(bytes memory symbol, address sender) {
         require(
             isSymbolOwner(symbol, sender), 
             "Allowed only for an owner."
@@ -63,7 +63,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     * @param symbol Symbol
     * @param issuerName Name of the issuer
     */
-    function registerSymbol(bytes symbol, bytes issuerName) 
+    function registerSymbol(bytes memory symbol, bytes memory issuerName) 
         public 
         verifySymbol(symbol) 
         verifyPermission(msg.sig, msg.sender) 
@@ -99,7 +99,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     * @notice Renew symbol
     * @param symbol Symbol which will be renewed
     */
-    function renewSymbol(bytes symbol) public onlySymbolOwner(symbol, msg.sender) {
+    function renewSymbol(bytes memory symbol) public onlySymbolOwner(symbol, msg.sender) {
         symbol = symbol.toUpperBytes();
 
         uint expiredAt = SRStorage().getSymbolExpiration(symbol);
@@ -114,7 +114,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     * @param symbol Symbol
     * @param newOwner Address of the new symbol owner
     */
-    function transferOwnership(bytes symbol, address newOwner) 
+    function transferOwnership(bytes memory symbol, address newOwner) 
         public
         onlySymbolOwner(symbol, msg.sender)
     {
@@ -130,7 +130,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     * @param symbol Symbol
     * @param issuerName Name of the issuer
     */
-    function acceptSymbolOwnership(bytes symbol, bytes issuerName) public {
+    function acceptSymbolOwnership(bytes memory symbol, bytes memory issuerName) public {
         symbol = symbol.toUpperBytes();
 
         require(
@@ -159,7 +159,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     */
     function registerTokenToTheSymbol(
         address sender, 
-        bytes symbol, 
+        bytes memory symbol, 
         address tokenAddress
     ) 
         public
@@ -192,7 +192,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     /**
     * @notice Checks symbol in system 
     */
-    function symbolIsAvailable(bytes symbol)
+    function symbolIsAvailable(bytes memory symbol)
         public
         verifySymbol(symbol)
         view 
@@ -211,7 +211,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     * @param symbol Symbol
     * @param owner Address for verification
     */
-    function isSymbolOwner(bytes symbol, address owner) 
+    function isSymbolOwner(bytes memory symbol, address owner) 
         public 
         view 
         returns (bool) 
@@ -225,21 +225,21 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
     /**
     * @notice Returns token registered on the symbol
     */
-    function getTokenBySymbol(bytes symbol) public view returns (address) {
+    function getTokenBySymbol(bytes memory symbol) public view returns (address) {
         return SRStorage().getSymbolToken(symbol);
     }
 
     /**
     * @notice Returns symbol expire date
     */
-    function getSymbolExpireDate(bytes symbol) public view returns (uint) {
+    function getSymbolExpireDate(bytes memory symbol) public view returns (uint) {
         return SRStorage().getSymbolExpiration(symbol);
     }
 
     /**
     * @notice Returns issuer name
     */
-    function getIssuerNameBySymbol(bytes symbol) public view returns (bytes) {
+    function getIssuerNameBySymbol(bytes memory symbol) public view returns (bytes memory) {
         return SRStorage().getSymbolIssuerName(symbol);
     }
 

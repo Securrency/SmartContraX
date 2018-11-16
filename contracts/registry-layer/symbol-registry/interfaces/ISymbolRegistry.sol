@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
 * @title Symbol Registry interface
@@ -9,40 +9,40 @@ contract ISymbolRegistry {
     * @param symbol Symbol
     * @param issuerName Name of the issuer
     */
-    function registerSymbol(bytes symbol, bytes issuerName) public;
+    function registerSymbol(bytes memory symbol, bytes memory issuerName) public;
 
     /**
     * @notice Renew symbol
     * @param symbol Symbol which will be renewed
     */
-    function renewSymbol(bytes symbol) public;
+    function renewSymbol(bytes memory symbol) public;
 
     /**
     * @notice Create request on the symbol ownership transferring
     * @param symbol Symbol
     * @param newOwner Address of the new symbol owner
     */
-    function transferOwnership(bytes symbol, address newOwner) public;
+    function transferOwnership(bytes memory symbol, address newOwner) public;
 
     /**
     * @notice Accept symbol ownership
     * @param symbol Symbol
     * @param issuerName Name of the issuer
     */
-    function acceptSymbolOwnership(bytes symbol, bytes issuerName) public;
+    function acceptSymbolOwnership(bytes memory symbol, bytes memory issuerName) public;
 
     /**
     * @notice Checks symbol in system 
     * @param symbol Symbol
     */
-    function symbolIsAvailable(bytes symbol) public view returns (bool);
+    function symbolIsAvailable(bytes memory symbol) public view returns (bool);
 
     /**
     * @notice Checks owner
     * @param symbol Symbol
     * @param owner Address for verification
     */
-    function isSymbolOwner(bytes symbol, address owner) public view returns (bool);
+    function isSymbolOwner(bytes memory symbol, address owner) public view returns (bool);
 
     /**
     * @notice Register token to the symbol
@@ -52,7 +52,7 @@ contract ISymbolRegistry {
     */
     function registerTokenToTheSymbol(
         address sender, 
-        bytes symbol, 
+        bytes memory symbol, 
         address tokenAddress
     ) 
         public;
@@ -66,15 +66,15 @@ contract ISymbolRegistry {
     /**
     * @notice Return token registred on the symbol
     */
-    function getTokenBySymbol(bytes symbol) public view returns (address);
+    function getTokenBySymbol(bytes memory symbol) public view returns (address);
 
     /**
     * @notice Return symbol expire date
     */
-    function getSymbolExpireDate(bytes symbol) public view returns (uint);
+    function getSymbolExpireDate(bytes memory symbol) public view returns (uint);
 
     /**
     * @notice Return issuer name
     */
-    function getIssuerNameBySymbol(bytes symbol) public view returns (bytes);
+    function getIssuerNameBySymbol(bytes memory symbol) public view returns (bytes memory);
 }

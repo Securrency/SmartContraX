@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 
 /**
@@ -260,12 +260,12 @@ contract IPMRolesManagerStorage {
     * @notice Supported methods by the role
     * @param role Role
     */
-    function getSupportedMethodsByRole(bytes32 role) public view returns (bytes4[]);
+    function getSupportedMethodsByRole(bytes32 role) public view returns (bytes4[] memory);
 
     /**
     * @notice Returns list od the all roles
     */
-    function getListOfAllRoles() public view returns (bytes32[]);
+    function getListOfAllRoles() public view returns (bytes32[] memory);
 
     /**
     * @notice Returns method by index

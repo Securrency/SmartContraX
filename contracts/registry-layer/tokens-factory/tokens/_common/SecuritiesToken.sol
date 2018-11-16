@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../interfaces/ISecuritiesToken.sol";
 import "../_services/TxCheckpoints.sol";
@@ -45,7 +45,7 @@ contract SecuritiesToken is TxCheckpoints, ISecuritiesToken {
         uint tokens,
         address sender,
         uint checkpointId,
-        string originalTxHash
+        string memory originalTxHash
     ) {
         processCheckpoint(
             from,
@@ -80,7 +80,7 @@ contract SecuritiesToken is TxCheckpoints, ISecuritiesToken {
         uint tokens,
         address sender,
         uint checkpointId,
-        string originalTxHash
+        string memory originalTxHash
     )
         internal
     {

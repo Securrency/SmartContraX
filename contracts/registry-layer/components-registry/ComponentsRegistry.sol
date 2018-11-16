@@ -1,10 +1,10 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./interfaces/IComponentsRegistry.sol";
 import "../../common/component/interfaces/IComponent.sol";
 import "../../request-verification-layer/permission-module/PermissionModuleMetadata.sol";
 import "../../request-verification-layer/permission-module/interfaces/IPermissionModule.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../common/libraries/SafeMath.sol";
 
 
 /**
@@ -148,7 +148,7 @@ contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
     * @notice Return component name by component id
     * @param id Component identifier
     */
-    function getNameById(bytes4 id) public view returns (bytes) {
+    function getNameById(bytes4 id) public view returns (bytes memory) {
         address componentAddress = components[id].componentAddress;
         return IComponent(componentAddress).getComponentName();
     }

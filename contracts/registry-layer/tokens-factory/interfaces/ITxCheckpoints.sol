@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
 * @title Transaction checkpoints for rollbacks and transaction cancellations system
@@ -59,5 +59,5 @@ contract ITxCheckpoints {
     * @param checkpointId Checkpoint identifier
     * @param originalTxHash The hash of the transaction which was canceled or rollbacked 
     */
-    function deactivateCheckpoint(uint checkpointId, string originalTxHash) internal;
+    function deactivateCheckpoint(uint checkpointId, string memory originalTxHash) internal;
 }

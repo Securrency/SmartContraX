@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../../../../transfer-layer/transfer-module/interfaces/ITransferModule.sol";
 import "../../../components-registry/instances/TransferModuleInstance.sol";
@@ -6,8 +6,8 @@ import "../_common/MultiChainToken.sol";
 import "../_common/SecuritiesToken.sol";
 import "../_services/Pausable.sol";
 import "../_services/FungibleTokensHolder.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../ERC-20/StandardToken.sol";
+import "../../../../common/libraries/SafeMath.sol";
 
 
 /**
@@ -100,7 +100,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         address sender,
         uint tokens,
         uint checkpointId,
-        string originalTxHash
+        string memory originalTxHash
     )
         public
         verifyPermissionForCurrentToken(msg.sig)

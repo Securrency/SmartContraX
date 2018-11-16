@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./TokenDeploymentStrategy.sol";
 import "../tokens/ERC-20/ERC20Token.sol";
@@ -27,8 +27,8 @@ contract ERC20Strategy is TokenDeploymentStrategy  {
     * @param totalSupply The number of coins
     */
     function deploy(
-        string name,
-        string symbol,
+        string memory name,
+        string memory symbol,
         uint8 decimals,
         uint totalSupply,
         address tokenOwner
@@ -37,7 +37,7 @@ contract ERC20Strategy is TokenDeploymentStrategy  {
         onlyTokensFactory(msg.sender)
         returns (address)
     {
-        address token = new ERC20Token(
+        ERC20Token token = new ERC20Token(
             name,
             symbol,
             decimals,
@@ -50,10 +50,10 @@ contract ERC20Strategy is TokenDeploymentStrategy  {
             symbol,
             decimals,
             totalSupply,
-            token
+            address(token)
         );
 
-        return token;
+        return address(token);
     }
 
     /**

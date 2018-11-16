@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 contract ITokenRolesManager {
     /**
@@ -28,5 +28,5 @@ contract ITokenRolesManager {
     /**
     * @notice Returns list of all roles of the wallet
     */
-    function getWalletRolesForToken(address wallet, address token) public view returns (bytes32[20]);    
+    function getWalletRolesForToken(address wallet, address token) public view returns (bytes32[20] memory);    
 }
