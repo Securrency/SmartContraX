@@ -247,7 +247,7 @@ contract PMRolesManagerStorage is BaseStorage {
     * @param sig Method id
     * @param index Index of the method
     */
-    function setMetodIndex(
+    function setMethodIndex(
         bytes32 role,
         bytes4 sig,
         uint index

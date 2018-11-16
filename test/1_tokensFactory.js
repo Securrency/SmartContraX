@@ -504,7 +504,7 @@ contract('TokensFactory', accounts => {
             let complianceRoleName = "Compliance";
 
             let tx = await permissionModule.addRoleForSpecificToken(token_owner, CAT20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
-            let roleAddedTopic = "0x5a5a613a5ad7aa18ff1166bf1a95ae66ccb7233d352bc8afe49bde4ec724fab2";
+            let roleAddedTopic = "0x989388bc4545c6ee22abaf7aca22f0b4b9866b1e1f0b40fd222455da7a63652e";
             assert.notEqual(tx.receipt.logs[0].topics.indexOf(roleAddedTopic), -1);
 
             tx = await whiteList.addToWhiteList(token_owner, CAT20Token.address.valueOf(), { from: token_owner });

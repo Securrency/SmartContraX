@@ -27,7 +27,7 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
     /**
     * @notice Verify token address
     */
-    modifier onlyRegistredToken(address tokenAddress) {
+    modifier onlyRegisteredToken(address tokenAddress) {
         require(
             tfInstance().getTokenStandard(tokenAddress) != 0x00, 
             "Token is not registered in the tokens factory."
@@ -67,7 +67,7 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
         uint value
     )
         public
-        onlyRegistredToken(msg.sender)
+        onlyRegisteredToken(msg.sender)
     {
         require(isSupported(chain), "Chain is not supported.");
         require(sender != address(0), "Invalid sender.");
@@ -150,7 +150,7 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
         uint tokens
     )
         public
-        onlyRegistredToken(msg.sender)
+        onlyRegisteredToken(msg.sender)
         view
         returns (bool)
     {

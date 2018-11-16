@@ -11,12 +11,12 @@ contract IPMTokenRolesStorage {
     /**
     * @notice Write info to the log when the new role was added to the wallet
     */
-    function emitTokenDependetRoleAdded(address wallet, address token, bytes32 role) public;
+    function emitTokenDependentRoleAdded(address wallet, address token, bytes32 role) public;
 
     /**
     * @notice Write info to the log when the role was deleted
     */
-    function emitTokenDependetRoleDeleted(address wallet, address token, bytes32 role) public;
+    function emitTokenDependentRoleDeleted(address wallet, address token, bytes32 role) public;
 
     /// Methods which updates the storage. Allowed only for the Permission Module.
 

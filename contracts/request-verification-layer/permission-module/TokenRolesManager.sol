@@ -67,7 +67,7 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
         );
 
         PMStorage().setTokenDependentRolesIndex(wallet,token,index.add(1));
-        PMStorage().emitTokenDependetRoleAdded(wallet, token, roleName);
+        PMStorage().emitTokenDependentRoleAdded(wallet, token, roleName);
     }
 
     /**
@@ -104,7 +104,7 @@ contract TokenRolesManager is RolesManager, TokensFactoryInstance, ITokenRolesMa
         PMStorage().delTokenDependentRoleIndex(wallet,token,roleName);
         PMStorage().delTokenDependentRole(wallet,token,last);
         PMStorage().setTokenDependentRolesIndex(wallet,token,last);
-        PMStorage().emitTokenDependetRoleDeleted(wallet, token, roleName);
+        PMStorage().emitTokenDependentRoleDeleted(wallet, token, roleName);
     }
 
     /**

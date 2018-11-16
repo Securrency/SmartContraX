@@ -44,7 +44,7 @@ contract IPMRolesManagerStorage {
     /**
     * @notice Write info to the log when the new role was added to the wallet
     */
-    function emitTokenDependetRoleAdded(
+    function emitTokenDependentRoleAdded(
         address wallet,
         address token, 
         bytes32 role
@@ -54,7 +54,7 @@ contract IPMRolesManagerStorage {
     /**
     * @notice Write info to the log when the role was deleted
     */
-    function emitTokenDependetRoleDeleted(
+    function emitTokenDependentRoleDeleted(
         address wallet, 
         address token, 
         bytes32 role
@@ -167,7 +167,7 @@ contract IPMRolesManagerStorage {
     * @param sig Method id
     * @param index Index of the method
     */
-    function setMetodIndex(
+    function setMethodIndex(
         bytes32 role,
         bytes4 sig,
         uint index

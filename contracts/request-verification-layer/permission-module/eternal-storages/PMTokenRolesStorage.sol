@@ -11,12 +11,12 @@ contract PMTokenRolesStorage is IPMTokenRolesStorage, BaseStorage {
     /**
     * @notice Write info to the log when the new role was added to the wallet
     */
-    event TokenDependetRoleAdded(address indexed wallet, address indexed token, bytes32 role);
+    event TokenDependentRoleAdded(address indexed wallet, address indexed token, bytes32 role);
 
     /**
     * @notice Write info to the log when the role was deleted
     */
-    event TokenDependetRoleDeleted(address indexed wallet, address indexed token, bytes32 role);
+    event TokenDependentRoleDeleted(address indexed wallet, address indexed token, bytes32 role);
 
     /// Events emmiters. Write info about any state changes to the log.
     /// Allowed only for the Permission Module.
@@ -24,7 +24,7 @@ contract PMTokenRolesStorage is IPMTokenRolesStorage, BaseStorage {
     /**
     * @notice Write info to the log when the new role was added to the wallet
     */
-    function emitTokenDependetRoleAdded(
+    function emitTokenDependentRoleAdded(
         address wallet,
         address token, 
         bytes32 role
@@ -32,7 +32,7 @@ contract PMTokenRolesStorage is IPMTokenRolesStorage, BaseStorage {
         public
         onlyPermissionModule(msg.sender)
     {
-        emit TokenDependetRoleAdded(
+        emit TokenDependentRoleAdded(
             wallet,
             token, 
             role
@@ -42,7 +42,7 @@ contract PMTokenRolesStorage is IPMTokenRolesStorage, BaseStorage {
     /**
     * @notice Write info to the log when the role was deleted
     */
-    function emitTokenDependetRoleDeleted(
+    function emitTokenDependentRoleDeleted(
         address wallet, 
         address token, 
         bytes32 role
@@ -50,7 +50,7 @@ contract PMTokenRolesStorage is IPMTokenRolesStorage, BaseStorage {
         public
         onlyPermissionModule(msg.sender)
     {
-        emit TokenDependetRoleDeleted(
+        emit TokenDependentRoleDeleted(
             wallet, 
             token, 
             role

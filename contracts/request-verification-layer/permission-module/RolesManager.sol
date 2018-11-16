@@ -117,7 +117,7 @@ contract RolesManager is IRolesManager {
 
         PMStorage().setMethodStatus(roleName, methodId, true);
         uint length = PMStorage().getMethodsLength(roleName);
-        PMStorage().setMetodIndex(roleName, methodId, length);
+        PMStorage().setMethodIndex(roleName, methodId, length);
         PMStorage().addMethod(roleName, methodId);
 
         PMStorage().emitMethodAdded(methodId, roleName);
@@ -146,7 +146,7 @@ contract RolesManager is IRolesManager {
 
         if (last > 0) {
             bytes4 idToUpdate = PMStorage().getMethodByIndex(roleName, last);
-            PMStorage().setMetodIndex(roleName, idToUpdate, index);
+            PMStorage().setMethodIndex(roleName, idToUpdate, index);
             PMStorage().addMethodToIndex(roleName, idToUpdate, index);
         }
         
