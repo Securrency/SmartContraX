@@ -14,15 +14,15 @@ contract WhiteList is IWhiteList, Protected, TokensFactoryInstance {
 
     /**
     * @notice Write info to the log when someone was added to the whitelist
-    * @param tokenAddress Address of the token
     * @param who An address which was added to the Whitelist
+    * @param tokenAddress Address of the token
     */
     event Added(address indexed who, address indexed tokenAddress);
 
     /**
     * @notice Write info to the log when someone was removed from the whitelist
-    * @param tokenAddress Address of the token
     * @param who An address which was removed from the Whitelist
+    * @param tokenAddress Address of the token
     */
     event Removed(address indexed who, address indexed tokenAddress);
 
