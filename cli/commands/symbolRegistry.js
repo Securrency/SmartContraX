@@ -207,7 +207,7 @@ async function isSymbolOwner() {
 }
 
 async function getExpirationInterval() {
-    await registry.methods.exprationInterval().call({ from: accounts[0] }, function (error, result) {
+    await registry.methods.expirationInterval().call({ from: accounts[0] }, function (error, result) {
         if (error) {
             console.log(error);
         }

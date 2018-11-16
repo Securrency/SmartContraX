@@ -13,8 +13,8 @@ contract TxCheckpoints is ITxCheckpoints {
     using BytesHelper for address;
     using BytesHelper for uint;
 
-    // Declares variable that stores expiration interval
-    uint public expireInterval = 3600;
+    // Declares variable that stores expiration interval (seconds)
+    uint public expirationInterval = 3600;
 
     // Declares variable that stores checkpoin identifier
     uint id = 1;
@@ -103,9 +103,9 @@ contract TxCheckpoints is ITxCheckpoints {
     * @param newExpirationInterval New expiration interval in seconds
     */
     function updateExpirationTime(uint newExpirationInterval) public {
-        emit ExpireInteravalUpdated(expireInterval, newExpirationInterval);
+        emit ExpireInteravalUpdated(expirationInterval, newExpirationInterval);
 
-        expireInterval = newExpirationInterval;
+        expirationInterval = newExpirationInterval;
     }
 
     /**
@@ -140,7 +140,7 @@ contract TxCheckpoints is ITxCheckpoints {
 
         checkpoints[id] = Checkpoint({
             checkpointKey: checkpointKey,
-            expireDate: now.add(expireInterval),
+            expireDate: now.add(expirationInterval),
             used: false
         });
 

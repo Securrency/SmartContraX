@@ -8,8 +8,8 @@ import "../../components-registry/getters/SymbolRegistryAddress.sol";
 * @title Eternal storage for the Symbol Registry
 */
 contract SRStorage is SymbolRegistryAddress, ISRStorage {
-    // Interval for symbol expiration
-    uint internal exprationInterval = 604800;
+    // Interval for symbol expiration (seconds)
+    uint internal expirationInterval = 604800;
 
     // Declare storage for symbol ownership transfer
     // symbol -> new owner
@@ -244,7 +244,7 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
         public 
         onlySymbolRegistry(msg.sender)
     {
-        exprationInterval = interval;
+        expirationInterval = interval;
     }
 
     /**
@@ -325,6 +325,6 @@ contract SRStorage is SymbolRegistryAddress, ISRStorage {
     * @notice Returns current symbol expiration interval
     */
     function getExpirationInterval() public view returns (uint) {
-        return exprationInterval;
+        return expirationInterval;
     }  
 }

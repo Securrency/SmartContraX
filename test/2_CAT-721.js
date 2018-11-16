@@ -335,11 +335,11 @@ contract("CAT721Token", accounts => {
     describe("Transactions checkpoints", async() => {
         it("Should change checkpoint expiration time", async() => {
             let newExpirationTime = 1;
-            let expirationTime = await CAT721Token.expireInterval();
+            let expirationTime = await CAT721Token.expirationInterval();
             expirationTime = expirationTime.toNumber();
 
             await CAT721Token.updateExpirationTime(newExpirationTime);
-            let updatedTime = await CAT721Token.expireInterval();
+            let updatedTime = await CAT721Token.expirationInterval();
             updatedTime = updatedTime.toNumber();
             
             assert.equal(updatedTime, newExpirationTime);
@@ -369,11 +369,11 @@ contract("CAT721Token", accounts => {
 
         it("Should update checkpoint expiration time and create rollback transaction", async() => {
             let newExpirationTime = 600;
-            let expirationTime = await CAT721Token.expireInterval();
+            let expirationTime = await CAT721Token.expirationInterval();
             expirationTime = expirationTime.toNumber();
 
             await CAT721Token.updateExpirationTime(newExpirationTime);
-            let updatedTime = await CAT721Token.expireInterval();
+            let updatedTime = await CAT721Token.expirationInterval();
             updatedTime = updatedTime.toNumber();
             
             assert.equal(updatedTime, newExpirationTime);

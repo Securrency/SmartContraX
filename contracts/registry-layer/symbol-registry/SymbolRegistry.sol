@@ -81,7 +81,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
             "The symbol is busy. Please wait when it will be available."
         );
 
-        uint exprationInterval = SRStorage().getExpirationInterval();
+        uint expirationInterval = SRStorage().getExpirationInterval();
 
         SRStorage().saveSymbol(
             symbol,
@@ -89,7 +89,7 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
             address(0),
             issuerName,
             now,
-            now.add(exprationInterval)
+            now.add(expirationInterval)
         );
 
         SRStorage().emitRegisteredSymbol(msg.sender, symbol, issuerName);
@@ -103,9 +103,9 @@ contract SymbolRegistry is ISymbolRegistry, Protected, SystemComponent, TokensFa
         symbol = symbol.toUpperBytes();
 
         uint expiredAt = SRStorage().getSymbolExpiration(symbol);
-        uint exprationInterval = SRStorage().getExpirationInterval();
+        uint expirationInterval = SRStorage().getExpirationInterval();
 
-        SRStorage().updateSymbolExpiration(symbol, expiredAt.add(exprationInterval));
+        SRStorage().updateSymbolExpiration(symbol, expiredAt.add(expirationInterval));
         SRStorage().emitRenewal(symbol);
     }
 
