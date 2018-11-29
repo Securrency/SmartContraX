@@ -22,6 +22,12 @@ module.exports = {
       gas: 4500000,
       gasPrice: 5000000000
     },
+    mainnet: {
+      provider: new HDWalletProvider(privateKey, "https://mainnet.infura.io/"),
+      network_id: "1",
+      gas: 450000,
+      gasPrice: 10000000000
+    },
     gochain: {
       provider: new HDWalletProvider(privateKey, "https://testnet-rpc.gochain.io"),
       network_id: "*",
