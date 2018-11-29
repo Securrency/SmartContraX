@@ -329,9 +329,9 @@ contract('TransferModule', accounts => {
         it("Should be transferred tokens on the account which is in the whitelist", async() => {
             let tx = await CAT20Token.transfer(token_holder_1, toTransfer);
 
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_1);
-            assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_1);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
         });
 
         it("Should be failed to transfer on account that is not in whitelist", async() => {
@@ -354,9 +354,9 @@ contract('TransferModule', accounts => {
             
             tx = await CAT20Token.transfer(token_holder_2, toTransfer);
 
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_2);
-            assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_2);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
         });
 
         it("Should add multiple accounts to the whitelist", async() => {

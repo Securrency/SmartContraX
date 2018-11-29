@@ -142,6 +142,9 @@ contract("CAT20Token", accounts => {
         let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
         tx = await permissionModule.addMethodToTheRole(rollbackId, complianceRoleName, { from: accounts[0] });
 
+        let enRoll = createId("toggleRollbacksStatus()");
+        tx = await permissionModule.addMethodToTheRole(enRoll, complianceRoleName, { from: accounts[0] });
+
         let p = createId("pause()");
         tx = await permissionModule.addMethodToTheRole(p, complianceRoleName, { from: accounts[0] });
 
@@ -304,9 +307,9 @@ contract("CAT20Token", accounts => {
         it("Should transfer tokens from the owner account to account " + token_holder_1, async() => {
             let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_1);
-            assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_1);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
 
             txForRollback = tx.tx;
         });
@@ -314,9 +317,9 @@ contract("CAT20Token", accounts => {
         it("Should transfer tokens from the owner account to account " + token_holder_2, async() => {
             let tx = await CAT20Token.transfer(token_holder_2, toTransfer, {from: token_owner});
             
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_2);
-            assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_2);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
         });
 
         it("Should get correct ballance after previous transfers", async() => {
@@ -326,16 +329,55 @@ contract("CAT20Token", accounts => {
             assert.equal(balance + toTransfer * 2, totalSupply);
         });
 
+        it("Fail rollback transaction (rollback disabled)", async() => {
+            try {
+                let receipt = web3.eth.getTransactionReceipt(txForRollback);
+                let transaction = web3.eth.getTransaction(txForRollback);
+                let checkpointId = parseInt(receipt.logs[0].topics[2]);
+                await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, transaction["from"], toTransfer, checkpointId, txForRollback);
+            } catch (error) {
+
+            }
+        });
+
+        it("Should enable rollbacks", async() => {
+            let tx = await CAT20Token.toggleRollbacksStatus();
+
+            assert.equal(tx.logs[0].args.newStatus, true);
+        });
+
+        it("Should transfer tokens with enabled rollbacks", async() => {
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
+            
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_1);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+
+            txForRollback = tx.tx;
+        });
+
         it("Should rollback transaction", async() => {
             let receipt = web3.eth.getTransactionReceipt(txForRollback);
             let transaction = web3.eth.getTransaction(txForRollback);
 
-            let checkpointId = parseInt(receipt.logs[0].topics[2]);
+            let checkpointId = parseInt(receipt.logs[1].topics[2]);
             
             await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, transaction["from"], toTransfer, checkpointId, txForRollback);
 
             let status = await CAT20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
+        });
+
+        it("Should disable rollbacks", async() => {
+            let tx = await CAT20Token.toggleRollbacksStatus();
+
+            assert.equal(tx.logs[0].args.newStatus, false);
+        });
+
+        it("Should enable rollbacks", async() => {
+            let tx = await CAT20Token.toggleRollbacksStatus();
+
+            assert.equal(tx.logs[0].args.newStatus, true);
         });
 
         it("Mint tokens", async() => {
@@ -530,11 +572,11 @@ contract("CAT20Token", accounts => {
         it("Should fial to create rollback transaction, checkpoint is expired", async() => {
             let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_1);
-            assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_1);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
             
-            let checkpointId = tx.logs[0].args.checkpointId.toNumber();
+            let checkpointId = tx.logs[1].args.checkpointId.toNumber();
 
             sleep.msleep(1001);
 
@@ -562,11 +604,11 @@ contract("CAT20Token", accounts => {
 
             let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_1);
-            assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_1);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
             
-            let checkpointId = tx.logs[0].args.checkpointId.toNumber();
+            let checkpointId = tx.logs[1].args.checkpointId.toNumber();
 
             await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, token_owner, toTransfer, checkpointId, tx.tx);
 

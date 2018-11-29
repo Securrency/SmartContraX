@@ -521,9 +521,9 @@ contract('TokensFactory', accounts => {
         it("Should transfer tokens from the owner account to account " + token_holder_1, async() => {
             let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
             
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_1);
-            assert.equal(tx.logs[1].args.value.toNumber(), toTransfer);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_1);
+            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
         });
         
         it("Should approve " + web3.fromWei(toApprove, "ether") + symbol + " tokens for account " + token_holder_1, async() => {
@@ -537,9 +537,9 @@ contract('TokensFactory', accounts => {
         it("Should transfer approved tokens", async() => {
             let tx = await CAT20Token.transferFrom(token_owner, token_holder_2, toApprove, {from: token_holder_1});
 
-            assert.equal(tx.logs[1].args.from, token_owner);
-            assert.equal(tx.logs[1].args.to, token_holder_2);
-            assert.equal(tx.logs[1].args.value.toNumber(), toApprove);
+            assert.equal(tx.logs[0].args.from, token_owner);
+            assert.equal(tx.logs[0].args.to, token_holder_2);
+            assert.equal(tx.logs[0].args.value.toNumber(), toApprove);
 
             let balance = await CAT20Token.balanceOf(token_holder_2);
             
