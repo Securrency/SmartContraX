@@ -1,4 +1,5 @@
 const Transfer = require("./TransferCommand");
+const BalanceOf = require("./BalanceOfCommand");
 const TokenDistribution = require("./TokenDistribution");
 const CommandsCollection = require("../../CommandsCollection");
 
@@ -18,6 +19,7 @@ class Collection extends CommandsCollection {
         this.commands = [
             new Transfer(),
             new TokenDistribution(),
+            new BalanceOf(),
         ];
     }
 }

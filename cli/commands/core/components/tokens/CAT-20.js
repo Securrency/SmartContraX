@@ -58,6 +58,7 @@ class CAT20 extends Component {
                 if (error) {
                     reject(error);
                 }
+                this.tokenName = result;
                 resolve(result);
             });
         });
@@ -73,6 +74,7 @@ class CAT20 extends Component {
                 if (error) {
                     reject(error);
                 }
+                this.tokenSymbol = result;
                 resolve(result);
             });
         });
@@ -85,6 +87,22 @@ class CAT20 extends Component {
     getTotalSupply() {
         return new Promise((resolve, reject) => {
             this.getInstance().methods.totalSupply().call({}, (error, result) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve(result);
+            });
+        });
+    }
+
+    /**
+     * Get account balance
+     * @param {string} account Account address
+     * @public
+     */
+    balanceOf(account) {
+        return new Promise((resolve, reject) => {
+            this.getInstance().methods.balanceOf(account).call({}, (error, result) => {
                 if (error) {
                     reject(error);
                 }
