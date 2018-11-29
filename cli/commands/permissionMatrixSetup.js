@@ -94,11 +94,17 @@ async function run(netowrk) {
         "addToWhiteList(address,address)",
         "removeFromWhiteList(address,address)",
         "addArrayToWhiteList(address[],address)",
+        "removeArrayFromWhiteList(address[],address)",
         "createRollbackTransaction(address,address,address,uint256,uint256,string)",
         "mint(address,uint256)",
         "mint(address)",
+        "issuerBurn(address,uint256,bytes32)",
         "crossChainTransfer(uint256,bytes32,bytes32)",
         "clawback(address,address,uint256,bytes32)",
+        "pause()",
+        "unpause()",
+        "moveTokensOnHold(address,uint256,bytes32)",
+        "moveTokensFromHold(address,uint256,bytes32)",
     ];
 
     let rolesData = [
