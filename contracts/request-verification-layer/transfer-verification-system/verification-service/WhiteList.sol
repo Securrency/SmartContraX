@@ -83,14 +83,28 @@ contract WhiteList is IWhiteList, Protected, TokensFactoryInstance {
     */
     function removeFromWhiteList(address who, address tokenAddress) 
         public
-        verifyPermissionForToken(msg.sig, msg.sender, tokenAddress) 
+        verifyPermissionForToken(msg.sig, msg.sender, tokenAddress)
     {
         require(who != address(0), "Invalid customer address.");
         require(tfInstance().getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
 
-        whitelistedAddresses[tokenAddress][who] = false;
+        remove(who, tokenAddress);
+    }
 
-        emit Removed(who, tokenAddress);
+    /**
+    * @notice Remove multiple addresses from the whitelist
+    * @param investors Array of the investors which will be removed
+    * @param tokenAddress Token address
+    */
+    function removeArrayFromWhiteList(address[] memory investors, address tokenAddress) 
+        public
+        verifyPermissionForToken(msg.sig, msg.sender, tokenAddress)
+    {
+        require(tfInstance().getTokenStandard(tokenAddress).length != 0, "Token is not registered in the tokens factory.");
+        for (uint i = 0; i < investors.length; i++) {
+            require(investors[i] != address(0), "Invalid investor address.");
+            remove(investors[i], tokenAddress);
+        }
     }
 
     /**
@@ -102,5 +116,16 @@ contract WhiteList is IWhiteList, Protected, TokensFactoryInstance {
         whitelistedAddresses[tokenAddress][who] = true;
 
         emit Added(who, tokenAddress);
+    }
+
+    /**
+    * @notice Remove address from whitelist
+    * @param investor Address which will be removed
+    * @param tokenAddress Token address
+    */
+    function remove(address investor, address tokenAddress) internal {
+        whitelistedAddresses[tokenAddress][investor] = false;
+
+        emit Removed(investor, tokenAddress);
     }
 }
