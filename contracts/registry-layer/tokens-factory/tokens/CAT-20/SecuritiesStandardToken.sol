@@ -17,6 +17,14 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     // define libraries
     using SafeMath for uint256;
 
+    // Rollback status (Enabled/Disabled)
+    bool public rollbackEnabled = false;
+
+    /**
+    * @notice Write info to the log about rollbacks status changes
+    */
+    event RollbacksStatusChanged(bool newStatus);
+
     /**
     * @notice Write details about clawback to the log
     * @param from Address from which tokens will be removed
@@ -136,10 +144,14 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
             value
         )
         returns (bool)
-    {
-        createCheckpoint(msg.sender, to, value, msg.sender);
+    {   
+        bool result = super.transfer(to, value);
 
-        return super.transfer(to, value);
+        if (rollbackEnabled && result) {
+            createCheckpoint(msg.sender, to, value, msg.sender);
+        }
+        
+        return result;
     }
 
     /**
@@ -159,10 +171,14 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
             value
         )
         returns (bool) 
-    {
-        createCheckpoint(from, to, value, msg.sender);
-
-        return super.transferFrom(from, to, value);
+    {   
+        bool result = super.transferFrom(from, to, value);
+        
+        if (rollbackEnabled && result) {
+            createCheckpoint(from, to, value, msg.sender);
+        }
+        
+        return result;
     }
 
     /**
@@ -225,6 +241,18 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     {
         require(balances[tokenHolder] >= amount, "Insufficient funds on balance.");
         _moveTokensOnHold(tokenHolder, amount, data);
+    }
+
+    /**
+    * @notice Enable/Disable rollbacks in the token
+    */
+    function toggleRollbacksStatus() 
+        external
+        verifyPermissionForCurrentToken(msg.sig)
+    {
+        rollbackEnabled = !rollbackEnabled;
+        
+        emit RollbacksStatusChanged(rollbackEnabled);
     }
 
     /**
