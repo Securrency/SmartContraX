@@ -14,7 +14,7 @@ contract TxCheckpoints is ITxCheckpoints {
     using BytesHelper for uint;
 
     // Declares variable that stores expiration interval (seconds)
-    uint public expirationInterval = 3600;
+    uint public expirationInterval = 2592000;
 
     // Declares variable that stores checkpoin identifier
     uint id = 1;
