@@ -17,6 +17,8 @@ var CAT721Verification = artifacts.require("./request-verification-layer/transfe
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMStorage = artifacts.require("./request-verification-layer/permission-module/eternal-storages/PMStorage.sol");
 
+var sleep = require("sleep");
+
 function createId(signature) {
   let hash = web3.sha3(signature);
 
@@ -67,7 +69,7 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       tokensFactoryDeployed = instance;
-      return deployer.deploy(WhiteList, ComponentsRegistryDeployed.address, {gas: 1000000});
+      return deployer.deploy(WhiteList, ComponentsRegistryDeployed.address, {gas: 1200000});
     })
     .then((instance) => {
       WhiteListDeployed = instance;
