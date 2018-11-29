@@ -1,6 +1,8 @@
 /node_modules
 /build
 /cli/mnemonic
+/cli/commands/tmp/*
+!/cli/commands/tmp/example.csv
 .npm-debug.log
 *.DS_Store
 .vscode/launch.json
