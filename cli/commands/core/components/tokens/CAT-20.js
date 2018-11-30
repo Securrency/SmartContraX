@@ -238,6 +238,54 @@ class CAT20 extends Component {
             });
         });
     }
+
+    /**
+     * CAT-20 pause function
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    pause(sendFrom) {
+        return new Promise((resolve, reject) => {
+            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+            let pause = this.getInstance().methods.pause();
+            let message = `Set ${this.symbol} token on pause. Please wait...`;
+
+            action
+            .setAction(pause)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * CAT-20 unpause function
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    unpause(sendFrom) {
+        return new Promise((resolve, reject) => {
+            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+            let pause = this.getInstance().methods.unpause();
+            let message = `Unpause ${this.symbol} token. Please wait...`;
+
+            action
+            .setAction(pause)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
 }
 
 module.exports = new CAT20();

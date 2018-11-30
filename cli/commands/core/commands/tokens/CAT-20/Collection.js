@@ -3,6 +3,8 @@ const BalanceOf = require("./BalanceOfCommand");
 const Clawback = require("./ClawbackCommand");
 const Mint = require("./MintCommand");
 const Burn = require("./BurnCommand");
+const Pause = require("./PauseCommand");
+const UnPause = require("./UnPauseCommand");
 const TokenDistribution = require("./TokenDistribution");
 const CommandsCollection = require("../../CommandsCollection");
 
@@ -26,6 +28,8 @@ class Collection extends CommandsCollection {
             new Clawback(),
             new Mint(),
             new Burn(),
+            new Pause(),
+            new UnPause(),
         ];
     }
 }
