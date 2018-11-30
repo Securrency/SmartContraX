@@ -105,6 +105,7 @@ async function run(netowrk) {
         "unpause()",
         "moveTokensOnHold(address,uint256,bytes32)",
         "moveTokensFromHold(address,uint256,bytes32)",
+        "toggleRollbacksStatus()",
     ];
 
     let rolesData = [

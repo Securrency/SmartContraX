@@ -7,6 +7,9 @@ const Pause = require("./PauseCommand");
 const UnPause = require("./UnPauseCommand");
 const MoveTokensOnHold = require("./MoveTokensOnHoldCommand");
 const MoveTokensFromHold = require("./MoveTokensFromHoldCommand");
+const GetRollbacksStatus = require("./GetRollbacksStatusCommand");
+const ToggleRollbacksStatus = require("./ToggleRollbacksStatusCommand");
+const Rollback = require("./RollbackCommand");
 const TokenDistribution = require("./TokenDistribution");
 const CommandsCollection = require("../../CommandsCollection");
 
@@ -34,6 +37,9 @@ class Collection extends CommandsCollection {
             new UnPause(),
             new MoveTokensOnHold(),
             new MoveTokensFromHold(),
+            new GetRollbacksStatus(),
+            new ToggleRollbacksStatus(),
+            new Rollback(),
         ];
     }
 }

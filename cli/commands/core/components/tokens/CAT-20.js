@@ -128,6 +128,21 @@ class CAT20 extends Component {
     }
 
     /**
+     * Get rollbacks status (Enabled/Disabled)
+     * @public
+     */
+    getRollbacksStatus() {
+        return new Promise((resolve, reject) => {
+            this.getInstance().methods.rollbackEnabled().call({}, (error, result) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve(result);
+            });
+        });
+    }
+
+    /**
      * ERC-20 transfer function
      * @param {string} to Recipient address
      * @param {string} value Number of the tokens to be 
@@ -301,6 +316,107 @@ class CAT20 extends Component {
                 reject(error);
             });
         });
+    }
+
+    /**
+     * CAT-20 toggleRollbacksStatus function
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    toggleRollbacksStatus(sendFrom) {
+        return new Promise((resolve, reject) => {
+            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+            let toogle = this.getInstance().methods.toggleRollbacksStatus();
+            let message = `Toggle rollbacks status. Please wait...`;
+
+            action
+            .setAction(toogle)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * CAT-20 createRollbackTransaction function
+     * @param {string} txHash Transaction for rollback
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    createRollbackTransaction(txHash, sendFrom) {
+        return new Promise((resolve, reject) => {
+            this.getTransactionReceipt(txHash)
+            .then(receipt => {
+                if (!receipt || typeof receipt.logs[1] == 'undefined' || typeof receipt.logs[0] == 'undefined') {
+                    reject("Invalid transaction. Rollback is not supported.");
+                }
+                let checkpointId = parseInt(receipt.logs[1].topics[2]);
+                let txFrom = this.prepareAddressFromLog(receipt.logs[0].topics[1]);
+                let to = this.prepareAddressFromLog(receipt.logs[0].topics[2]);
+                let value = parseInt(receipt.logs[0].data);
+
+                if (!checkpointId || !txFrom || !to || !value) {
+                    reject("Invalid transaction. Rollback is not supported.");
+                }
+
+                let rollback = this.getInstance()
+                    .methods
+                    .createRollbackTransaction(to, txFrom, txFrom, value, checkpointId, txHash);
+                    
+                let message = `
+                    Create rollback transaction
+                    To: ${to}
+                    From: ${txFrom},
+                    Value: ${this.web3.utils.fromWei(value.toString(), "ether")},
+                    CheckpointId: ${checkpointId},
+                    txHash: ${txHash}
+                `;
+
+                action
+                .setAction(rollback)
+                .execute(sendFrom, this.web3, message)
+                .then(receipt => {
+                    resolve(receipt);
+                })
+                .catch(error => {
+                    reject(error);
+                });
+            })
+            .catch(error => {
+                reject(error);
+            });
+        })
+    }   
+
+    /**
+     * Get transaction receipt
+     * @param {string} txHash Transaction hash
+     */
+    getTransactionReceipt(txHash) {
+        return new Promise((resolve, reject) => {
+            this.web3.eth.getTransactionReceipt(txHash, (err, result) => {                    
+                err ? reject(err) : resolve(result);
+            });
+        });
+    }
+
+    /**
+     * Get address
+     * @param {string} toConvert Address 32 bytes from the log 
+     * @private
+     */
+    prepareAddressFromLog(toConvert) {
+        let str = '0x';
+        for(let i = 26; i < toConvert.length; i++) {
+            str = str + toConvert[i];
+        }
+    
+        return str;
     }
 
     /**
