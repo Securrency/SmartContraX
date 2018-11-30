@@ -174,6 +174,39 @@ class CAT20 extends Component {
             });
         });
     }
+
+    /**
+     * CAT-20 mintfunction
+     * @param {string} to Recipient address
+     * @param {integer} value Numbet of the tokens to mint
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    mint(to, value, sendFrom) {
+        if (!this.web3.utils.isAddress(to)) throw new Error("Invalid recipient address.");
+        if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+        if (value == 0) throw new Error("An invalid number of the tokens to send.");
+
+        return new Promise((resolve, reject) => {
+            let weiValue = this.web3.utils.toWei(value);
+            let mint = this.getInstance().methods.mint(to, weiValue);
+            let message = `
+                    Minting ${value} ${this.symbol}.
+                    To:   ${to}
+                    Please wait...
+                `;
+
+            action
+            .setAction(mint)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
 }
 
 module.exports = new CAT20();
