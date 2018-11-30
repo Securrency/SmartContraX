@@ -5,6 +5,8 @@ const Mint = require("./MintCommand");
 const Burn = require("./BurnCommand");
 const Pause = require("./PauseCommand");
 const UnPause = require("./UnPauseCommand");
+const MoveTokensOnHold = require("./MoveTokensOnHoldCommand");
+const MoveTokensFromHold = require("./MoveTokensFromHoldCommand");
 const TokenDistribution = require("./TokenDistribution");
 const CommandsCollection = require("../../CommandsCollection");
 
@@ -30,6 +32,8 @@ class Collection extends CommandsCollection {
             new Burn(),
             new Pause(),
             new UnPause(),
+            new MoveTokensOnHold(),
+            new MoveTokensFromHold(),
         ];
     }
 }

@@ -112,6 +112,22 @@ class CAT20 extends Component {
     }
 
     /**
+     * Get number of the held tokens for an account
+     * @param {string} account Account address
+     * @public
+     */
+    getNumberOfTokensOnHold(account) {
+        return new Promise((resolve, reject) => {
+            this.getInstance().methods.getNumberOfTokensOnHold(account).call({}, (error, result) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve(result);
+            });
+        });
+    }
+
+    /**
      * ERC-20 transfer function
      * @param {string} to Recipient address
      * @param {string} value Number of the tokens to be 
@@ -286,6 +302,71 @@ class CAT20 extends Component {
             });
         });
     }
+
+    /**
+     * CAT-20 move tokens on hold
+     * @param {string} account Account for which token will move on hold
+     * @param {integer} value Number of the tokens which will be held
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @param {string} data Additional data (maybe reason)
+     */
+    moveTokensOnHold(account, value, sendFrom, data) {
+        return new Promise((resolve, reject) => {
+            if (!this.web3.utils.isAddress(account)) throw new Error("Invalid account address.");
+            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+            if (value <= 0) throw new Error("An invalid number of the tokens.");
+
+            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+            let weiValue = this.web3.utils.toWei(value);
+            let hexData = this.web3.utils.toHex(data);
+            let onHold = this.getInstance().methods.moveTokensOnHold(account, weiValue, hexData);
+            let message = `Move ${value} ${this.symbol} tokens on hold. Please wait...`;
+
+            action
+            .setAction(onHold)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * CAT-20 move tokens from hold
+     * @param {string} account Account for which token will move from hold
+     * @param {integer} value Number of the tokens which will be moved from held
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @param {string} data Additional data (maybe reason)
+     */
+    moveTokensFromHold(account, value, sendFrom, data) {
+        return new Promise((resolve, reject) => {
+            if (!this.web3.utils.isAddress(account)) throw new Error("Invalid account address.");
+            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+            if (value <= 0) throw new Error("An invalid number of the tokens.");
+
+            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+            let weiValue = this.web3.utils.toWei(value);
+            let hexData = this.web3.utils.toHex(data);
+            let fromHold = this.getInstance().methods.moveTokensFromHold(account, weiValue, hexData);
+            let message = `Move ${value} ${this.symbol} tokens from hold. Please wait...`;
+
+            action
+            .setAction(fromHold)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
 }
 
 module.exports = new CAT20();

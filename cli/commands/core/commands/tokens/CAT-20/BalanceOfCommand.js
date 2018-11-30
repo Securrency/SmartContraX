@@ -30,8 +30,16 @@ module.exports = class BalanceOfCommand extends Command {
                 this.contract
                 .balanceOf(this.account)
                 .then((result) => {
-                    console.log(`${this.web3.utils.fromWei(result, "ether")} ${this.contract.tokenSymbol}`);
-                    resolve(result);
+                    this.contract
+                    .getNumberOfTokensOnHold(this.account)
+                    .then((onHold) => {
+                        console.log(`Balance: ${this.web3.utils.fromWei(result, "ether")} ${this.contract.tokenSymbol}`);
+                        console.log(`On hold: ${this.web3.utils.fromWei(onHold, "ether")} ${this.contract.tokenSymbol}`);
+                        resolve({
+                            balance: result,
+                            onHold: onHold
+                        });
+                    });
                 })
                 .catch(error => {
                     reject(error);
