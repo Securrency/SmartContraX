@@ -135,6 +135,45 @@ class CAT20 extends Component {
             });
         });
     }
+
+    /**
+     * CAT-20 clawback function
+     * @param {string} from Account from which tokens will be transferred
+     * @param {string} to Recipient address
+     * @param {integer} value Number of the tokens to be transferred
+     * @param {string} note Some note about clawback
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    clawback(from, to, value, note, sendFrom) {
+        if (!this.web3.utils.isAddress(from)) throw new Error("Invalid address.");
+        if (!this.web3.utils.isAddress(to)) throw new Error("Invalid recipient address.");
+        if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+        if (value == 0) throw new Error("An invalid number of the tokens to send.");
+
+        note = this.web3.utils.toHex(note);
+
+        return new Promise((resolve, reject) => {
+            let weiValue = this.web3.utils.toWei(value);
+            let clawback = this.getInstance().methods.clawback(from, to, weiValue, note);
+            let message = `
+                    Create clawback ${value} ${this.symbol}. 
+                    From: ${from}
+                    To:   ${to}
+                    Please wait...
+                `;
+
+            action
+            .setAction(clawback)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
 }
 
 module.exports = new CAT20();
