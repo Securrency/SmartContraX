@@ -50,6 +50,39 @@ class WhiteList extends Component {
     }
 
     /**
+     * Add provided accounts from the WhiteList
+     * @param {array} investors Array of the account that will be removed from the WhiteList
+     * @param {string} token Token address
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    removeArrayFromWhiteList(investors, token, sendFrom) {
+        if (!this.web3.utils.isAddress(token)) throw new Error("Invalid token address.");
+        if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+        for (let i = 0; i < investors.length; i++) {
+            if (!this.web3.utils.isAddress(investors[i])) {
+                throw new Error("Invalid investor address. Provided address: " + investors[i]);
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            let removeFromWL = this.getInstance().methods.removeArrayFromWhiteList(investors, token);
+            let message = 'Removing from the whitelist. Please wait...';
+
+            action
+            .setAction(removeFromWL)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
      * Check account in the whitelist
      * @param {string} who Address to be verified
      * @param {string} token Token address

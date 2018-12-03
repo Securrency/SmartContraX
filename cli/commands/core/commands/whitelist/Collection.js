@@ -1,5 +1,6 @@
 const CommandsCollection = require("../CommandsCollection");
 const AddArrayToWhiteList = require("./AddArrayToWhiteListCommand");
+const RemoveArrayFromWhiteList = require("./RemoveArrayFromWhiteListCommand");
 const PresentInWhiteList = require("./PresentInWhiteListCommand");
 
 
@@ -18,6 +19,7 @@ class Collection extends CommandsCollection {
         this.commands = [
             new AddArrayToWhiteList(),
             new PresentInWhiteList(),
+            new RemoveArrayFromWhiteList(),
         ];
     }
 }
