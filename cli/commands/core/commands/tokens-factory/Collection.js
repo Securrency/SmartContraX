@@ -1,4 +1,5 @@
 const createToken = require("./CreateTokenCommand");
+const updateStrategy = require("./UpdateStrategyCommand");
 const CommandsCollection = require("../CommandsCollection");
 
 
@@ -16,6 +17,7 @@ class Collection extends CommandsCollection {
         super();
         this.commands = [
             new createToken(),
+            new updateStrategy(),
         ];
     }
 }

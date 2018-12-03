@@ -88,6 +88,31 @@ class TokensFactory extends Component {
             });
         });
     }
+    
+    /**
+     * Update tokens deployment strategy 
+     * @param {string} standard Token standard (CAT-20, CAT-721, CAT-1400...)
+     * @param {string} strategy Deployment strategy address
+     * @param {string} sendFrom Account from which will be executed transaction
+     */
+    updateTokenStrategy(standard, strategy, sendFrom) {
+        return new Promise((resolve, reject) => {
+            let hexStandard = this.web3.utils.toHex(standard);
+            let update = this.getInstance().methods.updateTokenStrategy(hexStandard, strategy);
+
+            let message = `Update deployment strategy for ${standard}. Please wait...`;
+
+            action
+            .setAction(update)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
 }
 
 module.exports = new TokensFactory();
