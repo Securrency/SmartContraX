@@ -168,6 +168,37 @@ class CAT20 extends Component {
     }
 
     /**
+     * Cross chain tokens transfer
+     * @param {integer} value Number of tokens to transfer
+     * @param {string} chain Target chain name
+     * @param {string} recipient Recipient address in the target chain
+     * @param {string} sendFrom Account from which will be executed transaction
+     */
+    crossChainTransfer(value, chain, recipient, sendFrom) {
+        if (value <= 0) throw new Error("Invalid number of the tokens.");
+        if (!chain) throw new Error("Invalid target chain.");
+        if (!recipient) throw new Error("Invalid recipient address.");
+        if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+        return new Promise((resolve, reject) => {
+            let wieValue = this.web3.utils.toWei(value);
+            let hexChain = this.web3.utils.toHex(chain);
+            let transferTokens = this.getInstance().methods.crossChainTransfer(wieValue, hexChain, recipient);
+            let message = `Transfer tokens to ${chain}. Please wait...`;
+
+            action
+            .setAction(transferTokens)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
      * CAT-20 clawback function
      * @param {string} from Account from which tokens will be transferred
      * @param {string} to Recipient address

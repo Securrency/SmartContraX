@@ -11,6 +11,7 @@ const GetRollbacksStatus = require("./GetRollbacksStatusCommand");
 const ToggleRollbacksStatus = require("./ToggleRollbacksStatusCommand");
 const Rollback = require("./RollbackCommand");
 const TokenDistribution = require("./TokenDistribution");
+const CrossChainTransfer = require("./CrossChainTransferCommand");
 const CommandsCollection = require("../../CommandsCollection");
 
 
@@ -40,6 +41,7 @@ class Collection extends CommandsCollection {
             new GetRollbacksStatus(),
             new ToggleRollbacksStatus(),
             new Rollback(),
+            new CrossChainTransfer(),
         ];
     }
 }
