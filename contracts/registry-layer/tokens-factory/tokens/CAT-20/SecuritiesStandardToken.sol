@@ -182,6 +182,17 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     }
 
     /**
+    * @notice Batch tokens transfer
+    * @param investors Array of the investors
+    * @param values Array of the numbers of the tokens for distribution
+    */
+    function batchTransfer(address[] calldata investors, uint[] calldata values) external {
+        for (uint i = 0; i < investors.length; i++) {
+            transfer(investors[i], values[i]);
+        }
+    }
+
+    /**
     * @notice Receive tokens from other chaine
     * @param value Tokens to receive
     * @param chain From chain
@@ -262,7 +273,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param tokens Quantity of the tokens that will be rollbacked
     */
     function updatedBalances(address from, address to, uint tokens) internal {
-        require(tokens <= balances[from], "Insufficient funds on balance.");
+        require(balances[from] >= tokensOnHold[from] + tokens, "Insufficient funds on balance.");
 
         balances[from] = balances[from].sub(tokens);
         balances[to] = balances[to].add(tokens);
