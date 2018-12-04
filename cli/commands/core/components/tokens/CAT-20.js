@@ -168,6 +168,40 @@ class CAT20 extends Component {
     }
 
     /**
+     * CAT-20 batch transfer function
+     * @param {array} investors Array of the investors
+     * @param {array} tokens Array of the numbers of the tokens
+     * @param {string} sendFrom Account from which will be executed transaction
+     * @public
+     */
+    batchTransfer(investors, tokens, sendFrom) {
+        for (let i = 0; i < investors.length; i++) {
+            if (!this.web3.utils.isAddress(investors[i])) {
+                throw new Error("Invalid investor address. Provided address: " + investors[i]);
+            }
+        }
+        for (let i = 0; i < tokens.length; i++) {
+            if (tokens[i] <= 0) throw new Error("Invalid number of the tokens.");
+        }
+        if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
+
+        return new Promise((resolve, reject) => {
+            let transferTokens = this.getInstance().methods.batchTransfer(investors, tokens);
+            let message = `Batch transfer for ${investors.length} investors. Please wait...`;
+
+            action
+            .setAction(transferTokens)
+            .execute(sendFrom, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
      * Cross chain tokens transfer
      * @param {integer} value Number of tokens to transfer
      * @param {string} chain Target chain name

@@ -35,9 +35,12 @@ module.exports = class TokenDistribution extends Command {
                 .fromFile(this.filePath)
                 .then((jsonObj)=>{
                     let investors = [];
+                    let tokens = [];
                     for (let i = 0; i < jsonObj.length; i++) {
                         console.log(`${i+1}. ${jsonObj[i].Investor} - ${jsonObj[i].Tokens}`);
+                        let weiValue = this.web3.utils.toWei(jsonObj[i].Tokens);
                         investors.push(jsonObj[i].Investor);
+                        tokens.push(weiValue);
                     }
 
                     this.rl.question("Confirm distribution (Y/N): ", (answer) => {
@@ -47,14 +50,14 @@ module.exports = class TokenDistribution extends Command {
 
                         this.addInvestorsToTheWhitelist(investors)
                         .then(() => {
-                            this.distribute(jsonObj, 0)
-                            .then(() => {
-                                console.log("Distribution complete.");
-                                resolve();
+                            console.log("Start distribution.")
+                            this.batchTransfer(investors, tokens)
+                            .then(result => {
+                                resolve(result);
                             })
                             .catch(error => {
                                 reject(error);
-                            });
+                            })
                         })
                         .catch(error => {
                             reject(error);
@@ -72,27 +75,20 @@ module.exports = class TokenDistribution extends Command {
     }
 
     /**
-     * Send tokens to the investors
-     * @param {object} data Information about investors for the distribution
+     * Distribute tokens between investors
+     * @param {array} investors Array of the investors
+     * @param {array} tokens Array of the numbers of the tokens
      */
-    distribute(data, index) {
+    batchTransfer(investors, tokens) {
         return new Promise((resolve, reject) => {
-            if (data.length == index) {
-                resolve();
-            }
             this.contract
-            .transfer(
-                data[index].Investor,
-                data[index].Tokens,
+            .batchTransfer(
+                investors,
+                tokens,
                 this.distributor
-            ).then((result) => {
-                this.distribute(data, index+1)
-                .then(() => {
-                    resolve();
-                })
-                .catch(error => {
-                    reject(error);
-                });
+            )
+            .then((result) => {
+                resolve(result);
             })
             .catch(error => {
                 reject(error);
