@@ -17,7 +17,8 @@ var CAT721Verification = artifacts.require("./request-verification-layer/transfe
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMStorage = artifacts.require("./request-verification-layer/permission-module/eternal-storages/PMStorage.sol");
 
-var sleep = require("sleep");
+var AppRegistry = artifacts.require("./registry-layer/application-registry/ApplicationRegistry.sol");
+var AppRegistryStorage = artifacts.require("./registry-layer/application-registry/eternal-storage/ARStorage.sol");
 
 function createId(signature) {
   let hash = web3.sha3(signature);
@@ -37,6 +38,8 @@ module.exports = function(deployer, network, accounts) {
   var CAT721VerificationDeployed;
   var PermissionModuleDeployed;
   var ComponentsRegistryDeployed;
+  var AppRegDeployed;
+  var AppRegStorageDeployed;
   var SRStorageDeployed;
   var TFStorageDeployed;
   var PMStorageDeployed;
@@ -89,7 +92,7 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       TransferModuleDeployed = instance;
-      return deployer.deploy(CAT20Strategy, ComponentsRegistryDeployed.address, {gas: 5100000}); 
+      return deployer.deploy(CAT20Strategy, ComponentsRegistryDeployed.address, {gas: 6600000}); 
     })
     .then((instance) => {
       CAT20StrategyDeployed = instance;
@@ -105,6 +108,14 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       CAT721VerificationDeployed = instance;
+      return deployer.deploy(AppRegistryStorage, ComponentsRegistryDeployed.address, {gas: 4100000});
+    })
+    .then((instance) => {
+      AppRegStorageDeployed = instance;
+      return deployer.deploy(AppRegistry, ComponentsRegistryDeployed.address, AppRegStorageDeployed.address, {gas: 6400000});
+    })
+    .then((instance) => {
+      AppRegDeployed = instance;
     })
     .then(() => {
       return ComponentsRegistryDeployed.initializePermissionModule(PermissionModuleDeployed.address, {gas: 120000});
@@ -141,6 +152,9 @@ module.exports = function(deployer, network, accounts) {
     })
     .then(() => {
       return ComponentsRegistryDeployed.registerNewComponent(SymbolRegistryDeployed.address, {gas: 120000});
+    })
+    .then(() => {
+      return ComponentsRegistryDeployed.registerNewComponent(AppRegDeployed.address, {gas: 120000});
     })
     .then(() => {
       return tokensFactoryDeployed.addTokenStrategy(CAT20StrategyDeployed.address, {gas: 160000});
