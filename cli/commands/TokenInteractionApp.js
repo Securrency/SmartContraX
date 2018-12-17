@@ -38,6 +38,7 @@ class TokenInteractionApp extends App {
                 standard = this.web3.utils.toAscii(standard);
                 standard = this.removeEmptyBytesFromAscii(standard);
                 switch (standard) {
+                    case "ERC-20":
                     case "CAT-20":
                         let CAT20Token = require("./core/components/tokens/CAT-20");
                         CAT20Token.address = token;

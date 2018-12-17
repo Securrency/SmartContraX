@@ -12,6 +12,8 @@ const ToggleRollbacksStatus = require("./ToggleRollbacksStatusCommand");
 const Rollback = require("./RollbackCommand");
 const TokenDistribution = require("./TokenDistribution");
 const CrossChainTransfer = require("./CrossChainTransferCommand");
+const CreateEscrow = require("./CreateEscrowCommand");
+const CancelEscrow = require("./CancelEscrowCommand");
 const CommandsCollection = require("../../CommandsCollection");
 
 
@@ -42,6 +44,8 @@ class Collection extends CommandsCollection {
             new ToggleRollbacksStatus(),
             new Rollback(),
             new CrossChainTransfer(),
+            new CreateEscrow(),
+            new CancelEscrow(),
         ];
     }
 }

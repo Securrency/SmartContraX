@@ -2,10 +2,10 @@ var Command = require("../../Command");
 
 
 /**
- * @fileoverview Contains command for CAT-20 balanceOf method
+ * @fileoverview Contains command for CAT-20 escrow cancellation
  * @namespace coreCommands Smart contracts related commands
  */
-module.exports = class BalanceOfCommand extends Command {
+module.exports = class CancelEscrowCommand extends Command {
     /**
      * Initialize command
      * @constructor
@@ -14,9 +14,9 @@ module.exports = class BalanceOfCommand extends Command {
     constructor() {
         super();
         
-        this.name = "balanceOf";
-        this.alias = "b"
-        this.description = "Show account balance";
+        this.name = "cancelEscrow";
+        this.alias = "cancelE"
+        this.description = "Cancel escrow";
     }
 
     /**
@@ -27,19 +27,24 @@ module.exports = class BalanceOfCommand extends Command {
         return new Promise((resolve, reject) => {
             this.initializeDetails()
             .then(() => {
+                // this.contract
+                // .getEscrowById(this.escrowId)
+                // .then((result) => {
+                //     console.log(result);
+                //     resolve(result);
+                // })
+                // .catch((err) => {
+                //     reject(err);
+                // });
                 this.contract
-                .balanceOf(this.account)
+                .cancelEscrow(
+                    this.escrowId,
+                    ".",
+                    ".",
+                    this.account,
+                )
                 .then((result) => {
-                    this.contract
-                    .getNumberOfTokensOnEscrow(this.account)
-                    .then((onEscrow) => {
-                        console.log(`Balance: ${this.web3.utils.fromWei(result, "ether")} ${this.contract.tokenSymbol}`);
-                        console.log(`On escrow: ${this.web3.utils.fromWei(onEscrow, "ether")} ${this.contract.tokenSymbol}`);
-                        resolve({
-                            balance: result,
-                            onHold: onEscrow
-                        });
-                    });
+                    resolve(result);
                 })
                 .catch(error => {
                     reject(error);
@@ -52,19 +57,21 @@ module.exports = class BalanceOfCommand extends Command {
     }
 
     /**
-     * Request account
      * @private
      */
     initializeDetails() {
         return new Promise((resolve, reject) => {
-            this.rl.question("Account: ", (account) => {
+            this.rl.question("Send request from: ", (account) => {
                 this.account = account;
                 if (!this.web3.utils.isAddress(account)) {
                     this.account = this.accounts[account];
                 }
                 if (!this.web3.utils.isAddress(this.account)) return reject("Invalid account address.");
 
-                resolve();
+                this.rl.question("Escrow id: ", (escrowId) => {
+                    this.escrowId = escrowId;
+                    resolve();
+                });
             });
         }); 
     }

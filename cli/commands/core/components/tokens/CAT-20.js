@@ -116,9 +116,9 @@ class CAT20 extends Component {
      * @param {string} account Account address
      * @public
      */
-    getNumberOfTokensOnHold(account) {
+    getNumberOfTokensOnEscrow(account) {
         return new Promise((resolve, reject) => {
-            this.getInstance().methods.getNumberOfTokensOnHold(account).call({}, (error, result) => {
+            this.getInstance().methods.getTokensOnEscrow(account).call({}, (error, result) => {
                 if (error) {
                     reject(error);
                 }
@@ -485,27 +485,39 @@ class CAT20 extends Component {
     }
 
     /**
-     * CAT-20 move tokens on hold
-     * @param {string} account Account for which token will move on hold
+     * CAT-20 move tokens to escrow
+     * @param {string} holder Account for which token will move to escrow
+     * @param {string} escrow Escrow agent address (must be registered in the application registry)
      * @param {integer} value Number of the tokens which will be held
      * @param {string} sendFrom Account from which will be executed transaction
      * @param {string} data Additional data (maybe reason)
      */
-    moveTokensOnHold(account, value, sendFrom, data) {
+    createEscrow(holder, escrow, value, dataForCall, data, externalId, canCancel, call, sendFrom) {
         return new Promise((resolve, reject) => {
-            if (!this.web3.utils.isAddress(account)) throw new Error("Invalid account address.");
+            if (!this.web3.utils.isAddress(holder)) throw new Error("Invalid account address.");
+            if (!this.web3.utils.isAddress(escrow)) throw new Error("Invalid escrow address.");
             if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
             if (value <= 0) throw new Error("An invalid number of the tokens.");
 
-            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
-
             let weiValue = this.web3.utils.toWei(value);
             let hexData = this.web3.utils.toHex(data);
-            let onHold = this.getInstance().methods.moveTokensOnHold(account, weiValue, hexData);
-            let message = `Move ${value} ${this.symbol} tokens on hold. Please wait...`;
+            let hexDataForCall = this.web3.utils.toHex(dataForCall);
+            let hexId = this.web3.utils.toHex(externalId);
+
+            let toEscrow = this.getInstance().methods.createEscrow(
+                holder,
+                escrow,
+                weiValue,
+                hexDataForCall,
+                hexData,
+                hexId,
+                canCancel,
+                call    
+            );
+            let message = `Move ${value} ${this.symbol} tokens to escrow. Please wait...`;
 
             action
-            .setAction(onHold)
+            .setAction(toEscrow)
             .execute(sendFrom, this.web3, message)
             .then(receipt => {
                 resolve(receipt);
@@ -515,29 +527,27 @@ class CAT20 extends Component {
             });
         });
     }
-
+    
     /**
-     * CAT-20 move tokens from hold
-     * @param {string} account Account for which token will move from hold
-     * @param {integer} value Number of the tokens which will be moved from held
-     * @param {string} sendFrom Account from which will be executed transaction
-     * @param {string} data Additional data (maybe reason)
+     * CAT-20 move tokens to escrow
      */
-    moveTokensFromHold(account, value, sendFrom, data) {
+    cancelEscrow(escrowId, dataForCall, data, sendFrom) {
         return new Promise((resolve, reject) => {
-            if (!this.web3.utils.isAddress(account)) throw new Error("Invalid account address.");
-            if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
-            if (value <= 0) throw new Error("An invalid number of the tokens.");
-
             if (!this.web3.utils.isAddress(sendFrom)) throw new Error("Invalid sender address.");
 
-            let weiValue = this.web3.utils.toWei(value);
             let hexData = this.web3.utils.toHex(data);
-            let fromHold = this.getInstance().methods.moveTokensFromHold(account, weiValue, hexData);
-            let message = `Move ${value} ${this.symbol} tokens from hold. Please wait...`;
+            let hexDataForCall = this.web3.utils.toHex(dataForCall);
+            let hexId = this.web3.utils.toHex(escrowId);
+
+            let cancelEsc = this.getInstance().methods.cancelEscrow(
+                hexId,
+                hexDataForCall,
+                hexData
+            );
+            let message = `Cancel escrow ${escrowId}. Please wait...`;
 
             action
-            .setAction(fromHold)
+            .setAction(cancelEsc)
             .execute(sendFrom, this.web3, message)
             .then(receipt => {
                 resolve(receipt);
@@ -548,6 +558,16 @@ class CAT20 extends Component {
         });
     }
 
+    getEscrowById(escrowId) {
+        return new Promise((resolve, reject) => {
+            this.getInstance().methods.getEscrowById(escrowId).call({}, (error, result) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve(result);
+            });
+        });
+    }
 }
 
 module.exports = new CAT20();
