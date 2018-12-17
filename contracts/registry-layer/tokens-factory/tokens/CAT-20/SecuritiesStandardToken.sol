@@ -5,7 +5,7 @@ import "../../../components-registry/instances/TransferModuleInstance.sol";
 import "../_common/MultiChainToken.sol";
 import "../_common/SecuritiesToken.sol";
 import "../_services/Pausable.sol";
-import "../_services/FungibleTokensHolder.sol";
+import "../_services/escrow/Escrow.sol";
 import "../ERC-20/StandardToken.sol";
 import "../../../../common/libraries/SafeMath.sol";
 
@@ -13,7 +13,7 @@ import "../../../../common/libraries/SafeMath.sol";
 /**
 * @title Securities Standart Token
 */
-contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Pausable, FungibleTokensHolder, TransferModuleInstance {
+contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardToken, Pausable, Escrow, TransferModuleInstance {
     // define libraries
     using SafeMath for uint256;
 
@@ -47,7 +47,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         address sender,
         uint tokens
     ) {
-        require(balances[from] >= tokensOnHold[from] + tokens, "Insufficient funds.");
+        require(balances[from] >= tokensOnEscrow[from] + tokens, "Insufficient funds.");
 
         bool allowed = tmInstance().verifyTransfer(
             from,
@@ -241,17 +241,81 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     }
 
     /**
-    * @notice Allows for the issuer account move tokens on hold
-    * @param tokenHolder Token holder account
-    * @param amount Number of tokens that will be moved on hold
-    * @param data Additional info
+    * @notice Process escrow. Provides possibility for move locked token.
+    * @notice Provide ability to transfer tokens to another token holder.
+    * @param externalId Escrow identifier
+    * @param recipient Tokens recipient
+    * @param callData Additional data for call
+    * @param data Additional data for log
+    * @dev If provided escrowAgent must execute external call "CATEscrowProcessed"
     */
-    function moveTokensOnHold(address tokenHolder, uint amount, bytes32 data) 
-        external
-        verifyPermissionForCurrentToken(msg.sig) 
+    function processEscrow(
+        bytes32 externalId,
+        address recipient,
+        bytes memory callData,
+        bytes memory data
+    )
+        public
     {
-        require(balances[tokenHolder] >= amount, "Insufficient funds on balance.");
-        _moveTokensOnHold(tokenHolder, amount, data);
+        require(externalId.length > 0, "Invalid escrow id.");
+        require(recipient != address(0), "Invalid recipient address.");
+        
+        _processEscrow(
+            externalId,
+            recipient,
+            callData,
+            data
+        );
+
+        uint escrowId = idsExtIntRelations[externalId];
+        updatedBalances(
+            escrowList[escrowId].tokenHolder,
+            recipient,
+            escrowList[escrowId].value
+        );
+    }
+
+    /**
+    * @notice Create new escrow
+    * @param tokenHolder Token holder address
+    * @param escrowAgent Address (application) on which will be executed call "escrow created"
+    * @param value Number of the tokens to lock
+    * @param dataForCall Additional data for call
+    * @param data Additional data for log
+    * @param externalId Transaction initiator can specify external identifier
+    * @param canCancel Specifies the type of the lock
+    * @param executeCall If equal "true" CAT-20 token send request to the escrow agent
+    * @return escrowId Escrow identifier
+    */
+    function createEscrow(
+        address tokenHolder,
+        address escrowAgent,
+        uint value,
+        bytes memory dataForCall,
+        bytes memory data,
+        bytes32 externalId,
+        bool canCancel,
+        bool executeCall
+    )
+        public
+        returns (uint)
+    {
+        require(balances[tokenHolder] >= tokensOnEscrow[tokenHolder] + value, "Insufficient funds on balance.");
+        // Verify application
+        if (escrowAgent != address(0)) {
+            require(arInstance().isRegistredApp(escrowAgent, address(this)), "Escrow agent in not registred in the application registry.");
+        }
+
+        return _createEscrow(
+            tokenHolder,
+            escrowAgent,
+            value,
+            dataForCall,
+            data,
+            externalId,
+            canCancel,
+            executeCall
+        );
     }
 
     /**
@@ -273,7 +337,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     * @param tokens Quantity of the tokens that will be rollbacked
     */
     function updatedBalances(address from, address to, uint tokens) internal {
-        require(balances[from] >= tokensOnHold[from] + tokens, "Insufficient funds on balance.");
+        require(balances[from] >= tokensOnEscrow[from] + tokens, "Insufficient funds on balance.");
 
         balances[from] = balances[from].sub(tokens);
         balances[to] = balances[to].add(tokens);
