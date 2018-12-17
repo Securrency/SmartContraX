@@ -1,5 +1,7 @@
 const sleep = require('sleep');
 
+var AR = artifacts.require("./registry-layer/application-registry/ApplicationRegistry.sol");
+var ARS = artifacts.require("./registry-layer/application-registry/eternal-storage/ARStorage.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
@@ -10,6 +12,7 @@ var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStor
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
 var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20/CAT20Token.sol");
+var ESC = artifacts.require("./common/mocks/EscrowClient.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");
@@ -57,6 +60,7 @@ contract("CAT20Token", accounts => {
     let PMStorage;
     let TCStorage;
     let FCStorage;
+    let EscrowClient;
 
     let zeroAddress = "0x0000000000000000000000000000000000000000";
 
@@ -151,14 +155,26 @@ contract("CAT20Token", accounts => {
         let unp = createId("unpause()");
         tx = await permissionModule.addMethodToTheRole(unp, complianceRoleName, { from: accounts[0] });
 
-        let mToHold = createId("moveTokensOnHold(address,uint256,bytes32)");
-        tx = await permissionModule.addMethodToTheRole(mToHold, complianceRoleName, { from: accounts[0] });
+        let crEscr = createId("createEscrow(address,address,uint256,bytes,bytes,bytes32,bool,bool)");
+        tx = await permissionModule.addMethodToTheRole(crEscr, complianceRoleName, { from: accounts[0] });
 
-        let mFromHold = createId("moveTokensFromHold(address,uint256,bytes32)");
-        tx = await permissionModule.addMethodToTheRole(mFromHold, complianceRoleName, { from: accounts[0] });
+        let canEscr = createId("cancelEscrow(bytes32,bytes,bytes)");
+        tx = await permissionModule.addMethodToTheRole(canEscr, complianceRoleName, { from: accounts[0] });
+
+        let ptEscr = createId("processEscrow(bytes32,address,bytes,bytes)");
+        tx = await permissionModule.addMethodToTheRole(ptEscr, complianceRoleName, { from: accounts[0] });
 
         let regCompId = createId("registerNewComponent(address)");
         tx = await permissionModule.addMethodToTheRole(regCompId, systemRoleName, { from: accounts[0] });
+
+        let createTApp = createId("createTokenApp(address,address)");
+        tx = await permissionModule.addMethodToTheRole(createTApp, complianceRoleName, { from: accounts[0] });
+
+        let removeTApp = createId("removeTokenApp(address,address)");
+        tx = await permissionModule.addMethodToTheRole(removeTApp, complianceRoleName, { from: accounts[0] });
+
+        let changeTAppStatus = createId("changeTokenAppStatus(address,address,bool)");
+        tx = await permissionModule.addMethodToTheRole(changeTAppStatus, complianceRoleName, { from: accounts[0] });
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], systemRoleName, { from: accounts[0] });
 
@@ -273,6 +289,31 @@ contract("CAT20Token", accounts => {
 
         CAT20Token = await DSToken.at(tokenAddress);
 
+        EscrowClient = await ESC.new();
+        assert.notEqual(
+            componentsRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Escrow client contract was not deployed"
+        );
+
+        ARStorage = await ARS.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            ARStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Application registry storage contract was not deployed"
+        );
+
+        applicationsRegistry = await AR.new(componentsRegistry.address.valueOf(), ARStorage.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            applicationsRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Application registry contract was not deployed"
+        );
+
+        tx = await componentsRegistry.registerNewComponent(applicationsRegistry.address.valueOf(), { from: accounts[0] });
+        assert.equal(tx.logs[0].args.componentAddress, applicationsRegistry.address.valueOf());
+
         // Printing all the contract addresses
         console.log(`
             Core smart contracts:\n
@@ -288,7 +329,8 @@ contract("CAT20Token", accounts => {
             CAT20Vierification: ${CAT20Verification.address}
             TransferModule: ${transferModule.address}
             TCStorage: ${TCStorage.address}
-            FCStorage: ${FCStorage.address}\n
+            FCStorage: ${FCStorage.address}
+            EscrowClient: ${EscrowClient.address}\n
         `);
     })
 
@@ -515,45 +557,6 @@ contract("CAT20Token", accounts => {
             assert.ok(errorThrown, "Transaction should fail!");
 
         });
-
-        it("Should move tokens on hold", async() => {
-            let toMint = web3.toWei(20);
-            await CAT20Token.mint(token_holder_1, toMint);
-
-            let tx = await CAT20Token.moveTokensOnHold(token_holder_1, toMint / 2, "");
-            
-            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
-            assert.equal(tx.logs[0].args.value, toMint / 2);
-        });
-
-        it("Retuns correct number of tokens on hold", async() => {
-            let modvedOnHold = web3.toWei(10);
-
-            let onHold = await CAT20Token.getNumberOfTokensOnHold(token_holder_1);
-
-            assert.equal(onHold, modvedOnHold);
-        });
-
-        it("Should fialed to move token on hold from not authorized account", async() => {
-            let errorThrown = false;
-            try {
-                await CAT20Token.moveTokensOnHold(token_holder_1, 1, "", { from: accounts[9] });
-            } catch (error) {
-                errorThrown = true;
-                console.log(`         tx revert -> Declined by Permission Module.`.grey);
-                assert(isException(error), error.toString());
-            }
-            assert.ok(errorThrown, "Transaction should fail!");
-        });
-
-        it("Should move tokens from hold", async() => {
-            let toMint = web3.toWei(20);
-
-            let tx = await CAT20Token.moveTokensFromHold(token_holder_1, toMint / 2, "");
-            
-            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
-            assert.equal(tx.logs[0].args.value, toMint / 2);
-        });
     });
 
     describe("Transactions checkpoints", async() => {
@@ -614,6 +617,347 @@ contract("CAT20Token", accounts => {
 
             let status = await CAT20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
+        });
+    });
+
+    describe("Token applications registry", async() => {
+        it("Should create application", async() => {
+            let tx = await applicationsRegistry.createTokenApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
+            let topic = "0x2f85b928a9cc622e7ffb326ec0eb8e31f4f488ad85e2172b43286226cd199754";
+            assert.equal(tx.receipt.logs[0].topics[0], topic);
+        });
+
+        it("Should show that token application is active", async() => {
+            let result = await applicationsRegistry.isRegistredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
+            assert.equal(result, true);
+        });
+
+        it("Should set an token application on pause", async() => {
+            let tx = await applicationsRegistry.changeTokenAppStatus(accounts[9], CAT20Token.address.valueOf(), false, { from: accounts[0] });      
+            let topic = "0x41dd6d1e5064cee24756b27b96f5dde774df1939f69b9a9266f7b0a2a6f6fd0f";
+            assert.equal(tx.receipt.logs[0].topics[0], topic);
+        });
+        
+        it("Should show that application is not active", async() => {
+            let result = await applicationsRegistry.isRegistredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
+            assert.equal(result, false);
+        });
+
+        it("Should move an token application from the pause", async() => {
+            let tx = await applicationsRegistry.changeTokenAppStatus(accounts[9], CAT20Token.address.valueOf(), true, { from: accounts[0] });
+            let topic = "0x41dd6d1e5064cee24756b27b96f5dde774df1939f69b9a9266f7b0a2a6f6fd0f";
+            assert.equal(tx.receipt.logs[0].topics[0], topic);
+        });
+
+        it("Should show that application is not registered", async() => {
+            let result = await applicationsRegistry.isRegistredApp(accounts[8], accounts[8], { from: accounts[0] });
+            assert.equal(result, false);
+        });
+
+        it ("Should returns list of registered applications for the particular token", async() => {
+            let result = await ARStorage.getTokenApplications(CAT20Token.address.valueOf());
+
+            assert.notEqual(result.indexOf(accounts[9]), -1);
+            assert.equal(result.indexOf(accounts[8]), -1);
+        });
+
+        it ("Should remove application from the token registry", async() => {
+            let tx = await applicationsRegistry.removeTokenApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });            
+            let topic = "0xea0c0fe2c332a549df82524a5b069a1155e094effb2a78ee24a78c2deaa01440";
+            assert.equal(topic, tx.receipt.logs[0].topics[0]);
+        });
+
+        it("Should show that removed application is not registered", async() => {
+            let result = await applicationsRegistry.isRegistredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
+            assert.equal(result, false);
+        });
+
+        it ("Should return empty list of the registred applications", async() => {
+            let result = await ARStorage.getCATApplications();
+            assert.equal(result.length, 0);
+        });
+
+        it ("Should register escrow client app", async() => {
+            let tx = await applicationsRegistry.createTokenApp(EscrowClient.address.valueOf(), CAT20Token.address.valueOf(), { from: accounts[0] });
+            let topic = "0x2f85b928a9cc622e7ffb326ec0eb8e31f4f488ad85e2172b43286226cd199754";
+            assert.equal(tx.receipt.logs[0].topics[0], topic);
+        });
+    });
+
+    describe("CAT-20 Escrow", async() => {
+        var escrowId;
+        var toMint = web3.toWei(20);
+        var externalId = web3.toHex("test-external-id");
+        it("Should move tokens to escrow", async() => {
+            await CAT20Token.mint(token_holder_1, toMint);
+
+            let onEscrow = await CAT20Token.getTokensOnEscrow(token_holder_1);
+            assert.equal(onEscrow, 0);
+
+            let tx = await CAT20Token.createEscrow(
+                token_holder_1,
+                EscrowClient.address,
+                toMint / 2,
+                web3.toHex("."),
+                web3.toHex("."),
+                externalId,
+                true,
+                true,
+                { from: token_holder_1 }
+            );
+            
+            escrowId = parseInt(tx.logs[0].args.escrowId);
+            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
+        });
+
+        it("Should fail to create escrow from with the same external id", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.createEscrow(
+                    token_holder_1,
+                    EscrowClient.address,
+                    toMint / 5,
+                    web3.toHex("."),
+                    web3.toHex("."),
+                    externalId,
+                    false,
+                    true,
+                    { from: token_holder_1 }
+                );
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Retuns correct number of tokens on escrow", async() => {
+            let modvedToEscrow = web3.toWei(10);
+
+            let onEscrow = await CAT20Token.getTokensOnEscrow(token_holder_1);
+
+            assert.equal(onEscrow, modvedToEscrow);
+        });
+
+        it("Retuns correct number of the external calls (created)", async() => {
+            let created = await EscrowClient.created();
+            assert.equal(parseInt(created), 1);
+        });
+        
+        it("Should cancel an escrow", async() => {
+            let tx = await CAT20Token.cancelEscrow(
+                externalId,
+                web3.toHex("."),
+                web3.toHex("."),
+                { from: token_holder_1 }
+            );
+            
+            assert.equal(tx.logs[0].args.canceledBy, token_holder_1);
+        });
+
+        it("Retuns correct number of the external calls (canceled)", async() => {
+            let canceled = await EscrowClient.canceled();
+            assert.equal(parseInt(canceled), 1);
+        });
+
+        it("Retuns correct number of tokens on escrow after cancellation", async() => {
+            let onEscrow = await CAT20Token.getTokensOnEscrow(token_holder_1);
+
+            assert.equal(onEscrow, 0);
+        });
+
+        var externalId2 = web3.toHex("test-external-id-2");
+        it("Should create one more escrow", async() => {
+            
+            let tx = await CAT20Token.createEscrow(
+                token_holder_1,
+                EscrowClient.address,
+                toMint / 2,
+                web3.toHex("."),
+                web3.toHex("."),
+                externalId2,
+                false,
+                true,
+                { from: token_holder_1 }
+            );
+            
+            escrowId = parseInt(tx.logs[0].args.escrowId);
+            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
+        });
+
+        it("Token holder should fail to cancel escrow", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.cancelEscrow(
+                    externalId2,
+                    web3.toHex("."),
+                    web3.toHex("."),
+                    { from: token_holder_1 }
+                );
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Cancelation is not allowed for the token holder.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Token holder should fail to process escrow", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.processEscrow(
+                    externalId2,
+                    token_holder_2,
+                    web3.toHex("."),
+                    web3.toHex("."),
+                    { from: token_holder_1 }
+                );
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Processing is not allowed for the token holder.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should returns escrow status", async() => {
+            let status = await CAT20Token.getEscrowStatus(escrowId);
+            
+            assert.equal(status, "0x01");
+        });
+
+        it("Escrow agent represented by smart contract should cancel escrow", async() => {
+            await EscrowClient.triggerCanceled(externalId2);
+            let status = await CAT20Token.getEscrowStatus(escrowId);
+            assert.equal(status, "0x04");
+        });
+
+        it("Retuns correct number of the external calls (canceled)", async() => {
+            let canceled = await EscrowClient.canceled();
+            assert.equal(parseInt(canceled), 1);
+        });
+
+        var externalId3 = web3.toHex("test-external-id-3");
+        it("Should create one more escrow", async() => {
+            let tx = await CAT20Token.createEscrow(
+                token_holder_1,
+                EscrowClient.address,
+                toMint / 2,
+                web3.toHex("."),
+                web3.toHex("."),
+                externalId3,
+                false,
+                true,
+                { from: token_holder_1 }
+            );
+            
+            escrowId = parseInt(tx.logs[0].args.escrowId);
+            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
+        });
+
+        it("Escrow agent represented by smart contract should process escrow", async() => {
+            await EscrowClient.triggerProcessed(externalId3, token_holder_2);
+            let status = await CAT20Token.getEscrowStatus(escrowId);
+            assert.equal(status, "0x02");
+
+            balance = await CAT20Token.balanceOf(token_holder_2);
+            assert.notEqual(balance, 0);
+        });
+
+        it("Retuns correct number of tokens on escrow after processing", async() => {
+            let onEscrow = await CAT20Token.getTokensOnEscrow(token_holder_1);
+
+            assert.equal(onEscrow, 0);
+        });
+
+        it("Should fail to create escrow from not authorized account", async() => {
+            let errorThrown = false;
+            let externalId4 = web3.toHex("test-external-id-4");
+            try {
+                await CAT20Token.createEscrow(
+                    token_holder_1,
+                    EscrowClient.address,
+                    toMint / 2,
+                    web3.toHex("."),
+                    web3.toHex("."),
+                    externalId4,
+                    false,
+                    true,
+                    { from: token_holder_2 }
+                );
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        var externalId6 = web3.toHex("test-external-id-6");
+        it("Should create one more escrow from the escrow agent account", async() => {
+            await CAT20Token.mint(token_holder_1, toMint);
+            let tx = await CAT20Token.createEscrow(
+                token_holder_1,
+                "",
+                toMint / 2,
+                web3.toHex("."),
+                web3.toHex("."),
+                externalId6,
+                false,
+                false,
+                { from: accounts[0] }
+            );
+            
+            escrowId = parseInt(tx.logs[0].args.escrowId);
+            assert.equal(tx.logs[0].args.tokenHolder, token_holder_1);
+        });
+
+        it("Should fail to cancel escrow created by an escrow agent", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.cancelEscrow(
+                    externalId6,
+                    web3.toHex("."),
+                    web3.toHex("."),
+                    { from: token_holder_1 }
+                );
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Cancelation is not allowed for the token holder.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail to process escrow created by an escrow agent", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.processEscrow(
+                    externalId6,
+                    token_holder_2,
+                    web3.toHex("."),
+                    web3.toHex("."),
+                    { from: token_holder_1 }
+                );
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Cancelation is not allowed for the token holder.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should process escrow created by the escrow agent", async() => {
+            let tx = await CAT20Token.processEscrow(
+                externalId6,
+                token_holder_2,
+                web3.toHex("."),
+                web3.toHex("."),
+                { from: accounts[0] }
+            );
+            
+            assert.equal(tx.logs[1].args.to, token_holder_2);
         });
     });
 });
