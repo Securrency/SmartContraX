@@ -103,9 +103,16 @@ async function run(netowrk) {
         "clawback(address,address,uint256,bytes32)",
         "pause()",
         "unpause()",
-        "moveTokensOnHold(address,uint256,bytes32)",
-        "moveTokensFromHold(address,uint256,bytes32)",
         "toggleRollbacksStatus()",
+        "createCATApp(address)",
+        "removeCATApp(address)",
+        "changeCATAppStatus(address,bool)",
+        "createTokenApp(address,address)",
+        "removeTokenApp(address,address)",
+        "changeTokenAppStatus(address,address,bool)",
+        "createEscrow(address,address,uint256,bytes,bytes,bytes32,bool,bool)",
+        "cancelEscrow(bytes32,bytes,bytes)",
+        "processEscrow(bytes32,address,bytes,bytes)",
     ];
 
     let rolesData = [
