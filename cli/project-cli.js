@@ -8,6 +8,7 @@ var symbolRegistry = require('./commands/symbolRegistry.js');
 var whiteList = require('./commands/whiteList.js');
 var permissionModule = require("./commands/permissionModule.js");
 var crossChainListener = require("./commands/crossChainListener.js");
+var applicationRegistry = require("./commands/ApplicationsRegistryApp.js");
 
 program
   .version('0.0.1')
@@ -27,6 +28,14 @@ program
   .description('Main functionality related with token')
   .action(() => {
     tokenInteraction.run();
+  });
+
+program
+  .command('applicationRegistry')
+  .alias('AR')
+  .description('Application management')
+  .action(() => {
+    applicationRegistry.run();
   });
 
 program
