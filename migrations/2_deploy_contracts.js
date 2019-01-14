@@ -21,7 +21,7 @@ var AppRegistry = artifacts.require("./registry-layer/application-registry/Appli
 var AppRegistryStorage = artifacts.require("./registry-layer/application-registry/eternal-storage/ARStorage.sol");
 
 function createId(signature) {
-  let hash = web3.sha3(signature);
+  let hash = web3.utils.keccak256(signature);
 
   return hash.substring(0, 10);
 }
@@ -45,6 +45,9 @@ module.exports = function(deployer, network, accounts) {
   var PMStorageDeployed;
   var TCStorageDeployed;
   var FCStorageDeployed;
+
+  var systemRole = web3.utils.toHex("System");
+  var ownerRole = web3.utils.toHex("Owner");
   
   deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
@@ -121,28 +124,28 @@ module.exports = function(deployer, network, accounts) {
       return ComponentsRegistryDeployed.initializePermissionModule(PermissionModuleDeployed.address, {gas: 120000});
     })
     .then(() => {
-      return PermissionModuleDeployed.createRole("System", "Owner", {gas: 300000});
+      return PermissionModuleDeployed.createRole(systemRole, ownerRole, {gas: 300000});
     })
     .then(() => {
-      return PermissionModuleDeployed.addMethodToTheRole(createId("addTokenStrategy(address)"), "System", {gas: 500000});
+      return PermissionModuleDeployed.addMethodToTheRole(createId("addTokenStrategy(address)"), systemRole, {gas: 500000});
     })
     .then(() => {
-      return PermissionModuleDeployed.addMethodToTheRole(createId("addVerificationLogic(address,bytes32)"), "System", {gas: 500000});
+      return PermissionModuleDeployed.addMethodToTheRole(createId("addVerificationLogic(address,bytes32)"), systemRole, {gas: 500000});
     })
     .then(() => {
-      return PermissionModuleDeployed.addMethodToTheRole(createId("setTransferModule(address)"), "System", {gas: 500000});
+      return PermissionModuleDeployed.addMethodToTheRole(createId("setTransferModule(address)"), systemRole, {gas: 500000});
     })
     .then(() => {
-      return PermissionModuleDeployed.addMethodToTheRole(createId("addNewChain(bytes32)"), "System", {gas: 500000});
+      return PermissionModuleDeployed.addMethodToTheRole(createId("addNewChain(bytes32)"), systemRole, {gas: 500000});
     })
     .then(() => {
-      return PermissionModuleDeployed.addMethodToTheRole(createId("removeChain(bytes32)"), "System", {gas: 500000});
+      return PermissionModuleDeployed.addMethodToTheRole(createId("removeChain(bytes32)"), systemRole, {gas: 500000});
     })
     .then(() => {
-      return PermissionModuleDeployed.addMethodToTheRole(createId("registerNewComponent(address)"), "System", {gas: 500000});
+      return PermissionModuleDeployed.addMethodToTheRole(createId("registerNewComponent(address)"), systemRole, {gas: 500000});
     })
     .then(() => {
-      return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], "System", {gas:300000});
+      return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], systemRole, {gas:300000});
     })
     .then(() => {
       return ComponentsRegistryDeployed.registerNewComponent(TransferModuleDeployed.address, {gas: 120000});

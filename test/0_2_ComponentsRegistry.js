@@ -4,7 +4,7 @@ var PM = artifacts.require("./request-verification-layer/permission-module/Permi
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
 }
@@ -17,8 +17,8 @@ contract("Components registry", accounts => {
     let component3;
     let PMStorage;
 
-    let ownerRoleName = "Owner";
-    let systemRoleName = "System";
+    let ownerRoleName = web3.utils.toHex("Owner");
+    let systemRoleName = web3.utils.toHex("System");
 
     before(async() => {
         componentsRegistry = await CR.new();
@@ -28,21 +28,21 @@ contract("Components registry", accounts => {
             "Components registry contract was not deployed"
         );
 
-        component1 = await CM.new("ComponentMock1");
+        component1 = await CM.new(web3.utils.toHex("ComponentMock1"));
         assert.notEqual(
             component1.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "Component contract was not deployed"
         );
 
-        component2 = await CM.new("ComponentMock2");
+        component2 = await CM.new(web3.utils.toHex("ComponentMock2"));
         assert.notEqual(
             component2.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "Component contract was not deployed"
         );
 
-        component3 = await CM.new("ComponentMock2");
+        component3 = await CM.new(web3.utils.toHex("ComponentMock2"));
         assert.notEqual(
             component3.address.valueOf(),
             "0x0000000000000000000000000000000000000000",

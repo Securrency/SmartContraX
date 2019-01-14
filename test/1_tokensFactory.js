@@ -1,4 +1,6 @@
 
+const BigNumber =require("bignumber.js");
+
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
@@ -18,13 +20,9 @@ var CAT20V = artifacts.require("./request-verification-layer/transfer-verificati
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
-}
-
-function bytes32ToString(bytes32) {
-    return web3.toAscii(bytes32).replace(/\0/g, '')
 }
 
 function isException(error) {
@@ -33,17 +31,18 @@ function isException(error) {
 }
 
 contract('TokensFactory', accounts => {
+    const precision = 1000000000000000000;
     const token_owner = accounts[0];
     const token_holder_1 = accounts[1];
     const token_holder_2 = accounts[2];
-    const toTransfer = web3.toWei(10, "ether");
-    const toApprove = web3.toWei(10, "ether");
+    const toTransfer = new BigNumber(10).mul(precision);
+    const toApprove = new BigNumber(10).mul(precision);
 
-    // Token details
+    // // Token details
     const name = "Securities Token";
     const symbol = "SEC";
     const decimals = 18;
-    const totalSupply = web3.toWei(100000, "ether");
+    const totalSupply = new BigNumber(20).mul(precision);
 
     let deployedTokenAddress;
     let CAT20Token;
@@ -59,7 +58,7 @@ contract('TokensFactory', accounts => {
     let TCStorage;
     let FCStorage;
 
-    let invalidTokenStandard = "ST-JGAqabJmEZsm1PXh3DmN";
+    let invalidTokenStandard = web3.utils.toHex("ST-JGAqabJmEZsm1PXh3DmN");
 
     const txRevertNotification = "Transaction should fail!";
     let zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -87,11 +86,11 @@ contract('TokensFactory', accounts => {
             "PermissionModule contract was not deployed"
         );
 
-        let ownerRoleName = "Owner";
-        let systemRoleName = "System";
-        let registrationRoleName = "Registration";
-        let issuerRoleName = "Issuer";
-        let complianceRoleName = "Compliance";
+        let ownerRoleName = web3.utils.toHex("Owner");
+        let systemRoleName = web3.utils.toHex("System");
+        let registrationRoleName = web3.utils.toHex("Registration");
+        let issuerRoleName = web3.utils.toHex("Issuer");
+        let complianceRoleName = web3.utils.toHex("Compliance");
 
         let tx;
         let status;
@@ -269,7 +268,7 @@ contract('TokensFactory', accounts => {
             let tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
 
             let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it("Should add CAT20Verification to transfer module", async() => {
@@ -277,7 +276,7 @@ contract('TokensFactory', accounts => {
             let tx = await transferModule.addVerificationLogic(CAT20Verification.address.valueOf(), standard);
             
             let topic = "0xef956dc4297ee86f5af7cb96c4208936ea515472ea1f5b315d8b9125c83c1ae8";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it ("Should fail to add existing token strategy", async() => {
@@ -308,13 +307,13 @@ contract('TokensFactory', accounts => {
             // add then update and remove mock token strategy
             let tx = await TokensFactory.addTokenStrategy(TokenStrategyMock.address, { from : token_owner });
             let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
             standard = await TokenStrategyMock.getTokenStandard();
 
             tx = await TokensFactory.updateTokenStrategy(standard, TokenStrategyMock2.address, { from : token_owner });
             topic = "0x0710dab9466831af48228f774c9e3c4c164c3c007b5529999eba93e70be606ed";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         }); 
 
         it("Should fail to update strategy with invalid address", async() => {
@@ -332,7 +331,6 @@ contract('TokensFactory', accounts => {
 
         it("Should fail to update not existing strategy", async() => {
             let errorThrown = false;    
-            let standard = await TokenStrategyMock2.getTokenStandard();
             try {
                 await TokensFactory.updateTokenStrategy(invalidTokenStandard, TokensFactory.address, { from : token_owner });
             } catch (error) {
@@ -348,8 +346,7 @@ contract('TokensFactory', accounts => {
             let tx = await TokensFactory.removeTokenStrategy(standard, { from : token_owner });
 
             let topic = "0x4f51b575075efcaeb6bd9a33be406fec2d196ac6e3afa739a19e0f9051c884f6";
-            // console.log(tx.receipt.logs[0].topics);
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it("Should fail to remove not exists strategy", async() => {
@@ -380,14 +377,14 @@ contract('TokensFactory', accounts => {
         it("Should deploy a new token", async() => {
             let standard = await CAT20Strategy.getTokenStandard();
 
-            let hexSymbol = web3.toHex(symbol);
-            await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
+            let hexSymbol = web3.utils.toHex(symbol);
+            await symbolRegistry.registerSymbol(hexSymbol, web3.utils.toHex(""), { from : token_owner });
 
             tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
             let topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
             
-            assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
-            deployedTokenAddress = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
+            assert.notEqual(tx.receipt.rawLogs[3].topics.indexOf(topic), -1);
+            deployedTokenAddress = tx.receipt.rawLogs[3].topics[1].replace("000000000000000000000000", "");
 
             assert.notEqual(
                 deployedTokenAddress,
@@ -402,16 +399,16 @@ contract('TokensFactory', accounts => {
             let standard = await CAT20Strategy.getTokenStandard();
             
             let symbol2 = "TES";
-            let hexSymbol = web3.toHex(symbol2);
+            let hexSymbol = web3.utils.toHex(symbol2);
 
-            await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
+            await symbolRegistry.registerSymbol(hexSymbol, web3.utils.toHex(""), { from : token_owner });
 
             let tx = await TokensFactory.createToken(name, symbol2, decimals, totalSupply, standard, { from : token_owner });
 
             let topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
             
-            assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
-            deployedTokenAddress = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
+            assert.notEqual(tx.receipt.rawLogs[3].topics.indexOf(topic), -1);
+            deployedTokenAddress = tx.receipt.rawLogs[3].topics[1].replace("000000000000000000000000", "");
 
             assert.notEqual(
                 deployedTokenAddress,
@@ -437,7 +434,7 @@ contract('TokensFactory', accounts => {
         });
 
         it("Should return 'false' for a not supported standard", async() => {
-            let standard = web3.toHex("CAT-0x00");
+            let standard = web3.utils.toHex("CAT-0x00");
 
             let result = await TokensFactory.isSupported(standard, { from : token_owner });
 
@@ -494,28 +491,26 @@ contract('TokensFactory', accounts => {
     // Test ERC-20 standard functions
     describe("Testing created CAT-20 token (ERC-20 standard functions)", async() => {
         it("Should return initial supply from balanceOf", async() => {
-            let balance = await CAT20Token.balanceOf(token_owner);
-            balance = balance.toNumber();
-
-            assert.equal(balance, totalSupply);
+            let balance = new BigNumber(await CAT20Token.balanceOf(token_owner));
+            assert.equal(balance.valueOf(), totalSupply.valueOf());
         });
 
         it("Should add accounts to the whitelist", async() => {
-            let complianceRoleName = "Compliance";
+            let complianceRoleName = web3.utils.toHex("Compliance");
 
             let tx = await permissionModule.addRoleForSpecificToken(token_owner, CAT20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
             let roleAddedTopic = "0x989388bc4545c6ee22abaf7aca22f0b4b9866b1e1f0b40fd222455da7a63652e";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(roleAddedTopic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(roleAddedTopic), -1);
 
             tx = await whiteList.addToWhiteList(token_owner, CAT20Token.address.valueOf(), { from: token_owner });
             let wlAddedTpic = "0x938c63ac3d228b23f6bee7618fefc6790522e338ac202c958a2ea9eb9706c5d1";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(wlAddedTpic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(wlAddedTpic), -1);
 
             tx = await whiteList.addToWhiteList(token_holder_1, CAT20Token.address.valueOf(), { from: token_owner });
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(wlAddedTpic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(wlAddedTpic), -1);
 
             tx = await whiteList.addToWhiteList(token_holder_2, CAT20Token.address.valueOf(), { from: token_owner });
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(wlAddedTpic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(wlAddedTpic), -1);
         })
 
         it("Should transfer tokens from the owner account to account " + token_holder_1, async() => {
@@ -523,27 +518,26 @@ contract('TokensFactory', accounts => {
             
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_1);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
         });
         
-        it("Should approve " + web3.fromWei(toApprove, "ether") + symbol + " tokens for account " + token_holder_1, async() => {
+        it("Should approve " + web3.utils.fromWei(toApprove.valueOf(), "ether") + symbol + " tokens for account " + token_holder_1, async() => {
             let tx = await CAT20Token.approve(token_holder_1, toApprove, {from: token_owner});
-
+            
             assert.equal(tx.logs[0].args.owner, token_owner);
             assert.equal(tx.logs[0].args.spender, token_holder_1);
-            assert.equal(tx.logs[0].args.value.toNumber(), toApprove);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toApprove.valueOf());
         });
 
         it("Should transfer approved tokens", async() => {
-            let tx = await CAT20Token.transferFrom(token_owner, token_holder_2, toApprove, {from: token_holder_1});
+            let tx = await CAT20Token.transferFrom(token_owner, token_holder_2, toApprove.valueOf(), {from: token_holder_1});
 
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_2);
-            assert.equal(tx.logs[0].args.value.toNumber(), toApprove);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toApprove.valueOf());
 
-            let balance = await CAT20Token.balanceOf(token_holder_2);
-            
-            assert.equal(balance.toNumber(), toApprove);
+            let balance = new BigNumber(await CAT20Token.balanceOf(token_holder_1));
+            assert.equal(balance.valueOf(), toApprove.valueOf());
         });
     });
 
@@ -590,9 +584,9 @@ contract('TokensFactory', accounts => {
                 await TFStorage.emitCreatedToken(
                     accounts[0],
                     accounts[0],
-                    "name",
-                    "TEST",
-                    "",
+                    web3.utils.toHex("name"),
+                    web3.utils.toHex("TEST"),
+                    web3.utils.toHex(""),
                     18,
                     100000,
                     standard, 

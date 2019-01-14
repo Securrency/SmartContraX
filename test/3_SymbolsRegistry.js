@@ -7,13 +7,9 @@ var PM = artifacts.require("./request-verification-layer/permission-module/Permi
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
-}
-
-function bytes32ToString(bytes32) {
-    return web3.toAscii(bytes32).replace(/\0/g, '')
 }
 
 function isException(error) {
@@ -28,13 +24,14 @@ contract('SymbolsRegistry', accounts => {
     let SRStorage;
     let PMStorage;
     let symbol = "TEST";
-    let testIssuerName = "Issuer name";
-    let newIssuerName = "new Issuer name";
+    let testIssuerName = web3.utils.toHex("Issuer name");
+    let newIssuerName = web3.utils.toHex("new Issuer name");
     let hexSymbol;
 
-    let ownerRoleName = "Owner";
-    let systemRoleName = "System";
-    let registrationRoleName = "Registration";
+    let ownerRoleName = web3.utils.toHex("Owner");
+    let systemRoleName = web3.utils.toHex("System");
+    let registrationRoleName = web3.utils.toHex("Registration");
+    
     before(async() => {
         componentsRegistry = await CR.new();
         assert.notEqual(
@@ -101,14 +98,14 @@ contract('SymbolsRegistry', accounts => {
             "SymbolRegistry contract was not deployed"
         );
 
-        hexSymbol = web3.toHex(symbol);
+        hexSymbol = web3.utils.toHex(symbol);
 
         tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
     });
 
     describe("Test symbols registry", async() => {
         it("ETH symbol is busy", async() => {
-            let result = await symbolRegistry.symbolIsAvailable("ETH", { from: accounts[0] });
+            let result = await symbolRegistry.symbolIsAvailable(web3.utils.toHex("ETH"), { from: accounts[0] });
             assert.equal(result, false);
         });
 
@@ -116,7 +113,7 @@ contract('SymbolsRegistry', accounts => {
             let tx = await symbolRegistry.registerSymbol(hexSymbol, testIssuerName, { from : accounts[0] });
             
             let topic = "0x5ade0af46527cf760337ecd4622da8babca0e6f5b11bb91ab3ba2b73eaaa9ffa";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it("Should get symbol expire date", async() => {
@@ -129,7 +126,7 @@ contract('SymbolsRegistry', accounts => {
 
             let tx = await symbolRegistry.renewSymbol(hexSymbol, { from: accounts[0] });
             let topic = "0x407b057f9f9b7d84fd07a19ad2acde81009e64366e22ced2fe87ed80fbfb34c0";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
             let expireDateNew = await symbolRegistry.getSymbolExpireDate(hexSymbol, { from: accounts[0] });
             assert.notEqual(expireDateOld, expireDateNew);
@@ -152,7 +149,7 @@ contract('SymbolsRegistry', accounts => {
             let tx = await symbolRegistry.transferOwnership(hexSymbol, accounts[1], { from: accounts[0] });
 
             let topic = "0x8c631de9ce57758839cd680c6d21c0032d0036b20ded488f41326a800cd6a8de";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it("Should be failed to accept symbol ownership", async() => {
@@ -171,7 +168,7 @@ contract('SymbolsRegistry', accounts => {
             let tx = await symbolRegistry.acceptSymbolOwnership(hexSymbol, newIssuerName, { from: accounts[1] });
             
             let topic = "0x38f7ca9ae00747ca9704a1e9296eb432e0d56c4d9372224ce5c9e298f6874ec5";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
             let isOwner = await symbolRegistry.isSymbolOwner(hexSymbol, accounts[1]);
             assert.equal(isOwner, true);
@@ -182,22 +179,22 @@ contract('SymbolsRegistry', accounts => {
             let tx = await symbolRegistry.updateExpirationInterval(newInterval, { from: accounts[0] });
 
             let topic = "0x34bf8d0f1668b5be5308a1c4acb3e2586421b1c162dc75e321c917e04ae58f01";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it("Should register already an expired symbol", async() => {
             let symbol2 = "TEST2";
-            let hexSymbol2 = web3.toHex(symbol2);
-            let tx = await symbolRegistry.registerSymbol(hexSymbol2, "", { from: accounts[0] });
+            let hexSymbol2 = web3.utils.toHex(symbol2);
+            let tx = await symbolRegistry.registerSymbol(hexSymbol2, web3.utils.toHex(""), { from: accounts[0] });
 
             let topic = "0x5ade0af46527cf760337ecd4622da8babca0e6f5b11bb91ab3ba2b73eaaa9ffa";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
             
             sleep.sleep(2);
 
-            tx = await symbolRegistry.registerSymbol(hexSymbol2, "", { from: accounts[1] });
+            tx = await symbolRegistry.registerSymbol(hexSymbol2, web3.utils.toHex(""), { from: accounts[1] });
             topic = "0x5ade0af46527cf760337ecd4622da8babca0e6f5b11bb91ab3ba2b73eaaa9ffa";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
             let isOwner = await symbolRegistry.isSymbolOwner(hexSymbol2, accounts[1]);
             assert.equal(isOwner, true);
@@ -226,7 +223,7 @@ contract('SymbolsRegistry', accounts => {
                     hexSymbol, 
                     accounts[0],
                     "0x0000000000000000000000000000000000000000",
-                    "",
+                    web3.utils.toHex(""),
                     time,
                     time,
                     { from : accounts[0] }
@@ -266,7 +263,7 @@ contract('SymbolsRegistry', accounts => {
         it("Should fail update symbol token", async() => {
             let errorThrown = false;
             try {
-                await SRStorage.updateSymbolIssuerName(hexSymbol, "issuer name", { from: accounts[0] });
+                await SRStorage.updateSymbolIssuerName(hexSymbol, web3.utils.toHex("issuer name"), { from: accounts[0] });
             } catch (error) {
                 errorThrown = true
                 console.log(`         tx revert -> Method allowed only for the Symbol Registry.`.grey);
@@ -329,7 +326,7 @@ contract('SymbolsRegistry', accounts => {
 
         it("Should return issuer name", async() => {
             let issuerName = await SRStorage.getSymbolIssuerName(hexSymbol, { from: accounts[0] });
-            assert.equal(issuerName, web3.toHex(newIssuerName));
+            assert.equal(issuerName, web3.utils.toHex(newIssuerName));
         });
 
         it("Should return symbol registration time", async() => {

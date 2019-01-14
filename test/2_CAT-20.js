@@ -1,4 +1,5 @@
 const sleep = require('sleep');
+const BigNumber = require("bignumber.js");
 
 var AR = artifacts.require("./registry-layer/application-registry/ApplicationRegistry.sol");
 var ARS = artifacts.require("./registry-layer/application-registry/eternal-storage/ARStorage.sol");
@@ -21,13 +22,9 @@ var CAT20V = artifacts.require("./request-verification-layer/transfer-verificati
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
-}
-
-function bytes32ToString(bytes32) {
-    return web3.toAscii(bytes32).replace(/\0/g, '')
 }
 
 function isException(error) {
@@ -36,6 +33,7 @@ function isException(error) {
 }
 
 contract("CAT20Token", accounts => {
+    const precision = 1000000000000000000;
     const token_owner = accounts[0];
     const token_holder_1 = accounts[1];
     const token_holder_2 = accounts[2];
@@ -44,9 +42,9 @@ contract("CAT20Token", accounts => {
     const name = "Securities Token";
     const symbol = "SEC";
     const decimals = 18;
-    const totalSupply = web3.toWei(10000, "ether");
+    const totalSupply = new BigNumber(100).mul(precision);
 
-    const toTransfer = web3.toWei(10, "ether");
+    const toTransfer = new BigNumber(10).mul(precision);
 
     let CAT20Token;
     let whiteList;
@@ -65,19 +63,20 @@ contract("CAT20Token", accounts => {
     let zeroAddress = "0x0000000000000000000000000000000000000000";
 
     let txForRollback;
-
+    var emptyBytes = web3.utils.toHex("");
+    
     before(async() => {
         componentsRegistry = await CR.new();
         assert.notEqual(
             componentsRegistry.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
+            zeroAddress,
             "Components Registry contract was not deployed"
         );
 
         PMStorage = await PMST.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
         assert.notEqual(
             PMStorage.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
+            zeroAddress,
             "Permission module storage was not deployed"
         );
 
@@ -85,15 +84,15 @@ contract("CAT20Token", accounts => {
 
         assert.notEqual(
             permissionModule.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
+            zeroAddress,
             "PermissionModule contract was not deployed"
         );
 
-        let ownerRoleName = "Owner";
-        let systemRoleName = "System";
-        let registrationRoleName = "Registration";
-        let issuerRoleName = "Issuer";
-        let complianceRoleName = "Compliance";
+        let ownerRoleName = web3.utils.toHex("Owner");
+        let systemRoleName = web3.utils.toHex("System");
+        let registrationRoleName = web3.utils.toHex("Registration");
+        let issuerRoleName = web3.utils.toHex("Issuer");
+        let complianceRoleName = web3.utils.toHex("Compliance");
 
         let tx;
         let status;
@@ -266,20 +265,20 @@ contract("CAT20Token", accounts => {
         
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
         let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
-        assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
         let standard = await CAT20Strategy.getTokenStandard();
 
         await transferModule.addVerificationLogic(CAT20Verification.address.valueOf(), standard);
 
-        let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
+        let hexSymbol = web3.utils.toHex(symbol);
+        await symbolRegistry.registerSymbol(hexSymbol, emptyBytes, { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
         topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
             
-        assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
-        tokenAddress = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
+        assert.notEqual(tx.receipt.rawLogs[3].topics.indexOf(topic), -1);
+        tokenAddress = tx.receipt.rawLogs[3].topics[1].replace("000000000000000000000000", "");
 
         assert.notEqual(
             tokenAddress,
@@ -336,7 +335,7 @@ contract("CAT20Token", accounts => {
 
     describe("Testing CAT-20 token", async() => {
         it("Should add accounts to the whitelist", async() => {
-            let complianceRoleName = "Compliance";
+            let complianceRoleName = web3.utils.toHex("Compliance");
 
             let tx = await permissionModule.addRoleForSpecificToken(token_owner, CAT20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
 
@@ -351,7 +350,7 @@ contract("CAT20Token", accounts => {
             
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_1);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
 
             txForRollback = tx.tx;
         });
@@ -361,14 +360,13 @@ contract("CAT20Token", accounts => {
             
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_2);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
         });
 
         it("Should get correct ballance after previous transfers", async() => {
-            let balance = await CAT20Token.balanceOf(token_owner);
-            balance = balance.toNumber();
+            let balance = new BigNumber(await CAT20Token.balanceOf(token_owner));
 
-            assert.equal(balance + toTransfer * 2, totalSupply);
+            assert.equal(balance.add(toTransfer.mul(2).valueOf()).valueOf(), totalSupply.valueOf());
         });
 
         it("Fail rollback transaction (rollback disabled)", async() => {
@@ -393,14 +391,14 @@ contract("CAT20Token", accounts => {
             
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_1);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
 
             txForRollback = tx.tx;
         });
 
         it("Should rollback transaction", async() => {
-            let receipt = web3.eth.getTransactionReceipt(txForRollback);
-            let transaction = web3.eth.getTransaction(txForRollback);
+            let receipt = await web3.eth.getTransactionReceipt(txForRollback);
+            let transaction = await web3.eth.getTransaction(txForRollback);
 
             let checkpointId = parseInt(receipt.logs[1].topics[2]);
             
@@ -423,14 +421,14 @@ contract("CAT20Token", accounts => {
         });
 
         it("Mint tokens", async() => {
-            let toMint = web3.toWei(20);
+            let toMint = new BigNumber(20).mul(precision);
             let tx = await CAT20Token.mint(accounts[8], toMint);
 
             assert.equal(tx.logs[0].args.to, accounts[8]);
         });
 
         it("Should fail to mint tokens", async() => {
-            let toMint = web3.toWei(1000);
+            let toMint = new BigNumber(10).mul(precision);
             let errorThrown = false;
             try {
                 await CAT20Token.mint(token_holder_2, toMint, { from: token_holder_2 });
@@ -443,7 +441,7 @@ contract("CAT20Token", accounts => {
         });
 
         it("Should fail to mint tokens for invalid address", async() => {
-            let toMint = web3.toWei(1000);
+            let toMint =new BigNumber(10).mul(precision);
             let errorThrown = false;
             try {
                 await CAT20Token.mint("0x0000000000000000000000000000000000000000", toMint);
@@ -468,27 +466,27 @@ contract("CAT20Token", accounts => {
         });
 
         it("Should burn tokens", async() => {
-            let toMint = web3.toWei(20);
+            let toMint = new BigNumber(20).mul(precision);
             await CAT20Token.mint(token_holder_2, toMint);
 
             let tx = await CAT20Token.burn(toMint, { from: token_holder_2 });
 
             assert.equal(tx.logs[0].args.from, token_holder_2);
-            assert.equal(tx.logs[0].args.value, toMint);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toMint.valueOf());
         });
 
         it("An issuer should burn tokens", async() => {
-            let toMint = web3.toWei(20);
+            let toMint = new BigNumber(20).mul(precision);
             await CAT20Token.mint(token_holder_2, toMint);
 
-            let tx = await CAT20Token.issuerBurn(token_holder_2, toMint, "", { from: token_owner });
+            let tx = await CAT20Token.issuerBurn(token_holder_2, toMint, emptyBytes, { from: token_owner });
 
             assert.equal(tx.logs[0].args.from, token_holder_2);
-            assert.equal(tx.logs[0].args.value, toMint);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toMint.valueOf());
         });
 
         it("Clawback", async() => {
-            let tx = await CAT20Token.clawback(token_holder_2, accounts[9], toTransfer, "", { from: token_owner });
+            let tx = await CAT20Token.clawback(token_holder_2, accounts[9], toTransfer, emptyBytes, { from: token_owner });
 
             assert.equal(tx.logs[0].args.from, token_holder_2);
             assert.equal(tx.logs[0].args.to, accounts[9]);
@@ -497,7 +495,7 @@ contract("CAT20Token", accounts => {
         it("Should fail to create clawback", async() => {
             let errorThrown = false;
             try {
-                await CAT20Token.clawback(accounts[9], token_holder_2, toTransfer, "", { from: token_holder_2 });
+                await CAT20Token.clawback(accounts[9], token_holder_2, toTransfer, emptyBytes, { from: token_holder_2 });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Declined by Permission Module.`.grey);
@@ -525,7 +523,7 @@ contract("CAT20Token", accounts => {
         });
 
         it("Should be failed to transfer approved tokens", async() => {
-            let toApprove = web3.toWei(1);
+            let toApprove = new BigNumber(1).mul(precision);
             await CAT20Token.approve(token_holder_1, toApprove, {from: token_owner});
 
             let errorThrown = false;
@@ -577,7 +575,7 @@ contract("CAT20Token", accounts => {
             
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_1);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
             
             let checkpointId = tx.logs[1].args.checkpointId.toNumber();
 
@@ -609,7 +607,7 @@ contract("CAT20Token", accounts => {
             
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_1);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
             
             let checkpointId = tx.logs[1].args.checkpointId.toNumber();
 
@@ -624,7 +622,7 @@ contract("CAT20Token", accounts => {
         it("Should create application", async() => {
             let tx = await applicationsRegistry.createTokenApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
             let topic = "0x2f85b928a9cc622e7ffb326ec0eb8e31f4f488ad85e2172b43286226cd199754";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
 
         it("Should show that token application is active", async() => {
@@ -635,7 +633,7 @@ contract("CAT20Token", accounts => {
         it("Should set an token application on pause", async() => {
             let tx = await applicationsRegistry.changeTokenAppStatus(accounts[9], CAT20Token.address.valueOf(), false, { from: accounts[0] });      
             let topic = "0x41dd6d1e5064cee24756b27b96f5dde774df1939f69b9a9266f7b0a2a6f6fd0f";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
         
         it("Should show that application is not active", async() => {
@@ -646,7 +644,7 @@ contract("CAT20Token", accounts => {
         it("Should move an token application from the pause", async() => {
             let tx = await applicationsRegistry.changeTokenAppStatus(accounts[9], CAT20Token.address.valueOf(), true, { from: accounts[0] });
             let topic = "0x41dd6d1e5064cee24756b27b96f5dde774df1939f69b9a9266f7b0a2a6f6fd0f";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
 
         it("Should show that application is not registered", async() => {
@@ -664,7 +662,7 @@ contract("CAT20Token", accounts => {
         it ("Should remove application from the token registry", async() => {
             let tx = await applicationsRegistry.removeTokenApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });            
             let topic = "0xea0c0fe2c332a549df82524a5b069a1155e094effb2a78ee24a78c2deaa01440";
-            assert.equal(topic, tx.receipt.logs[0].topics[0]);
+            assert.equal(topic, tx.receipt.rawLogs[0].topics[0]);
         });
 
         it("Should show that removed application is not registered", async() => {
@@ -680,26 +678,26 @@ contract("CAT20Token", accounts => {
         it ("Should register escrow client app", async() => {
             let tx = await applicationsRegistry.createTokenApp(EscrowClient.address.valueOf(), CAT20Token.address.valueOf(), { from: accounts[0] });
             let topic = "0x2f85b928a9cc622e7ffb326ec0eb8e31f4f488ad85e2172b43286226cd199754";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
     });
 
     describe("CAT-20 Escrow", async() => {
         var escrowId;
-        var toMint = web3.toWei(20);
-        var externalId = web3.toHex("test-external-id");
+        var toMint = new BigNumber(20).mul(precision);
+        var externalId = web3.utils.toHex("test-external-id");
         it("Should move tokens to escrow", async() => {
             await CAT20Token.mint(token_holder_1, toMint);
 
-            let onEscrow = await CAT20Token.getTokensOnEscrow(token_holder_1);
-            assert.equal(onEscrow, 0);
+            let onEscrow = new BigNumber(await CAT20Token.getTokensOnEscrow(token_holder_1));
+            assert.equal(onEscrow.valueOf(), 0);
 
             let tx = await CAT20Token.createEscrow(
                 token_holder_1,
                 EscrowClient.address,
-                toMint / 2,
-                web3.toHex("."),
-                web3.toHex("."),
+                toMint.div(2),
+                web3.utils.toHex("."),
+                web3.utils.toHex("."),
                 externalId,
                 true,
                 true,
@@ -716,9 +714,9 @@ contract("CAT20Token", accounts => {
                 await CAT20Token.createEscrow(
                     token_holder_1,
                     EscrowClient.address,
-                    toMint / 5,
-                    web3.toHex("."),
-                    web3.toHex("."),
+                    toMint.div(5),
+                    web3.utils.toHex("."),
+                    web3.utils.toHex("."),
                     externalId,
                     false,
                     true,
@@ -733,23 +731,23 @@ contract("CAT20Token", accounts => {
         });
 
         it("Retuns correct number of tokens on escrow", async() => {
-            let modvedToEscrow = web3.toWei(10);
+            let modvedToEscrow = new BigNumber(10).mul(precision);
 
-            let onEscrow = await CAT20Token.getTokensOnEscrow(token_holder_1);
+            let onEscrow = new BigNumber(await CAT20Token.getTokensOnEscrow(token_holder_1));
 
-            assert.equal(onEscrow, modvedToEscrow);
+            assert.equal(onEscrow.valueOf(), modvedToEscrow.valueOf());
         });
 
         it("Retuns correct number of the external calls (created)", async() => {
-            let created = await EscrowClient.created();
-            assert.equal(parseInt(created), 1);
+            let created = new BigNumber(await EscrowClient.created());
+            assert.equal(created.valueOf(), 1);
         });
         
         it("Should cancel an escrow", async() => {
             let tx = await CAT20Token.cancelEscrow(
                 externalId,
-                web3.toHex("."),
-                web3.toHex("."),
+                web3.utils.toHex("."),
+                web3.utils.toHex("."),
                 { from: token_holder_1 }
             );
             
@@ -757,8 +755,8 @@ contract("CAT20Token", accounts => {
         });
 
         it("Retuns correct number of the external calls (canceled)", async() => {
-            let canceled = await EscrowClient.canceled();
-            assert.equal(parseInt(canceled), 1);
+            let canceled = new BigNumber(await EscrowClient.canceled());
+            assert.equal(canceled.valueOf(), 1);
         });
 
         it("Retuns correct number of tokens on escrow after cancellation", async() => {
@@ -767,15 +765,15 @@ contract("CAT20Token", accounts => {
             assert.equal(onEscrow, 0);
         });
 
-        var externalId2 = web3.toHex("test-external-id-2");
+        var externalId2 = web3.utils.toHex("test-external-id-2");
         it("Should create one more escrow", async() => {
             
             let tx = await CAT20Token.createEscrow(
                 token_holder_1,
                 EscrowClient.address,
-                toMint / 2,
-                web3.toHex("."),
-                web3.toHex("."),
+                toMint.div(2),
+                web3.utils.toHex("."),
+                web3.utils.toHex("."),
                 externalId2,
                 false,
                 true,
@@ -791,8 +789,8 @@ contract("CAT20Token", accounts => {
             try {
                 await CAT20Token.cancelEscrow(
                     externalId2,
-                    web3.toHex("."),
-                    web3.toHex("."),
+                    web3.utils.toHex("."),
+                    web3.utils.toHex("."),
                     { from: token_holder_1 }
                 );
             } catch (error) {
@@ -809,8 +807,8 @@ contract("CAT20Token", accounts => {
                 await CAT20Token.processEscrow(
                     externalId2,
                     token_holder_2,
-                    web3.toHex("."),
-                    web3.toHex("."),
+                    web3.utils.toHex("."),
+                    web3.utils.toHex("."),
                     { from: token_holder_1 }
                 );
             } catch (error) {
@@ -838,14 +836,14 @@ contract("CAT20Token", accounts => {
             assert.equal(parseInt(canceled), 1);
         });
 
-        var externalId3 = web3.toHex("test-external-id-3");
+        var externalId3 = web3.utils.toHex("test-external-id-3");
         it("Should create one more escrow", async() => {
             let tx = await CAT20Token.createEscrow(
                 token_holder_1,
                 EscrowClient.address,
-                toMint / 2,
-                web3.toHex("."),
-                web3.toHex("."),
+                toMint.div(2),
+                web3.utils.toHex("."),
+                web3.utils.toHex("."),
                 externalId3,
                 false,
                 true,
@@ -873,14 +871,14 @@ contract("CAT20Token", accounts => {
 
         it("Should fail to create escrow from not authorized account", async() => {
             let errorThrown = false;
-            let externalId4 = web3.toHex("test-external-id-4");
+            let externalId4 = web3.utils.toHex("test-external-id-4");
             try {
                 await CAT20Token.createEscrow(
                     token_holder_1,
                     EscrowClient.address,
-                    toMint / 2,
-                    web3.toHex("."),
-                    web3.toHex("."),
+                    toMint.div(2),
+                    web3.utils.toHex("."),
+                    web3.utils.toHex("."),
                     externalId4,
                     false,
                     true,
@@ -894,15 +892,15 @@ contract("CAT20Token", accounts => {
             assert.ok(errorThrown, "Transaction should fail!");
         });
 
-        var externalId6 = web3.toHex("test-external-id-6");
+        var externalId6 = web3.utils.toHex("test-external-id-6");
         it("Should create one more escrow from the escrow agent account", async() => {
             await CAT20Token.mint(token_holder_1, toMint);
             let tx = await CAT20Token.createEscrow(
                 token_holder_1,
-                "",
-                toMint / 2,
-                web3.toHex("."),
-                web3.toHex("."),
+                zeroAddress,
+                toMint.div(2),
+                web3.utils.toHex("."),
+                web3.utils.toHex("."),
                 externalId6,
                 false,
                 false,
@@ -918,8 +916,8 @@ contract("CAT20Token", accounts => {
             try {
                 await CAT20Token.cancelEscrow(
                     externalId6,
-                    web3.toHex("."),
-                    web3.toHex("."),
+                    web3.utils.toHex("."),
+                    web3.utils.toHex("."),
                     { from: token_holder_1 }
                 );
             } catch (error) {
@@ -936,8 +934,8 @@ contract("CAT20Token", accounts => {
                 await CAT20Token.processEscrow(
                     externalId6,
                     token_holder_2,
-                    web3.toHex("."),
-                    web3.toHex("."),
+                    web3.utils.toHex("."),
+                    web3.utils.toHex("."),
                     { from: token_holder_1 }
                 );
             } catch (error) {
@@ -952,8 +950,8 @@ contract("CAT20Token", accounts => {
             let tx = await CAT20Token.processEscrow(
                 externalId6,
                 token_holder_2,
-                web3.toHex("."),
-                web3.toHex("."),
+                web3.utils.toHex("."),
+                web3.utils.toHex("."),
                 { from: accounts[0] }
             );
             

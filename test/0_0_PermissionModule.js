@@ -18,11 +18,11 @@ function isException(error) {
 }
 
 function bytes32ToString(bytes32) {
-    return web3.toAscii(bytes32).replace(/\0/g, '')
+    return web3.utils.toAscii(bytes32).replace(/\0/g, '')
 }
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
 }
@@ -42,7 +42,7 @@ function makeRole() {
     for (var i = 0; i < 5; i++) {
         role += possible.charAt(Math.floor(Math.random() * possible.length));
     }
-    return role;
+    return web3.utils.toHex(role);
 }
 
 contract('PermissionModule', accounts => {
@@ -56,9 +56,11 @@ contract('PermissionModule', accounts => {
 
     let owner = accounts[0];
 
-    let ownerRoleName = "Owner";
-    let systemRoleName = "System";
-    let notExistingRole = "Not existing role";
+    let ownerRoleName = web3.utils.toHex("Owner");
+    let systemRoleName = web3.utils.toHex("System");
+    let registrationRoleName = web3.utils.toHex("Registration");
+    let issuerRoleName = web3.utils.toHex("Issuer");
+    let notExistingRole = web3.utils.toHex("Not existing role");
     
     let testToken = "0x9d4770de60c5876cb0f3bb360803c35b700c6df4";
 
@@ -98,11 +100,6 @@ contract('PermissionModule', accounts => {
         );
 
         let tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
-
-        let ownerRoleName = "Owner";
-        let systemRoleName = "System";
-        let registrationRoleName = "Registration";
-        let issuerRoleName = "Issuer";
 
         let status;
         
@@ -218,19 +215,19 @@ contract('PermissionModule', accounts => {
 
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : accounts[0] });
         let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
-        assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
         let standard = await CAT20Strategy.getTokenStandard();
 
         let symbol = "TEST";
-        let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, "", { from : accounts[0] });
+        let hexSymbol = web3.utils.toHex(symbol);
+        await symbolRegistry.registerSymbol(hexSymbol, web3.utils.toHex(emptyBytes), { from : accounts[0] });
             
-        tx = await TokensFactory.createToken("TEST NAME", symbol, 18, 100000000, standard, { from : accounts[0] });
+        tx = await TokensFactory.createToken(web3.utils.toHex("TEST NAME"), symbol, 18, 100000000, standard, { from : accounts[0] });
         topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
             
-        assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
-        testToken = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
+        assert.notEqual(tx.receipt.rawLogs[3].topics.indexOf(topic), -1);
+        testToken = tx.receipt.rawLogs[3].topics[1].replace("000000000000000000000000", "");
 
         assert.notEqual(
             testToken,
@@ -272,8 +269,16 @@ contract('PermissionModule', accounts => {
             let roles = [];
             for (let i = 0; i < length; i++) {
                 role = await PMStorage.getRoleByTheIndex(i);
-                roles.push(bytes32ToString(role));
+                roles.push(role);
             }
+            
+            let j = roles[0].length - 1;
+            while(roles[0][j] == 0) {
+                j--;
+            }
+
+            roles[0] = roles[0].substring(0, j+1);
+            
             assert.equal(ownerRoleName, roles[0]);
         });
 
@@ -409,11 +414,12 @@ contract('PermissionModule', accounts => {
         });
     });
 
+    var emptyBytes = web3.utils.toHex("");
     describe("Test roles manager", async() => {
         it("Should fail to create new role with empty name", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.createRole("", ownerRoleName, {from: accounts[0]});
+                await permissionModule.createRole(emptyBytes, ownerRoleName, {from: accounts[0]});
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -425,7 +431,7 @@ contract('PermissionModule', accounts => {
         it("Should fail to create new role with empty parent name", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.createRole(systemRoleName, "", {from: accounts[0]});
+                await permissionModule.createRole(systemRoleName, emptyBytes, {from: accounts[0]});
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid parent role.`.grey);
@@ -474,7 +480,7 @@ contract('PermissionModule', accounts => {
         it("Should fail to add method to the role", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.addMethodToTheRole(testMethodIds[0], "", { from: owner });
+                await permissionModule.addMethodToTheRole(testMethodIds[0], emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -486,7 +492,7 @@ contract('PermissionModule', accounts => {
         it("Should fail to add method to the role", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.addMethodToTheRole("", systemRoleName, { from: owner });
+                await permissionModule.addMethodToTheRole(emptyBytes, systemRoleName, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -535,7 +541,7 @@ contract('PermissionModule', accounts => {
         it("Should fail to remove a method from the role", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.removeMethodFromTheRole(testMethodIds[0], "", { from: owner });
+                await permissionModule.removeMethodFromTheRole(testMethodIds[0], emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -547,7 +553,7 @@ contract('PermissionModule', accounts => {
         it("Should fail to remove a method from the role", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.removeMethodFromTheRole("", systemRoleName, { from: owner });
+                await permissionModule.removeMethodFromTheRole(emptyBytes, systemRoleName, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid method id.`.grey);
@@ -593,7 +599,7 @@ contract('PermissionModule', accounts => {
         it("Should fail to deactivate role", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.deactivateRole("", { from: owner });
+                await permissionModule.deactivateRole(emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -652,7 +658,7 @@ contract('PermissionModule', accounts => {
         it("Should fail to activate role", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.activateRole("", { from: owner });
+                await permissionModule.activateRole(emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -701,7 +707,7 @@ contract('PermissionModule', accounts => {
         it("Should fail add role to the wallet", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.addRoleToTheWallet(accounts[1], "", { from: owner });
+                await permissionModule.addRoleToTheWallet(accounts[1], emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -789,7 +795,7 @@ contract('PermissionModule', accounts => {
         it("Should fail remove role from the wallet", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.removeRoleFromTheWallet(accounts[1], "", { from: owner });
+                await permissionModule.removeRoleFromTheWallet(accounts[1], emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -838,7 +844,7 @@ contract('PermissionModule', accounts => {
         it("Should fail transfer ownership", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.transferOwnership("", { from: owner });
+                await permissionModule.transferOwnership("0x0000000000000000000000000000000000000000", { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid new owner address.`.grey);
@@ -850,7 +856,7 @@ contract('PermissionModule', accounts => {
         it("Should transfer ownership", async() => {
             let tx = await permissionModule.transferOwnership(accounts[1], { from: owner });
             let topic = "0x1399338fbdd61ce69ad7a59b8913751ad69b17ec3e2dd9cf2bb5dc5caea2ea8b";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it("Should be failed to accept ownership from an account without permission", async() => {
@@ -867,7 +873,7 @@ contract('PermissionModule', accounts => {
 
         it("Should accept ownership", async() => {
             let tx = await permissionModule.acceptOwnership({ from: accounts[1] });
-            status = await PMStorage.verifyRole(accounts[1], "Owner");
+            status = await PMStorage.verifyRole(accounts[1], ownerRoleName);
             assert.equal(status, true);
         });
 
@@ -892,12 +898,12 @@ contract('PermissionModule', accounts => {
         it("Should transfer ownership back to the previous owner", async() => {
             let tx = await permissionModule.transferOwnership(owner, { from: accounts[1] });
             let topic = "0x1399338fbdd61ce69ad7a59b8913751ad69b17ec3e2dd9cf2bb5dc5caea2ea8b";
-            assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+            assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
         });
 
         it("Previous owner should accept ownership", async() => {
             let tx = await permissionModule.acceptOwnership({ from: owner });
-            status = await PMStorage.verifyRole(owner, "Owner");
+            status = await PMStorage.verifyRole(owner, ownerRoleName);
             assert.equal(status, true);
         });
 
@@ -913,7 +919,7 @@ contract('PermissionModule', accounts => {
         it("Should fail add role for a specific token", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.addRoleForSpecificToken(accounts[0], testToken, "", { from: owner });
+                await permissionModule.addRoleForSpecificToken(accounts[0], testToken, emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);
@@ -979,7 +985,7 @@ contract('PermissionModule', accounts => {
         it("Should fail remove role from the wallet for a specific token", async() => {
             let errorThrown = false;
             try {
-                await permissionModule.removeRoleFromSpecificToken(accounts[1], testToken, "", { from: owner });
+                await permissionModule.removeRoleFromSpecificToken(accounts[1], testToken, emptyBytes, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Invalid role.`.grey);

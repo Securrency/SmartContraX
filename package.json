@@ -20,15 +20,15 @@
     "bignumber.js": "^5.0.0",
     "chalk": "^2.4.1",
     "csvtojson": "^2.0.8",
-    "ethereumjs-testrpc": "^6.0.3",
+    "ganache-cli": "^6.2.5",
     "ethers": "^3.0.15",
     "readline-sync": "^1.4.9",
     "shelljs": "^0.8.2",
     "sleep": "^5.1.1",
     "solc": "^0.5.0",
-    "truffle-contract": "^3.0.4",
-    "truffle-hdwallet-provider": "0.0.6",
-    "truffle-hdwallet-provider-privkey": "^0.1.0",
+    "truffle-contract": "^4.0.0",
+    "truffle-hdwallet-provider": "1.0.1",
+    "truffle-hdwallet-provider-privkey": "1.0.0",
     "web3": "^1.0.0-beta.33"
   },
   "devDependencies": {
@@ -39,11 +39,11 @@
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.0.1",
-    "ganache-cli": "^6.1.0",
+    "ganache-cli": "^6.2.5",
     "sol-merger": "^0.1.2",
     "solidity-coverage": "^0.5.0",
     "solium": "^1.1.6",
-    "truffle": "^4.1.13",
+    "truffle": "5.0.0",
     "truffle-wallet-provider": "0.0.5"
   }
 }

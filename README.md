@@ -45,13 +45,13 @@ Components:
 
 - node v8.10.0
 - npm v3.5.2
-- Truffle v4.1.13 (core: 4.1.13)
+- Truffle v5.0.0
 - Solidity v0.5.0 (solc-js)
-- Ganache CLI v6.1.6 (ganache-core: 2.1.5)
+- Ganache CLI v6.2.5 (ganache-core: 2.3.3)
 
 ## Setup
 
-The smart contracts are written in [Solidity](https://github.com/ethereum/solidity) and tested/deployed using [Truffle](https://github.com/trufflesuite/truffle) version 4.1.13.
+The smart contracts are written in [Solidity](https://github.com/ethereum/solidity) and tested/deployed using [Truffle](https://github.com/trufflesuite/truffle) version 5.0.0.
 
 [Description](docs/project-setup/setup.md)
 

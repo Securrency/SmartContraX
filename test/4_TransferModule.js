@@ -1,3 +1,5 @@
+const BigNumber = require("bignumber.js");
+
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");
 var CAT20V = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-verification/CAT20Verification.sol");
@@ -15,13 +17,9 @@ var DSToken = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20/C
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
-}
-
-function bytes32ToString(bytes32) {
-    return web3.toAscii(bytes32).replace(/\0/g, '')
 }
 
 function isException(error) {
@@ -32,6 +30,7 @@ function isException(error) {
 const txRevertNotification = "Transaction should fail!";
 
 contract('TransferModule', accounts => {
+    const precision = 1000000000000000000;
     const token_owner = accounts[0];
     const token_holder_1 = accounts[1];
     const token_holder_2 = accounts[2];
@@ -40,9 +39,9 @@ contract('TransferModule', accounts => {
     const name = "Securities Token";
     const symbol = "SEC";
     const decimals = 18;
-    const totalSupply = web3.toWei(10000, "ether");
+    const totalSupply = new BigNumber(100).mul(precision);
 
-    const toTransfer = web3.toWei(10, "ether");
+    const toTransfer = new BigNumber(10).mul(precision);
 
     let CAT20Token;
     let zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -60,12 +59,11 @@ contract('TransferModule', accounts => {
 
     let crossChainTx;
 
-
-    let ownerRoleName = "Owner";
-    let systemRoleName = "System";
-    let registrationRoleName = "Registration";
-    let issuerRoleName = "Issuer";
-    let complianceRoleName = "Compliance";
+    let ownerRoleName = web3.utils.toHex("Owner");
+    let systemRoleName = web3.utils.toHex("System");
+    let registrationRoleName = web3.utils.toHex("Registration");
+    let issuerRoleName = web3.utils.toHex("Issuer");
+    let complianceRoleName = web3.utils.toHex("Compliance");
 
     before(async() => {
         componentsRegistry = await CR.new();
@@ -237,17 +235,17 @@ contract('TransferModule', accounts => {
         
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : token_owner });
         let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
-        assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
         let standard = await CAT20Strategy.getTokenStandard();
 
-        let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
+        let hexSymbol = web3.utils.toHex(symbol);
+        await symbolRegistry.registerSymbol(hexSymbol, web3.utils.toHex(""), { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
         topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
-        assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
-        tokenAddress = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
+        assert.notEqual(tx.receipt.rawLogs[3].topics.indexOf(topic), -1);
+        tokenAddress = tx.receipt.rawLogs[3].topics[1].replace("000000000000000000000000", "");
 
         assert.notEqual(
             tokenAddress,
@@ -331,7 +329,7 @@ contract('TransferModule', accounts => {
 
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_1);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
         });
 
         it("Should be failed to transfer on account that is not in whitelist", async() => {
@@ -356,7 +354,7 @@ contract('TransferModule', accounts => {
 
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_2);
-            assert.equal(tx.logs[0].args.value.toNumber(), toTransfer);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
         });
 
         it("Should add multiple accounts to the whitelist", async() => {
@@ -379,28 +377,28 @@ contract('TransferModule', accounts => {
 
     describe("Test cross chain service", async() => {
         it("Should add new chain", async() => {
-            let chain = web3.toHex("Ethereum Classic");
+            let chain = web3.utils.toHex("Ethereum Classic");
             let tx = await transferModule.addNewChain(chain);
             
             assert.equal(chain, tx.logs[0].args.chain.replace("00000000000000000000000000000000", ""));
         });
 
         it("Should add one more chain", async() => {
-            let chain = web3.toHex("Ethereum");
+            let chain = web3.utils.toHex("Ethereum");
             let tx = await transferModule.addNewChain(chain);
             
             assert.equal(chain, tx.logs[0].args.chain.replace("000000000000000000000000000000000000000000000000", ""));
         });
 
         it("Should verify chain", async() => {
-            let chain = web3.toHex("Ethereum");
+            let chain = web3.utils.toHex("Ethereum");
             let result = await transferModule.isSupported(chain);
 
             assert.equal(result, true);
         });
 
         it("Should remove chain", async() => {
-            let chain = web3.toHex("Ethereum");
+            let chain = web3.utils.toHex("Ethereum");
             let tx = await transferModule.removeChain(chain);
             
             assert.equal(chain, tx.logs[0].args.chain.replace("000000000000000000000000000000000000000000000000", ""));
@@ -409,7 +407,7 @@ contract('TransferModule', accounts => {
 
     describe("Test cross chain transfer", async() => {
         it("Should create cross chain transfer", async() => {
-            let chain = web3.toHex("Ethereum Classic");
+            let chain = web3.utils.toHex("Ethereum Classic");
             let tx = await CAT20Token.crossChainTransfer(toTransfer, chain, accounts[7], { from: token_owner });
 
             assert.equal(tx.logs[0].args.to, "0x0000000000000000000000000000000000000000");
@@ -430,7 +428,7 @@ contract('TransferModule', accounts => {
             let chain = "0x" + data.substring(0, 64).replace("00000000000000000000000000000000", "");
             let recipient = "0x" + data.substring(64, 104);
 
-            let balance1 = await CAT20Token.balanceOf(accounts[7]);
+            let balance1 = new BigNumber(await CAT20Token.balanceOf(accounts[7]));
 
             tx = await transferModule.acceptTokensFromOtherChain(
                 token,
@@ -444,10 +442,10 @@ contract('TransferModule', accounts => {
                 { from: accounts[0] }
             );
 
-            let balance2 = await CAT20Token.balanceOf(accounts[7]); 
+            let balance2 = new BigNumber(await CAT20Token.balanceOf(accounts[7])); 
             
-            assert.equal(balance1, 0);
-            assert.equal(balance2, toTransfer);
+            assert.equal(balance1.valueOf(), 0);
+            assert.equal(balance2.valueOf(), toTransfer.valueOf());
         });
 
         it("Should show that transaction is processed", async() => {

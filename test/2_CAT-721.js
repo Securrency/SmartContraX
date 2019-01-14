@@ -18,13 +18,9 @@ var CAT721V = artifacts.require("./request-verification-layer/transfer-verificat
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
-}
-
-function bytes32ToString(bytes32) {
-    return web3.toAscii(bytes32).replace(/\0/g, '')
 }
 
 function isException(error) {
@@ -63,11 +59,13 @@ contract("CAT721Token", accounts => {
 
     let txForRollback;
 
-    let ownerRoleName = "Owner";
-    let systemRoleName = "System";
-    let registrationRoleName = "Registration";
-    let issuerRoleName = "Issuer";
-    let complianceRoleName = "Compliance";
+    let ownerRoleName = web3.utils.toHex("Owner");
+    let systemRoleName = web3.utils.toHex("System");
+    let registrationRoleName = web3.utils.toHex("Registration");
+    let issuerRoleName = web3.utils.toHex("Issuer");
+    let complianceRoleName = web3.utils.toHex("Compliance");
+
+    let emptyBytes = web3.utils.toHex(""); 
 
     before(async() => {
         componentsRegistry = await CR.new();
@@ -227,19 +225,19 @@ contract("CAT721Token", accounts => {
         
         tx = await TokensFactory.addTokenStrategy(CAT721Strategy.address, { from : token_owner });
         let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
-        assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
         let standard = await CAT721Strategy.getTokenStandard();
 
         await transferModule.addVerificationLogic(CAT721Verification.address.valueOf(), standard);
 
-        let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, "", { from : token_owner });
+        let hexSymbol = web3.utils.toHex(symbol);
+        await symbolRegistry.registerSymbol(hexSymbol, emptyBytes, { from : token_owner });
             
         tx = await TokensFactory.createToken(name, symbol, decimals, totalSupply, standard, { from : token_owner });
         topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
-        assert.notEqual(tx.receipt.logs[2].topics.indexOf(topic), -1);
-        tokenAddress = tx.receipt.logs[2].topics[1].replace("000000000000000000000000", "");
+        assert.notEqual(tx.receipt.rawLogs[2].topics.indexOf(topic), -1);
+        tokenAddress = tx.receipt.rawLogs[2].topics[1].replace("000000000000000000000000", "");
 
         assert.notEqual(
             tokenAddress,
@@ -269,7 +267,7 @@ contract("CAT721Token", accounts => {
 
     describe("Testing CAT-721 token", async() => {
         it("Should add accounts to the whitelist", async() => {
-            let complianceRoleName = "Compliance";
+            let complianceRoleName = web3.utils.toHex("Compliance");
 
             let tx = await permissionModule.addRoleForSpecificToken(token_owner, CAT721Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
 
@@ -320,8 +318,8 @@ contract("CAT721Token", accounts => {
         });
 
         it("Should rollback transaction", async() => {
-            let receipt = web3.eth.getTransactionReceipt(txForRollback);
-            let transaction = web3.eth.getTransaction(txForRollback);
+            let receipt = await web3.eth.getTransactionReceipt(txForRollback);
+            let transaction = await web3.eth.getTransaction(txForRollback);
 
             let checkpointId = parseInt(receipt.logs[0].topics[2]);
             
@@ -398,7 +396,7 @@ contract("CAT721Token", accounts => {
             assert.equal(tx.logs[0].args._to, token_holder_1);
             assert.equal(tx.logs[0].args._tokenId, testTokenId);
 
-            tx = await CAT721Token.clawback(token_holder_1, token_holder_2, testTokenId, "", { from: token_owner });
+            tx = await CAT721Token.clawback(token_holder_1, token_holder_2, testTokenId, emptyBytes, { from: token_owner });
             
             assert.equal(tx.logs[1].args.from, token_holder_1);
             assert.equal(tx.logs[1].args.to, token_holder_2);
@@ -408,7 +406,7 @@ contract("CAT721Token", accounts => {
         it("Should fail to create clawback", async() => {
             let errorThrown = false;
             try {
-                await CAT721Token.clawback(token_holder_2, token_holder_1, testTokenId, "", { from: token_holder_1 });
+                await CAT721Token.clawback(token_holder_2, token_holder_1, testTokenId, emptyBytes, { from: token_holder_1 });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> Declined by Permission Module.`.grey);

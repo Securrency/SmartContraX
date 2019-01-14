@@ -5,7 +5,7 @@ var PM = artifacts.require("./request-verification-layer/permission-module/Permi
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
 }
@@ -16,8 +16,8 @@ contract("Applications registry", accounts => {
     let applicationsRegistry;
     let ARStorage;
 
-    let ownerRoleName = "Owner";
-    let systemRoleName = "System";
+    let ownerRoleName = web3.utils.toHex("Owner");
+    let systemRoleName = web3.utils.toHex("System");
 
     before(async() => {
         componentsRegistry = await CR.new();
@@ -93,7 +93,7 @@ contract("Applications registry", accounts => {
         it("Should create application", async() => {
             let tx = await applicationsRegistry.createCATApp(accounts[9], { from: accounts[0] });
             let topic = "0x8497d72ea0779ab7050fb26725eeeb177632d04eeab50ee68d471da302313169";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
 
         it("Should show that application is active", async() => {
@@ -104,7 +104,7 @@ contract("Applications registry", accounts => {
         it("Should set an application on pause", async() => {
             let tx = await applicationsRegistry.changeCATAppStatus(accounts[9], false, { from: accounts[0] });
             let topic = "0x0758f995530e15d8f0d1d184e03e566e227f5d1157f6bf09420fdb4ed919b52b";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
 
         it("Should show that application is not active", async() => {
@@ -115,7 +115,7 @@ contract("Applications registry", accounts => {
         it("Should move an application from the pause", async() => {
             let tx = await applicationsRegistry.changeCATAppStatus(accounts[9], true, { from: accounts[0] });
             let topic = "0x0758f995530e15d8f0d1d184e03e566e227f5d1157f6bf09420fdb4ed919b52b";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
 
         it("Should show that application is not registered", async() => {
@@ -134,7 +134,7 @@ contract("Applications registry", accounts => {
             let tx = await applicationsRegistry.removeCATApp(accounts[9], { from: accounts[0] });
             let topic = "0xe9acc0144859ac3efbea36e7043b9de2ed34bbcafdcde7dae2657db51fe80687";
             
-            assert.equal(topic, tx.receipt.logs[0].topics[0]);
+            assert.equal(topic, tx.receipt.rawLogs[0].topics[0]);
         });
 
         it("Should show that removed application is not registered", async() => {
@@ -151,15 +151,14 @@ contract("Applications registry", accounts => {
         it("Should create application one more application", async() => {
             let tx = await applicationsRegistry.createCATApp(accounts[1], { from: accounts[0] });
             let topic = "0x8497d72ea0779ab7050fb26725eeeb177632d04eeab50ee68d471da302313169";
-            assert.equal(tx.receipt.logs[0].topics[0], topic);
+            assert.equal(tx.receipt.rawLogs[0].topics[0], topic);
         });
 
         it ("Should remove application from the CAT registry", async() => {
             let tx = await applicationsRegistry.removeCATApp(accounts[1], { from: accounts[0] });
             let topic = "0xe9acc0144859ac3efbea36e7043b9de2ed34bbcafdcde7dae2657db51fe80687";
             
-            assert.equal(topic, tx.receipt.logs[0].topics[0]);
+            assert.equal(topic, tx.receipt.rawLogs[0].topics[0]);
         });
-
     });
 });

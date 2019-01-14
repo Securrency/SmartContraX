@@ -18,11 +18,11 @@ function isException(error) {
 }
 
 function bytes32ToString(bytes32) {
-    return web3.toAscii(bytes32).replace(/\0/g, '')
+    return web3.utils.toAscii(bytes32).replace(/\0/g, '')
 }
 
 function createId(signature) {
-    let hash = web3.sha3(signature);
+    let hash = web3.utils.keccak256(signature);
 
     return hash.substring(0, 10);
 }
@@ -42,7 +42,7 @@ function makeRole() {
     for (var i = 0; i < 5; i++) {
         role += possible.charAt(Math.floor(Math.random() * possible.length));
     }
-    return role;
+    return web3.utils.toHex(role);
 }
 
 contract('PermissionModule (Permissions matrix)', accounts => {
@@ -55,7 +55,10 @@ contract('PermissionModule (Permissions matrix)', accounts => {
     let FCStorage;
 
     // roles
-    let ownerRoleName = "Owner";
+    let ownerRoleName = web3.utils.toHex("Owner");
+    let systemRoleName = web3.utils.toHex("System");
+    let registrationRoleName = web3.utils.toHex("Registration");
+    let issuerRoleName = web3.utils.toHex("Issuer");
     let systemRole = makeRole();
     let registrationRole = makeRole();
     let issuerRole = makeRole();
@@ -106,11 +109,6 @@ contract('PermissionModule (Permissions matrix)', accounts => {
             "0x0000000000000000000000000000000000000000",
             "Permission module contract was not deployed"
         );
-
-        let ownerRoleName = "Owner";
-        let systemRoleName = "System";
-        let registrationRoleName = "Registration";
-        let issuerRoleName = "Issuer";
 
         let tx;
         let status;
@@ -238,19 +236,19 @@ contract('PermissionModule (Permissions matrix)', accounts => {
 
         tx = await TokensFactory.addTokenStrategy(CAT20Strategy.address, { from : accounts[0] });
         let topic = "0x9bf07456b86b17320e4e8334cf1783b2ad1d7e33d589ede121035bc9f601e89f";
-        assert.notEqual(tx.receipt.logs[0].topics.indexOf(topic), -1);
+        assert.notEqual(tx.receipt.rawLogs[0].topics.indexOf(topic), -1);
 
         let standard = await CAT20Strategy.getTokenStandard();
 
         let symbol = "TEST";
-        let hexSymbol = web3.toHex(symbol);
-        await symbolRegistry.registerSymbol(hexSymbol, "", { from : accounts[0] });
+        let hexSymbol = web3.utils.toHex(symbol);
+        await symbolRegistry.registerSymbol(hexSymbol, web3.utils.toHex(""), { from : accounts[0] });
             
-        tx = await TokensFactory.createToken("TEST NAME", symbol, 18, 100000000, standard, { from : accounts[0] });
+        tx = await TokensFactory.createToken(web3.utils.toHex("TEST NAME"), symbol, 18, 100000000, standard, { from : accounts[0] });
         topic = "0xe38427d7596a29073b620ae861fdbd25e1b120ec4db69ea1e146489fe7416c9f";
             
-        assert.notEqual(tx.receipt.logs[3].topics.indexOf(topic), -1);
-        testToken = tx.receipt.logs[3].topics[1].replace("000000000000000000000000", "");
+        assert.notEqual(tx.receipt.rawLogs[3].topics.indexOf(topic), -1);
+        testToken = tx.receipt.rawLogs[3].topics[1].replace("000000000000000000000000", "");
 
         assert.notEqual(
             testToken,
