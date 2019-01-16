@@ -98,7 +98,7 @@ async function run(netowrk) {
         "createRollbackTransaction(address,address,address,uint256,uint256,string)",
         "mint(address,uint256)",
         "mint(address)",
-        "issuerBurn(address,uint256,bytes32)",
+        "transferAgentBurn(address,uint256,bytes32)",
         "crossChainTransfer(uint256,bytes32,bytes32)",
         "clawback(address,address,uint256,bytes32)",
         "pause()",

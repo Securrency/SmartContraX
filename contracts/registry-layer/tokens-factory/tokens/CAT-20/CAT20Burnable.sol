@@ -15,13 +15,13 @@ contract CAT20Burnale is SecuritiesStandardToken {
     event Burn(address indexed from, uint256 value);
 
     /**
-    * @notice Write info to the log when issuer was burned tokens
+    * @notice Write info to the log when transfer agent burned tokens
     * @param from Address from which tokens were burned
     * @param burnedBy Address of the transaction initiator
     * @param value Number of burned tokens
     * @param data Additional data which will be added to the log
     */
-    event BurnedByIssuer(address indexed from, address indexed burnedBy, uint256 value, bytes32 data);
+    event BurnedByTransferAgent(address indexed from, address indexed burnedBy, uint256 value, bytes32 data);
 
     /**
     * @notice Burns a specific amount of tokens for sender
@@ -40,7 +40,7 @@ contract CAT20Burnale is SecuritiesStandardToken {
     * @param value The amount of token to be burned
     * @param data Additional data which will be added to the log
     */
-    function issuerBurn(address from, uint value, bytes32 data)
+    function transferAgentBurn(address from, uint value, bytes32 data)
         external
         verifyPermissionForCurrentToken(msg.sig)
     {
@@ -49,7 +49,7 @@ contract CAT20Burnale is SecuritiesStandardToken {
 
         _burn(from, value);
 
-        emit BurnedByIssuer(from, msg.sender, value, data);
+        emit BurnedByTransferAgent(from, msg.sender, value, data);
     }
 
     /**

@@ -139,7 +139,7 @@ contract("CAT20Token", accounts => {
         let mt = createId("mint(address,uint256)");
         tx = await permissionModule.addMethodToTheRole(mt, complianceRoleName, { from: accounts[0] });
 
-        let iBurn = createId("issuerBurn(address,uint256,bytes32)");
+        let iBurn = createId("transferAgentBurn(address,uint256,bytes32)");
         tx = await permissionModule.addMethodToTheRole(iBurn, complianceRoleName, { from: accounts[0] });
 
         let rollbackId = createId("createRollbackTransaction(address,address,address,uint256,uint256,string)");
@@ -475,11 +475,11 @@ contract("CAT20Token", accounts => {
             assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toMint.valueOf());
         });
 
-        it("An issuer should burn tokens", async() => {
+        it("A transfer agent should burn tokens", async() => {
             let toMint = new BigNumber(20).mul(precision);
             await CAT20Token.mint(token_holder_2, toMint);
 
-            let tx = await CAT20Token.issuerBurn(token_holder_2, toMint, emptyBytes, { from: token_owner });
+            let tx = await CAT20Token.transferAgentBurn(token_holder_2, toMint, emptyBytes, { from: token_owner });
 
             assert.equal(tx.logs[0].args.from, token_holder_2);
             assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toMint.valueOf());
