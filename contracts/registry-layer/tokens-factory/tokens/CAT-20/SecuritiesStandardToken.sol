@@ -47,8 +47,6 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         address sender,
         uint tokens
     ) {
-        require(balances[from] >= tokensOnEscrow[from] + tokens, "Insufficient funds.");
-
         bool allowed = tmInstance().verifyTransfer(
             from,
             to,
@@ -62,6 +60,16 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     }
 
     /**
+    * @notice Verify balance with tokens on the escrow
+    * @param tokenHolder Address of the token holder to be verified
+    * @param tokens Number of the tokens
+    */
+    modifier verifyBalance(address tokenHolder, uint tokens) {
+        require(balances[tokenHolder] >= tokensOnEscrow[tokenHolder].add(tokens), "Insufficient funds.");
+        _;
+    }
+
+    /**
     * @notice Transfer tokens from chain
     * @param value Tokens to be transfered
     * @param chain Target chain name
@@ -70,6 +78,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     function crossChainTransfer(uint value, bytes32 chain, bytes32 recipient) 
         external
         notPaused()
+        verifyBalance(msg.sender, value)
         allowedTx(
             msg.sender,
             msg.sender,
@@ -137,6 +146,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     function transfer(address to, uint256 value) 
         public
         notPaused()
+        verifyBalance(msg.sender, value)
         allowedTx(
             msg.sender,
             to,
@@ -164,6 +174,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     function transferFrom(address from, address to, uint256 value) 
         public
         notPaused()
+        verifyBalance(from, value)
         allowedTx(
             from,
             to,
@@ -257,8 +268,8 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     )
         public
     {
-        require(externalId.length > 0, "Invalid escrow id.");
-        require(recipient != address(0), "Invalid recipient address.");
+        require(externalId != bytes32(0x00));
+        require(recipient != address(0));
         
         _processEscrow(
             externalId,
@@ -266,9 +277,9 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
             callData,
             data
         );
-
+        
         uint escrowId = idsExtIntRelations[externalId];
-        updatedBalances(
+        _updatedBalances(
             escrowList[escrowId].tokenHolder,
             recipient,
             escrowList[escrowId].value
@@ -298,9 +309,9 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         bool executeCall
     )
         public
+        verifyBalance(tokenHolder, value)
         returns (uint)
     {
-        require(balances[tokenHolder] >= tokensOnEscrow[tokenHolder] + value, "Insufficient funds on balance.");
         // Verify application
         if (escrowAgent != address(0)) {
             require(arInstance().isRegistredApp(escrowAgent, address(this)), "Escrow agent in not registred in the application registry.");
@@ -331,14 +342,25 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     }
 
     /**
+    * @notice Update token holders balances with balance verification
+    * @param from Address from which we rollback tokens
+    * @param to Tokens owner
+    * @param tokens Quantity of the tokens that will be rollbacked
+    */
+    function updatedBalances(address from, address to, uint tokens) 
+        internal
+        verifyBalance(from, tokens)
+    {
+        _updatedBalances(from, to, tokens);
+    }
+
+    /**
     * @notice Update token holders balances
     * @param from Address from which we rollback tokens
     * @param to Tokens owner
     * @param tokens Quantity of the tokens that will be rollbacked
     */
-    function updatedBalances(address from, address to, uint tokens) internal {
-        require(balances[from] >= tokensOnEscrow[from] + tokens, "Insufficient funds on balance.");
-
+    function _updatedBalances(address from, address to, uint tokens) internal {
         balances[from] = balances[from].sub(tokens);
         balances[to] = balances[to].add(tokens);
 

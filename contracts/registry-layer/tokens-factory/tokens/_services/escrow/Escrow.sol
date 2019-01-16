@@ -95,16 +95,10 @@ contract Escrow is IEscrow, ERC165Query, PermissionModuleInstance, ApplicationRe
     /**
     * @notice Verify inputs on escrow creation
     * @param tokenHolder Address of the token holder
-    * @param externalId External escrow id
     */
-    modifier beforeCreate(address tokenHolder, bytes32 externalId) {
+    modifier beforeCreate(address tokenHolder) {
         if (msg.sender != tokenHolder) {
-            require(pmInstance().allowed(msg.sig, msg.sender, address(this)), "Declined by Permission Module.");
-        }
-
-        // verify external id
-        if (externalId.length > 0) {
-            require(!registeredIds[externalId], "External id already registered.");
+            require(pmInstance().allowed(msg.sig, msg.sender, address(this)));
         }
 
         _;
@@ -137,10 +131,24 @@ contract Escrow is IEscrow, ERC165Query, PermissionModuleInstance, ApplicationRe
         bool executeCall
     )
         internal
-        beforeCreate(tokenHolder, externalId)
+        beforeCreate(tokenHolder)
         returns (uint)
     {
         uint escrowId = escrowList.length;
+
+        // verify external id
+        if (externalId == bytes32(0x00)) {
+            externalId = escrowId.uintToBytes32();
+        }
+
+        require(!registeredIds[externalId], "External id already registered.");
+
+        // update stats
+        totalOnEscrow = totalOnEscrow.add(value);
+        tokensOnEscrow[tokenHolder] = tokensOnEscrow[tokenHolder].add(value);
+        registeredIds[externalId] = true;
+        idsIntExtRelations[escrowId] = externalId;
+        idsExtIntRelations[externalId] = escrowId;
 
         // Execute call
         if (executeCall
@@ -156,10 +164,6 @@ contract Escrow is IEscrow, ERC165Query, PermissionModuleInstance, ApplicationRe
             require(result, "Escrow agent fails to execute the call.");
         }
 
-        registeredIds[externalId] = true;
-        idsIntExtRelations[escrowId] = externalId;
-        idsExtIntRelations[externalId] = escrowId;
-
         // save escrow
         escrowList.push(EscrowObj({
             escrowId: escrowId,
@@ -172,10 +176,6 @@ contract Escrow is IEscrow, ERC165Query, PermissionModuleInstance, ApplicationRe
             externalId: externalId
         }));
         tokenHolderIds[tokenHolder].push(escrowId);
-
-        // update stats
-        totalOnEscrow = totalOnEscrow.add(value);
-        tokensOnEscrow[tokenHolder] = tokensOnEscrow[tokenHolder].add(value); 
 
         // Write info to the log
         emit EscrowCreated(
@@ -205,14 +205,15 @@ contract Escrow is IEscrow, ERC165Query, PermissionModuleInstance, ApplicationRe
     ) 
         public
     {
-        // require(registeredIds[externalId], "invalid escrow id.");
+        require(registeredIds[externalId]);
 
         uint escrowId = idsExtIntRelations[externalId];
+        require(escrowList[escrowId].status == STATUS_ACTIVE);
         if (msg.sender == escrowList[escrowId].tokenHolder) {
             require(escrowList[escrowId].canCancel, "Cancelation is not allowed for the token holder.");
         }
         if (msg.sender != escrowList[escrowId].tokenHolder && msg.sender != escrowList[escrowId].escrowAgent) {
-            require(pmInstance().allowed(msg.sig, msg.sender, address(this)), "Declined by Permission Module.");
+            require(pmInstance().allowed(msg.sig, msg.sender, address(this)));
         }
 
         // Change escrow status
@@ -257,7 +258,7 @@ contract Escrow is IEscrow, ERC165Query, PermissionModuleInstance, ApplicationRe
     )
         internal
     {   
-        // require(registeredIds[externalId], "invalid escrow id.");
+        require(registeredIds[externalId]);
 
         uint escrowId = idsExtIntRelations[externalId];
         require(escrowList[escrowId].status == STATUS_ACTIVE, "Can't process escrow. Already processed or canceled.");
