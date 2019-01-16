@@ -23,11 +23,13 @@ contract CAT20Token is SecuritiesStandardToken, CAT20Mintable, CAT20Burnale, Det
         SecuritiesToken(_issuer)
         WithComponentsRegistry(_componentsRegistry)
     {
-        totalSupply_ = _totalSupply;
-        balances[_issuer] = totalSupply_;
+        if (_totalSupply > 0) {
+            totalSupply_ = _totalSupply;
+            balances[_issuer] = totalSupply_;
 
-        issuer = _issuer;
+            issuer = _issuer;
 
-        emit Transfer(address(0), _issuer, totalSupply_);
+            emit Transfer(address(0), _issuer, totalSupply_);
+        }
     }
 } 
