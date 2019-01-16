@@ -60,9 +60,17 @@ library BytesHelper {
     function uintToBytes(uint x) internal pure returns (bytes memory b) {
         b = new bytes(32);
         assembly { 
-            mstore(add(b, 32), x) 
-        
+            mstore(add(b, 32), x)
         }
     }
     
+    /**
+    * @notice Convert uint type to the bytes32 type
+    * @param x Value to convert
+    */
+    function uintToBytes32(uint x) internal pure returns (bytes32 b) {
+        assembly { 
+            mstore(add(b, 32), x) 
+        }
+    }
 }
