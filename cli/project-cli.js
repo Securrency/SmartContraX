@@ -9,6 +9,7 @@ var whiteList = require('./commands/whiteList.js');
 var permissionModule = require("./commands/permissionModule.js");
 var crossChainListener = require("./commands/crossChainListener.js");
 var applicationRegistry = require("./commands/ApplicationsRegistryApp.js");
+var identity = require("./commands/IdentityApp.js");
 
 program
   .version('0.0.1')
@@ -36,6 +37,14 @@ program
   .description('Application management')
   .action(() => {
     applicationRegistry.run();
+  });
+
+program
+  .command('identity')
+  .alias('I')
+  .description('Identity')
+  .action(() => {
+    identity.run();
   });
 
 program

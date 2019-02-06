@@ -113,7 +113,9 @@ async function run(netowrk) {
         "createEscrow(address,address,uint256,bytes,bytes,bytes32,bool,bool)",
         "cancelEscrow(bytes32,bytes,bytes)",
         "processEscrow(bytes32,address,bytes,bytes)",
-        "transferAgentBurn(address,uint256,bytes32)",
+        // identity
+        "setWalletAttribute(address,bytes32,bytes32)",
+        "deleteWalletAttribute(address,bytes32)",
     ];
 
     let rolesData = [
