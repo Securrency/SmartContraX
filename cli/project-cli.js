@@ -10,6 +10,7 @@ var permissionModule = require("./commands/permissionModule.js");
 var crossChainListener = require("./commands/crossChainListener.js");
 var applicationRegistry = require("./commands/ApplicationsRegistryApp.js");
 var identity = require("./commands/IdentityApp.js");
+var tokensPolicyRegistryApp = require("./commands/TokensPolicyRegistryApp.js");
 
 program
   .version('0.0.1')
@@ -45,6 +46,14 @@ program
   .description('Identity')
   .action(() => {
     identity.run();
+  });
+
+program
+  .command('tokensPolicyRegistry')
+  .alias('TPR')
+  .description('Tokens policy registry')
+  .action(() => {
+    tokensPolicyRegistryApp.run();
   });
 
 program

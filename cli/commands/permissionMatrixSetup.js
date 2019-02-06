@@ -116,6 +116,8 @@ async function run(netowrk) {
         // identity
         "setWalletAttribute(address,bytes32,bytes32)",
         "deleteWalletAttribute(address,bytes32)",
+        // tokens policy registry
+        "setPolicy(address,bytes32,bytes)",
     ];
 
     let rolesData = [
