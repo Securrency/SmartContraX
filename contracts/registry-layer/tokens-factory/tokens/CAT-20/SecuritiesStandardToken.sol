@@ -238,9 +238,9 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         external
         verifyPermissionForCurrentToken(msg.sig)
         allowedTx(
-            from,
             to,
-            msg.sender,
+            to,
+            to,
             tokens
         )
     {
@@ -279,7 +279,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
         );
         
         uint escrowId = idsExtIntRelations[externalId];
-        _updatedBalances(
+        updatedBalances(
             escrowList[escrowId].tokenHolder,
             recipient,
             escrowList[escrowId].value

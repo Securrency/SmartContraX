@@ -114,9 +114,9 @@ contract SecuritiesNFT is SecuritiesToken, Protected, TransferModuleInstance, ER
         external
         verifyPermissionForCurrentToken(msg.sig)
         allowedTx(
-            from,
             to,
-            msg.sender,
+            to,
+            to,
             token
         )
     {
