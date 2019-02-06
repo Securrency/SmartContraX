@@ -138,7 +138,13 @@ contract Escrow is IEscrow, ERC165Query, PermissionModuleInstance, ApplicationRe
 
         // verify external id
         if (externalId == bytes32(0x00)) {
-            externalId = escrowId.uintToBytes32();
+            bytes memory buffer = new bytes(64);
+            assembly {
+                mstore(add(buffer, 0x20), escrowId)
+                mstore(add(buffer, 0x40), timestamp)
+                    
+            }
+            externalId = keccak256(buffer);
         }
 
         require(!registeredIds[externalId], "External id already registered.");
