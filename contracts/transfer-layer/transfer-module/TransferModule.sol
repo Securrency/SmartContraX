@@ -4,6 +4,7 @@ import "../cross-chain/CrossChainService.sol";
 import "./interfaces/ITransferModule.sol";
 import "./TransferModuleMetadata.sol";
 import "../../request-verification-layer/transfer-verification-system/interfaces/ITransferVerification.sol";
+import "../../request-verification-layer/transfer-verification-system/interfaces/ICAT20TransferAction.sol";
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "../../registry-layer/tokens-factory/interfaces/IMultiChainToken.sol";
 import "../../common/component/SystemComponent.sol";
@@ -141,6 +142,7 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
     * @notice Selecting verification logic depending on the token standard.
     * @param from The address transfer from
     * @param to The address transfer to
+    * @param sender Sender address
     * @param tokens The amount of tokens to be transferred 
     */
     function verifyTransfer(
@@ -171,6 +173,39 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
     }
 
     /**
+    * @notice Verify tokens transfer and cache result
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param sender Sender address
+    * @param tokens The number of tokens to be transferred 
+    */
+    function checkCAT20TransferThroughRE(
+        address from,
+        address to,
+        address sender,
+        uint tokens
+    )
+        public
+        returns (bool)
+    {
+        // CAT-20-V2-RE
+        bytes4 standard = 0x6a770c78;
+        address verification = transferVerifications[standard];
+
+        if(verification == address(0)) {
+            return true;
+        }
+
+        return ICAT20TransferAction(verification).verifyTransfer(
+            from,
+            to,
+            sender,
+            msg.sender,
+            tokens
+        );
+    }
+
+    /**
     * @notice Add verification logic to the Transfer module
     * @param tvAddress Transfer verification logic address
     * @param standard Token standard related to this logic
@@ -180,8 +215,6 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
         verifyPermission(msg.sig, msg.sender)
     {
         require(tvAddress != address(0), "Invalid address of the transfer verification logic.");
-        require(transferVerifications[standard] == address(0), "Transfer verification logic for this standard already present.");
-        require(tfInstance().isSupported(standard), "Standard didn't supports by tokens factory.");
 
         transferVerifications[standard] = tvAddress;
 
