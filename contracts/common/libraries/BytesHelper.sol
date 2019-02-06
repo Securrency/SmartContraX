@@ -73,4 +73,40 @@ library BytesHelper {
             mstore(add(b, 32), x) 
         }
     }
+     
+    /**
+    * @notice Cut firs 4 bytes
+    * @param data Bytes
+    */
+    function cutFirst4Bytes(bytes memory data) internal pure returns (bytes4 outBytes) {
+        bytes memory result = new bytes(4);
+        for (uint8 i = 0; i < 4; i++) {
+            result[i] = data[i];
+        }
+        assembly {
+            outBytes := mload(add(result, 32))
+        }
+    }
+
+    /**
+    * @notice Cut 32 bytes and returns it as address
+    * @param data Bytes
+    * @param offset Offset from which bytes will be cut
+    */
+    function cutAddress(bytes memory data, uint16 offset) internal pure returns (address) {
+        require(offset + 20 > offset, "Offset overflow.");
+
+        bytes memory result = new bytes(20);
+        uint16 num = 0;
+        uint16 max = offset + 20;
+        for (uint16 i = offset; i < max; i++) {
+            result[num] = data[i];
+            num++;
+        }
+        bytes20 outBytes;
+        assembly {
+            outBytes := mload(add(result, 32))
+        }
+        return address(outBytes);
+    }
 }
