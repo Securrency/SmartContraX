@@ -11,7 +11,6 @@ var TransferModule = artifacts.require("./transfer-layer/transfer-module/Transfe
 var TCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
 var FCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var WhiteList = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-service/WhiteList.sol");
-var CAT20Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT20Verification.sol");
 var CAT721Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT721Verification.sol");
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
@@ -19,6 +18,12 @@ var PMStorage = artifacts.require("./request-verification-layer/permission-modul
 
 var AppRegistry = artifacts.require("./registry-layer/application-registry/ApplicationRegistry.sol");
 var AppRegistryStorage = artifacts.require("./registry-layer/application-registry/eternal-storage/ARStorage.sol");
+
+var Identity = artifacts.require("./registry-layer/identity/Identity.sol");
+var TokensPolicyRegistry = artifacts.require("./registry-layer/tokens-policy-registry/TokensPolicyRegistry.sol");
+var CAT20TransferAction = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/actions/CAT20TransferAction.sol");
+var PolicyParser = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/core/PolicyParser.sol");
+var RulesEngine = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/RulesEngine.sol");
 
 function createId(signature) {
   let hash = web3.utils.keccak256(signature);
@@ -34,7 +39,6 @@ module.exports = function(deployer, network, accounts) {
   var SymbolRegistryDeployed;
   var TransferModuleDeployed;
   var WhiteListDeployed;
-  var CAT20VerificationDeployed;
   var CAT721VerificationDeployed;
   var PermissionModuleDeployed;
   var ComponentsRegistryDeployed;
@@ -52,7 +56,27 @@ module.exports = function(deployer, network, accounts) {
   deployer.deploy(ComponentsRegistry, {gas: 6400000})
   .then((instance) => {
     ComponentsRegistryDeployed = instance;
-    return deployer.deploy(PMStorage, ComponentsRegistryDeployed.address, {gas: 3800000})
+    return deployer.deploy(Identity, ComponentsRegistryDeployed.address, {gas: 3800000})
+    .then((instance) => {
+      IdentityDeployed = instance;
+      return deployer.deploy(TokensPolicyRegistry, ComponentsRegistryDeployed.address, {gas: 3800000})
+    })
+    .then((instance) => {
+      PolicyRegistryDeployed = instance;
+      return deployer.deploy(RulesEngine, ComponentsRegistryDeployed.address, {gas: 3800000})
+    })
+    .then((instance) => {
+      RulesEngineDeployed = instance;
+      return deployer.deploy(PolicyParser, IdentityDeployed.address, {gas: 3800000})
+    })
+    .then((instance) => {
+      PolicyParserDeployed = instance;
+      return deployer.deploy(CAT20TransferAction, PolicyRegistryDeployed.address, PolicyParserDeployed.address, ComponentsRegistryDeployed.address, {gas: 4000000})
+    })
+    .then((instance) => {
+      CAT20TransferActionDeployed = instance;
+      return deployer.deploy(PMStorage, ComponentsRegistryDeployed.address, {gas: 3800000})
+    })
     .then((instance) => {
       PMStorageDeployed = instance;
       return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, PMStorageDeployed.address, {gas: 6200000})
@@ -79,10 +103,6 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       WhiteListDeployed = instance;
-      return deployer.deploy(CAT20Verification, WhiteListDeployed.address, {gas: 500000});
-    })
-    .then((instance) => {
-      CAT20VerificationDeployed = instance;
       return deployer.deploy(TCStorage, ComponentsRegistryDeployed.address, {gas: 6200000});
     })
     .then((instance) => {
@@ -145,6 +165,9 @@ module.exports = function(deployer, network, accounts) {
       return PermissionModuleDeployed.addMethodToTheRole(createId("registerNewComponent(address)"), systemRole, {gas: 500000});
     })
     .then(() => {
+      return PermissionModuleDeployed.addMethodToTheRole(createId("setActionExecutor(bytes32,address)"), systemRole, {gas: 500000});
+    })
+    .then(() => {
       return PermissionModuleDeployed.addRoleToTheWallet(accounts[0], systemRole, {gas:300000});
     })
     .then(() => {
@@ -169,10 +192,16 @@ module.exports = function(deployer, network, accounts) {
       return tokensFactoryDeployed.addTokenStrategy(CAT721StrategyDeployed.address, {gas: 160000});
     })
     .then(() => {
+      return RulesEngineDeployed.setActionExecutor("0xa9059cbb", CAT20TransferActionDeployed.address, {gas: 200000});
+    })
+    .then(() => {
       return CAT20StrategyDeployed.getTokenStandard();
     })
     .then((standard) => {
-      return TransferModuleDeployed.addVerificationLogic(CAT20VerificationDeployed.address, standard, {gas: 120000});
+      return TransferModuleDeployed.addVerificationLogic(CAT20TransferActionDeployed.address, standard, {gas: 120000});
+    })
+    .then(() => {
+      return TransferModuleDeployed.addVerificationLogic(CAT20TransferActionDeployed.address, "0x6a770c78", {gas: 120000});
     })
     .then(() => {
       return CAT721StrategyDeployed.getTokenStandard();
