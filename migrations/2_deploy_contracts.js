@@ -12,6 +12,7 @@ var TCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/
 var FCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var WhiteList = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-service/WhiteList.sol");
 var CAT721Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT721Verification.sol");
+var CAT20Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT20Verification.sol");
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMStorage = artifacts.require("./request-verification-layer/permission-module/eternal-storages/PMStorage.sol");
@@ -24,6 +25,16 @@ var TokensPolicyRegistry = artifacts.require("./registry-layer/tokens-policy-reg
 var CAT20TransferAction = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/actions/CAT20TransferAction.sol");
 var PolicyParser = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/core/PolicyParser.sol");
 var RulesEngine = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/RulesEngine.sol");
+
+var setupV1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20-V2/token-setup/SetupV1.sol");
+var CAT20V2Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20V2Strategy.sol");
+
+// CAT-20-V2 functions
+var ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/ERC20Functions.sol");
+var CAT20Mint = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20MintFunction.sol");
+var CAT20TransferWithWL = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20WLVTransferFunction.sol");
+var CAT20TransferWithRE = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20REVTransferFunction.sol");
+var CAT20ClawbackWithWL = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20WLVClawbackFunction.sol");
 
 function createId(signature) {
   let hash = web3.utils.keccak256(signature);
@@ -49,6 +60,8 @@ module.exports = function(deployer, network, accounts) {
   var PMStorageDeployed;
   var TCStorageDeployed;
   var FCStorageDeployed;
+  var SetupV1Deployed;
+  var CAT20V2StrategyDeployed;
 
   var systemRole = web3.utils.toHex("System");
   var ownerRole = web3.utils.toHex("Owner");
@@ -107,6 +120,10 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       TCStorageDeployed = instance;
+      return deployer.deploy(CAT20Verification, WhiteListDeployed.address, {gas: 500000});
+    })
+    .then((instance) => {
+      CAT20VerificationDeployed = instance;
       return deployer.deploy(FCStorage, ComponentsRegistryDeployed.address, {gas: 6200000});
     })
     .then((instance) => {
@@ -139,6 +156,27 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       AppRegDeployed = instance;
+      return deployer.deploy(setupV1, {gas: 3000000});
+    })
+    .then((instance) => {
+      SetupV1Deployed = instance;
+      return deployer.deploy(CAT20V2Strategy, ComponentsRegistryDeployed.address, SetupV1Deployed.address, {gas: 4000000});
+    })
+    .then((instance) => {
+      CAT20V2StrategyDeployed = instance;
+      return deployer.deploy(ERC20Functions, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT20Mint, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT20TransferWithWL, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT20TransferWithRE, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT20ClawbackWithWL, {gas:1000000});
     })
     .then(() => {
       return ComponentsRegistryDeployed.initializePermissionModule(PermissionModuleDeployed.address, {gas: 120000});
@@ -189,6 +227,9 @@ module.exports = function(deployer, network, accounts) {
       return tokensFactoryDeployed.addTokenStrategy(ERC20StrategyDeployed.address, {gas: 160000});
     })
     .then(() => {
+      return tokensFactoryDeployed.addTokenStrategy(CAT20V2StrategyDeployed.address, {gas: 160000});
+    })
+    .then(() => {
       return tokensFactoryDeployed.addTokenStrategy(CAT721StrategyDeployed.address, {gas: 160000});
     })
     .then(() => {
@@ -198,7 +239,13 @@ module.exports = function(deployer, network, accounts) {
       return CAT20StrategyDeployed.getTokenStandard();
     })
     .then((standard) => {
-      return TransferModuleDeployed.addVerificationLogic(CAT20TransferActionDeployed.address, standard, {gas: 120000});
+      return TransferModuleDeployed.addVerificationLogic(CAT20VerificationDeployed.address, standard, {gas: 120000});
+    })
+    .then(() => {
+      return CAT20V2StrategyDeployed.getTokenStandard();
+    })
+    .then((standard) => {
+      return TransferModuleDeployed.addVerificationLogic(CAT20VerificationDeployed.address, standard, {gas: 120000});
     })
     .then(() => {
       return TransferModuleDeployed.addVerificationLogic(CAT20TransferActionDeployed.address, "0x6a770c78", {gas: 120000});
