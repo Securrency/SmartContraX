@@ -58,6 +58,29 @@ class TokenInteractionApp extends App {
                             this.intitializeToken();
                         });
                         break;
+                    case "CAT-20-V2":
+                        let CAT20TokenV2 = require("./core/components/tokens/CAT-20-V2");
+                        CAT20TokenV2.address = token;
+                        this.commandsCollection = require("./core/commands/tokens/CAT-20-V2/Collection");
+                        this.initializeApp(CAT20TokenV2);
+                        CAT20TokenV2.getTokenDetails()
+                        .then(() => {
+                            let totalSupply = 0;
+                            if (CAT20TokenV2.totalSupply != 0) {
+                                totalSupply = this.web3.utils.fromWei(CAT20TokenV2.totalSupply, "ether");
+                            }
+                            console.log(`
+                                Token name:  ${CAT20TokenV2.tokenName}
+                                Symbol:      ${CAT20TokenV2.symbol}
+                                TotalSypply: ${totalSupply}
+                            `);
+                            this.question();
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            this.intitializeToken();
+                        });
+                        break;
                 }
             })
             .catch((error) => {

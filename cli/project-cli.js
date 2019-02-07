@@ -2,8 +2,8 @@
 
 var program = require('commander');
 
-var tokensGenerator = require('./commands/tokensGenerator.js');
-var tokenInteraction = require('./commands/tokenInteraction.js');
+var tokensGenerator = require('./commands/TokensFactoryApp.js');
+var tokenInteraction = require('./commands/TokenInteractionApp.js');
 var symbolRegistry = require('./commands/symbolRegistry.js');
 var whiteList = require('./commands/whiteList.js');
 var permissionModule = require("./commands/permissionModule.js");

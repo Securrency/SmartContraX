@@ -76,6 +76,7 @@ async function run(netowrk) {
         "updateComponent(address,address)",
         "removeComponent(address)",
         "acceptTokensFromOtherChain(address,address,address,bytes32,bytes32,bytes32,uint256,uint256)",
+        "setImplementations(bytes4[],address[])",
     ];
 
     let ownerMethods = [];
@@ -101,6 +102,7 @@ async function run(netowrk) {
         "transferAgentBurn(address,uint256,bytes32)",
         "crossChainTransfer(uint256,bytes32,bytes32)",
         "clawback(address,address,uint256,bytes32)",
+        "clawback(address,address,uint256)",
         "pause()",
         "unpause()",
         "toggleRollbacksStatus()",

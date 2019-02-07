@@ -30,7 +30,7 @@ class Action {
                     console.error(`Gas price estimation failed.`);
                     reject(error);
                 }
-                this.gas = Math.round(1.7 * result);
+                this.gas = Math.round(1.2 * result);
                 resolve(this.gas);
             });
         });
