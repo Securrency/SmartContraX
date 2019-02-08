@@ -99,6 +99,37 @@ contract("CAT20Token", accounts => {
 
         tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
+        SRStorage = await ES.new(componentsRegistry.address.valueOf());
+        assert.notEqual(
+            SRStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Symbol registry storage was not deployed"
+        );
+
+        symbolRegistry = await SR.new(componentsRegistry.address.valueOf(), SRStorage.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            symbolRegistry.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "SymbolRegistry contract was not deployed"
+        );
+
+        TFStorage = await TFS.new(componentsRegistry.address.valueOf());
+
+        assert.notEqual(
+            TFStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Tokens factory storage was not deployed"
+        );
+
+        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), TFStorage.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            TokensFactory.address.valueOf(),
+            zeroAddress,
+            "TokensFactory contract was not deployed"
+        );
+
         tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
         status = await PMStorage.getRoleStatus(systemRoleName);
         assert.equal(status, true);
@@ -183,39 +214,7 @@ contract("CAT20Token", accounts => {
 
         tx = await permissionModule.addRoleToTheWallet(accounts[0], complianceRoleName, { from: accounts[0] });
 
-        SRStorage = await ES.new(componentsRegistry.address.valueOf());
-        assert.notEqual(
-            SRStorage.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
-            "Symbol registry storage was not deployed"
-        );
-
-        symbolRegistry = await SR.new(componentsRegistry.address.valueOf(), SRStorage.address.valueOf(), {from: accounts[0]});
-
-        assert.notEqual(
-            symbolRegistry.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
-            "SymbolRegistry contract was not deployed"
-        );
-
         tx = componentsRegistry.registerNewComponent(symbolRegistry.address.valueOf());
-
-        TFStorage = await TFS.new(componentsRegistry.address.valueOf());
-
-        assert.notEqual(
-            TFStorage.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
-            "Tokens factory storage was not deployed"
-        );
-
-        TokensFactory = await TF.new(componentsRegistry.address.valueOf(), TFStorage.address.valueOf(), {from: accounts[0]});
-
-        assert.notEqual(
-            TokensFactory.address.valueOf(),
-            zeroAddress,
-            "TokensFactory contract was not deployed"
-        );
-
         tx = componentsRegistry.registerNewComponent(TokensFactory.address.valueOf());
 
         whiteList = await WL.new(componentsRegistry.address.valueOf(), { from: token_owner });

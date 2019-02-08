@@ -87,7 +87,7 @@ contract("CAT721Token", accounts => {
 
         permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
 
-        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+        tx = await componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
         tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
         status = await PMStorage.getRoleStatus(systemRoleName);

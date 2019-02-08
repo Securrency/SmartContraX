@@ -99,7 +99,7 @@ contract('PermissionModule', accounts => {
             "Permission module contract was not deployed"
         );
 
-        let tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+        let tx = await componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
         let status;
         

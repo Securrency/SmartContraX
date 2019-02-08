@@ -95,7 +95,7 @@ contract('TokensFactory', accounts => {
         let tx;
         let status;
 
-        tx = componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
+        tx = await componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 
         tx = await permissionModule.createRole(systemRoleName, ownerRoleName, {from: accounts[0]});
         status = await PMStorage.getRoleStatus(systemRoleName);
