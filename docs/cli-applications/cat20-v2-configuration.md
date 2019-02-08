@@ -33,5 +33,3 @@ Method implementation: 0x0......
 ```
 
 [List of the CAT-20 methods](../tokens/CAT-20/methods/list.md)
-
-[Token interaction application](token-interaction-application.md)
