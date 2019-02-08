@@ -76,7 +76,6 @@ async function run(netowrk) {
         "updateComponent(address,address)",
         "removeComponent(address)",
         "acceptTokensFromOtherChain(address,address,address,bytes32,bytes32,bytes32,uint256,uint256)",
-        "setImplementations(bytes4[],address[])",
     ];
 
     let ownerMethods = [];
@@ -115,6 +114,7 @@ async function run(netowrk) {
         "createEscrow(address,address,uint256,bytes,bytes,bytes32,bool,bool)",
         "cancelEscrow(bytes32,bytes,bytes)",
         "processEscrow(bytes32,address,bytes,bytes)",
+        "setImplementations(bytes4[],address[])",
         // identity
         "setWalletAttribute(address,bytes32,bytes32)",
         "deleteWalletAttribute(address,bytes32)",
