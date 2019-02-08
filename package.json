@@ -1,7 +1,7 @@
 {
-  "name": "ethereum-st-factory",
-  "version": "0.0.1",
-  "description": "Ethereum securities tokens factory",
+  "name": "securrency-tokens-issuing-platform",
+  "version": "1.0.0",
+  "description": "Tokens Issuing Platform. Platform supports the most popular tokens standards and its modifications on Ethereum blockchain.",
   "main": "truffle.js",
   "directories": {
     "test": "test"
@@ -27,9 +27,9 @@
     "sleep": "^5.1.1",
     "solc": "^0.5.0",
     "truffle-contract": "^4.0.0",
-    "truffle-hdwallet-provider": "1.0.1",
-    "truffle-hdwallet-provider-privkey": "1.0.0",
-    "web3": "^1.0.0-beta.33"
+    "truffle-hdwallet-provider": "1.0.3",
+    "truffle-hdwallet-provider-privkey": "1.0.3",
+    "web3": "1.0.0-beta.33"
   },
   "devDependencies": {
     "@soldoc/soldoc": "^0.4.3",
