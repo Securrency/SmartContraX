@@ -71,4 +71,4 @@ To deploy the code simply run:
 $ truffle migrate
 ```
 ## CLI applications
-[docs](docs/cli-applications/description.md)
+[docs](docs/cli-applications)
