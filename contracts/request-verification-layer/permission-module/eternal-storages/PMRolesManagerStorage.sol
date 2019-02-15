@@ -110,7 +110,10 @@ contract PMRolesManagerStorage is BaseStorage {
     * @param name Name of the new role
     * @param parent Name of the parent role
     */
-    function emitCreatedRole(bytes32 name, bytes32 parent) public {
+    function emitCreatedRole(bytes32 name, bytes32 parent)
+        public
+        onlyPermissionModule(msg.sender)
+    {
         emit CreatedRole(name, parent);
     }
 
