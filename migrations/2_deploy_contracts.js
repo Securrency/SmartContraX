@@ -43,8 +43,8 @@ var CAT20ClawbackWithWL = artifacts.require("./registry-layer/tokens-factory/tok
 // CAT-1400 functions
 var CAT1400ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20Functions.sol");
 var BalanceOfByPartitionFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/BalanceOfByPartitionFn.sol");
-var CAT140REVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140REVClawbackFn.sol");
-var CAT140WLVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140WLVClawbackFn.sol");
+var CAT1400REVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVClawbackFn.sol");
+var CAT1400WLVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVClawbackFn.sol");
 var CAT1400REVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVTransferFn.sol");
 var CAT1400WLVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
 var MintFunction = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/MintFunction.sol");
@@ -215,10 +215,10 @@ module.exports = function(deployer, network, accounts) {
       return deployer.deploy(BalanceOfByPartitionFn, {gas:1000000});
     })
     .then(() => {
-      return deployer.deploy(CAT140REVClawbackFn, {gas:1000000});
+      return deployer.deploy(CAT1400REVClawbackFn, {gas:1000000});
     })
     .then(() => {
-      return deployer.deploy(CAT140WLVClawbackFn, {gas:1000000});
+      return deployer.deploy(CAT1400WLVClawbackFn, {gas:1000000});
     })
     .then(() => {
       return deployer.deploy(CAT1400REVTransferFn, {gas:1000000});

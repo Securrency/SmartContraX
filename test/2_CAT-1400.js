@@ -33,8 +33,8 @@ var C1400SDP = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400
 var E20F = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20Functions.sol");
 var E20TFWLV = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
 var E20TFREV = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVTransferFn.sol");
-var CAT1400WLVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140WLVClawbackFn.sol");
-var CAT1400REVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140REVClawbackFn.sol");
+var CAT1400WLVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVClawbackFn.sol");
+var CAT1400REVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVClawbackFn.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteListWithIds.sol");

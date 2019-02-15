@@ -51,7 +51,7 @@ contract IPM {
 /**
 * @title CAT-1400 Clawback with whitelist verification
 */
-contract CAT140WLVClawbackFn {
+contract CAT1400WLVClawbackFn {
     /**
     * @notice Write info the log about tokens transfer
     * @param from  Sender address
