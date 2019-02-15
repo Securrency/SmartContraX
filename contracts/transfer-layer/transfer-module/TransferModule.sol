@@ -4,7 +4,9 @@ import "../cross-chain/CrossChainService.sol";
 import "./interfaces/ITransferModule.sol";
 import "./TransferModuleMetadata.sol";
 import "../../request-verification-layer/transfer-verification-system/interfaces/ITransferVerification.sol";
+import "../../request-verification-layer/transfer-verification-system/interfaces/ITransferVerificationWithId.sol";
 import "../../request-verification-layer/transfer-verification-system/interfaces/ICAT20TransferAction.sol";
+import "../../request-verification-layer/transfer-verification-system/interfaces/ICAT1400TransferAction.sol";
 import "../../registry-layer/tokens-factory/interfaces/ITokensFactory.sol";
 import "../../registry-layer/tokens-factory/interfaces/IMultiChainToken.sol";
 import "../../common/component/SystemComponent.sol";
@@ -173,6 +175,42 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
     }
 
     /**
+    * @notice Verify tokens transfer. 
+    * @notice Selecting verification logic depending on the token standard.
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param sender Transaction initiator
+    * @param id Additional identifier
+    * @param tokenAddress Address of the token
+    */
+    function verifyTransferWithId(
+        address from,
+        address to,
+        address sender,
+        address tokenAddress,
+        bytes32 id
+    )
+        public
+        view
+        returns (bool)
+    {
+        bytes32 standard = tfInstance().getTokenStandard(msg.sender);
+        address verification = transferVerifications[standard];
+
+        if(verification == address(0)) {
+            return true;
+        }
+
+        return ITransferVerificationWithId(verification).verifyTransfer(
+            from,
+            to,
+            sender,
+            tokenAddress,
+            id
+        );
+    }
+
+    /**
     * @notice Verify tokens transfer and cache result
     * @param from The address transfer from
     * @param to The address transfer to
@@ -202,6 +240,42 @@ contract TransferModule is ITransferModule, CrossChainService, SystemComponent, 
             sender,
             msg.sender,
             tokens
+        );
+    }
+
+    /**
+    * @notice Verify tokens transfer and cache result
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param sender Sender address
+    * @param partition Partition identifier
+    * @param tokens The number of tokens to be transferred 
+    */
+    function checkCAT1400TransferThroughRE(
+        address from,
+        address to,
+        address sender,
+        bytes32 partition,
+        uint tokens
+    )
+        public
+        returns (bool)
+    {
+        // CAT-1400-RE
+        bytes4 standard = 0x4341542d;
+        address verification = transferVerifications[standard];
+
+        if(verification == address(0)) {
+            return true;
+        }
+
+        return ICAT1400TransferAction(verification).verifyTransfer(
+            from,
+            to,
+            sender,
+            msg.sender,
+            tokens,
+            partition
         );
     }
 
