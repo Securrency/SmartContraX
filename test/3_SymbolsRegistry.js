@@ -5,6 +5,7 @@ var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol"
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var PMEST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMETokenRolesStorage.sol");
 
 function createId(signature) {
     let hash = web3.utils.keccak256(signature);
@@ -21,6 +22,7 @@ contract('SymbolsRegistry', accounts => {
     let symbolRegistry;
     let permissionModule;
     let componentsRegistry;
+    let PMETokenStorage;
     let SRStorage;
     let PMStorage;
     let symbol = "TEST";
@@ -39,6 +41,9 @@ contract('SymbolsRegistry', accounts => {
             "0x0000000000000000000000000000000000000000",
             "Components Registry contract was not deployed"
         );
+        
+        let tx;
+        let status;
 
         PMStorage = await PMST.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
         assert.notEqual(
@@ -47,10 +52,20 @@ contract('SymbolsRegistry', accounts => {
             "Permission module storage was not deployed"
         );
 
-        let tx;
-        let status;
+        PMETokenStorage = await PMEST.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), PMETokenStorage.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            permissionModule.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module contract was not deployed"
+        );
 
         assert.notEqual(
             permissionModule.address.valueOf(),

@@ -1,5 +1,6 @@
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var PMEST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMETokenRolesStorage.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var TF = artifacts.require("./registry-layer/tokens-factory/TokensFactory.sol");
 var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol");
@@ -48,6 +49,7 @@ function makeRole() {
 contract('PermissionModule (Permissions matrix)', accounts => {
     let permissionModule;
     let componentsRegistry;
+    let PMETokenStorage;
     let SRStorage;
     let TFStorage;
     let PMStorage;
@@ -102,7 +104,14 @@ contract('PermissionModule (Permissions matrix)', accounts => {
             "Permission module storage was not deployed"
         );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        PMETokenStorage = await PMEST.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), PMETokenStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),

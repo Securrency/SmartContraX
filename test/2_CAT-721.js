@@ -6,6 +6,7 @@ var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol"
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
 var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var PMEST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMETokenRolesStorage.sol");
 var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
 var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var CAT721S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT721Strategy.sol");
@@ -49,6 +50,7 @@ contract("CAT721Token", accounts => {
     let CAT721Strategy;
     let permissionModule;
     let componentsRegistry;
+    let PMETokenStorage;
     let SRStorage;
     let TFStorage;
     let PMStorage;
@@ -75,6 +77,9 @@ contract("CAT721Token", accounts => {
             "Components Registry contract was not deployed"
         );
 
+        let tx;
+        let status;
+
         PMStorage = await PMST.new(componentsRegistry.address.valueOf(), {from: accounts[0]});
         assert.notEqual(
             PMStorage.address.valueOf(),
@@ -82,10 +87,20 @@ contract("CAT721Token", accounts => {
             "Permission module storage was not deployed"
         );
 
-        let tx;
-        let status;
+        PMETokenStorage = await PMEST.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), PMETokenStorage.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            permissionModule.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module contract was not deployed"
+        );
 
         tx = await componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 

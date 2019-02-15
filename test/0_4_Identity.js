@@ -2,6 +2,7 @@ var ID = artifacts.require('./registry-layer/identity/Identity.sol');
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var PMEST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMETokenRolesStorage.sol");
 
 function createId(signature) {
     return web3.utils.keccak256(signature).substring(0, 10);
@@ -15,6 +16,7 @@ function isException(error) {
 contract("Identity", accounts => {
     let identity;
     let PMStorage;
+    let PMETokenStorage;
     let permissionModule;
     let componentsRegistry;
 
@@ -49,7 +51,20 @@ contract("Identity", accounts => {
             "Permission module storage was not deployed"
         );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        PMETokenStorage = await PMEST.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), PMETokenStorage.address.valueOf(), {from: accounts[0]});
+
+        assert.notEqual(
+            permissionModule.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module contract was not deployed"
+        );
 
         await componentsRegistry.initializePermissionModule(permissionModule.address.valueOf());
 

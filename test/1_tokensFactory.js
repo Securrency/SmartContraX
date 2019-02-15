@@ -7,6 +7,7 @@ var SR = artifacts.require("./registry-layer/symbol-registry/SymbolRegistry.sol"
 let ES = artifacts.require("./registry-layer/symbol-registry/eternal-storages/SRStorage.sol");
 var TFS = artifacts.require("./registry-layer/tokens-factory/eternal-storage/TFStorage.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var PMEST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMETokenRolesStorage.sol");
 var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
 var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var CAT20S = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20Strategy.sol");
@@ -52,6 +53,7 @@ contract('TokensFactory', accounts => {
     let CAT20Strategy;
     let permissionModule;
     let componentsRegistry;
+    let PMETokenStorage;
     let SRStorage;
     let TFStorage;
     let PMStorage;
@@ -78,12 +80,19 @@ contract('TokensFactory', accounts => {
             "Permission module storage was not deployed"
         );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        PMETokenStorage = await PMEST.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), PMETokenStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "PermissionModule contract was not deployed"
+            "Permission module contract was not deployed"
         );
 
         let ownerRoleName = web3.utils.toHex("Owner");

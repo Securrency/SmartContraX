@@ -1,5 +1,6 @@
 var PM = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMStorage.sol");
+var PMEST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMETokenRolesStorage.sol");
 var TCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/TCStorage.sol");
 var FCS = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var CR = artifacts.require("./registry-layer/components-registry/ComponentsRegistry.sol");
@@ -48,6 +49,7 @@ function makeRole() {
 contract('PermissionModule', accounts => {
     let permissionModule;
     let componentsRegistry;
+    let PMETokenStorage;
     let SRStorage;
     let TFStorage;
     let PMStorage;
@@ -91,7 +93,14 @@ contract('PermissionModule', accounts => {
             "Permission module storage was not deployed"
         );
 
-        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        PMETokenStorage = await PMEST.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), {from: accounts[0]});
+        assert.notEqual(
+            PMStorage.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Permission module storage was not deployed"
+        );
+
+        permissionModule = await PM.new(componentsRegistry.address.valueOf(), PMStorage.address.valueOf(), PMETokenStorage.address.valueOf(), {from: accounts[0]});
 
         assert.notEqual(
             permissionModule.address.valueOf(),
@@ -1032,6 +1041,135 @@ contract('PermissionModule', accounts => {
             let errorThrown = false;
             try {
                 await permissionModule.addRoleForSpecificToken(accounts[5], testToken, testRoles[21], { from: owner });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> The limit for number of roles has been reached.`.grey);
+                assert(isException(error), error.toString());
+            }
+
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+    });
+
+    var partition1 = "0x536563757272656e63792e536d617274436f6e74726163747300000000000000";
+    describe("Test extended token roles manager", async() => {
+        // add role to the wallet
+        it("Should fail add role for a specific token", async() => {
+            let errorThrown = false;
+            try {
+                await permissionModule.addRoleForSpecificTokenWithSubId(accounts[0], testToken, emptyBytes, partition1, { from: owner });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Invalid role.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail add role for a specific token", async() => {
+            let errorThrown = false;
+            try {
+                await permissionModule.addRoleForSpecificTokenWithSubId(accounts[0], testToken, systemRoleName, partition1, { from: accounts[1] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Role management not allowed.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should add role for a specific token", async() => {
+            let tx = await permissionModule.addRoleForSpecificTokenWithSubId(accounts[0], testToken, systemRoleName, partition1, { from: owner });
+            status = await PMETokenStorage.getTokenDependentRoleStatusWithSubId(accounts[0], testToken, systemRoleName, partition1);
+            assert.equal(status, true);
+        });
+
+        it("Should fail add role for a specific token", async() => {
+            let errorThrown = false;
+            try {
+                await permissionModule.addRoleForSpecificTokenWithSubId(accounts[0], testToken, systemRoleName, partition1, { from: owner });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Role already added.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        // verify permission
+        it("Should allow access to the method for a specific token", async() => {
+            let result = await permissionModule.allowedForTokenWithSubId(testMethodIds[0], accounts[0], testToken, partition1, { from: owner });
+            assert.equal(result, true);
+        });
+
+        it("Should decline access to the method for a specific token", async() => {
+            let result = await permissionModule.allowedForTokenWithSubId(testMethodIds[2], testToken, accounts[1], partition1, { from: owner });
+            assert.equal(result, false);
+        });
+
+        // remove role
+        it("Should fail remove role from the wallet for a specific token", async() => {
+            let errorThrown = false;
+            try {
+                await permissionModule.removeRoleFromSpecificTokenWithSubId(accounts[1], testToken, notExistingRole, partition1, { from: owner });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> The wallet has no this role.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail remove role from the wallet for a specific token", async() => {
+            let errorThrown = false;
+            try {
+                await permissionModule.removeRoleFromSpecificTokenWithSubId(accounts[1], testToken, emptyBytes, partition1, { from: owner });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Invalid role.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail remove role from the wallet for a specific token", async() => {
+            let errorThrown = false;
+            try {
+                await permissionModule.removeRoleFromSpecificTokenWithSubId(accounts[1], testToken, systemRoleName, partition1, { from: accounts[1] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Role management not allowed.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should remove role from the wallet for a specific token", async() => {
+            let tx = await permissionModule.removeRoleFromSpecificTokenWithSubId(accounts[0], testToken, systemRoleName, partition1, { from: owner });
+            status = await PMETokenStorage.getTokenDependentRoleStatusWithSubId(accounts[0], testToken, systemRoleName, partition1);
+            assert.equal(status, false);
+        });
+
+        // verify permission
+        it("Should decline access to the method for a specific token after role removing", async() => {
+            let result = await permissionModule.allowedForTokenWithSubId(testMethodIds[0], accounts[1], testToken, partition1, { from: owner });
+            assert.equal(result, false);
+        });
+
+        // roles limit
+        it("Should fail when wallet roles limit for specific token will be reached", async() => {
+            let tx;
+
+            // add roles to the account
+            for (let i = 0; i < 20; i++) {
+                tx = await permissionModule.addRoleForSpecificTokenWithSubId(accounts[5], testToken, testRoles[i], partition1, { from: owner });
+                status = await PMETokenStorage.getTokenDependentRoleStatusWithSubId(accounts[5], testToken, testRoles[i], partition1);
+                assert.equal(status, true);
+            }
+            
+            let errorThrown = false;
+            try {
+                await permissionModule.addRoleForSpecificTokenWithSubId(accounts[5], testToken, testRoles[21], partition1, { from: owner });
             } catch (error) {
                 errorThrown = true;
                 console.log(`         tx revert -> The limit for number of roles has been reached.`.grey);
