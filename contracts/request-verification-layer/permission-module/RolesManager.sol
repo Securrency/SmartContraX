@@ -2,8 +2,10 @@ pragma solidity ^0.5.0;
 
 import "./interfaces/IRolesManager.sol";
 import "./interfaces/IPMStorage.sol";
+import "./interfaces/IPMETokenRolesStorage.sol";
 import "../../common/libraries/SafeMath8.sol";
 import "../../common/libraries/SafeMath.sol";
+
 
 /**
 * @title Roles Manager
@@ -21,6 +23,9 @@ contract RolesManager is IRolesManager {
 
     // Address of the Permission module storage
     address pmStorage;
+
+    // Address of the extended by subIds storage for the token roles
+    address pmStorage2;
 
     /**
     * @notice Verify sender
@@ -51,8 +56,9 @@ contract RolesManager is IRolesManager {
     /**
     * @notice Initialze permission module
     */ 
-    constructor(address storageAddress) public {
+    constructor(address storageAddress, address storageAddress2) public {
         pmStorage = storageAddress;
+        pmStorage2 = storageAddress2;
     }
 
     /**
@@ -176,5 +182,12 @@ contract RolesManager is IRolesManager {
     */
     function PMStorage() internal view returns (IPMStorage) {
         return IPMStorage(pmStorage);
+    }
+
+    /**
+    * @notice Returns permission module storage instance
+    */
+    function PMStorage2() internal view returns (IPMETokenRolesStorage) {
+        return IPMETokenRolesStorage(pmStorage2);
     }
 }
