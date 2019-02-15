@@ -30,6 +30,9 @@ var RulesEngine = artifacts.require("./request-verification-layer/transfer-verif
 var setupV1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20-V2/token-setup/SetupV1.sol");
 var CAT20V2Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20V2Strategy.sol");
 
+var setup1400V1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-1400/token-setup/SetupV1.sol");
+var CAT1400Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT1400Strategy.sol");
+
 // CAT-20-V2 functions
 var ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/ERC20Functions.sol");
 var CAT20Mint = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20MintFunction.sol");
@@ -47,6 +50,8 @@ module.exports = function(deployer, network, accounts) {
   var tokensFactoryDeployed;
   var CAT20StrategyDeployed;
   var CAT721StrategyDeployed;
+  var CAT1400StrategyDeployed;
+  var setup1400V1Deployed;
   var ERC20StrategyDeployed;
   var SymbolRegistryDeployed;
   var TransferModuleDeployed;
@@ -170,6 +175,14 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       CAT20V2StrategyDeployed = instance;
+      return deployer.deploy(setup1400V1, {gas: 3000000});
+    })
+    .then((instance) => {
+      setup1400V1Deployed = instance;
+      return deployer.deploy(CAT1400Strategy, ComponentsRegistryDeployed.address, setup1400V1Deployed.address, {gas: 4000000});
+    })
+    .then((instance) => {
+      CAT1400StrategyDeployed = instance;
       return deployer.deploy(ERC20Functions, {gas:1000000});
     })
     .then(() => {
@@ -237,6 +250,9 @@ module.exports = function(deployer, network, accounts) {
     })
     .then(() => {
       return tokensFactoryDeployed.addTokenStrategy(CAT721StrategyDeployed.address, {gas: 160000});
+    })
+    .then(() => {
+      return tokensFactoryDeployed.addTokenStrategy(CAT1400StrategyDeployed.address, {gas: 160000});
     })
     .then(() => {
       return RulesEngineDeployed.setActionExecutor("0xa9059cbb", CAT20TransferActionDeployed.address, {gas: 200000});
