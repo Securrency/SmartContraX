@@ -16,6 +16,7 @@ var CAT20Verification = artifacts.require("./request-verification-layer/transfer
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMStorage = artifacts.require("./request-verification-layer/permission-module/eternal-storages/PMStorage.sol");
+var PMEST = artifacts.require("./request-verification-layer/permission-module/eternal-storage/PMETokenRolesStorage.sol");
 
 var AppRegistry = artifacts.require("./registry-layer/application-registry/ApplicationRegistry.sol");
 var AppRegistryStorage = artifacts.require("./registry-layer/application-registry/eternal-storage/ARStorage.sol");
@@ -58,6 +59,7 @@ module.exports = function(deployer, network, accounts) {
   var SRStorageDeployed;
   var TFStorageDeployed;
   var PMStorageDeployed;
+  var PMEStorageDeployed;
   var TCStorageDeployed;
   var FCStorageDeployed;
   var SetupV1Deployed;
@@ -92,7 +94,11 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       PMStorageDeployed = instance;
-      return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, PMStorageDeployed.address, {gas: 6200000})
+      return deployer.deploy(PMEST, ComponentsRegistryDeployed.address, PMStorageDeployed.address, {gas: 5000000})
+    })
+    .then((instance) => {
+      PMEStorageDeployed = instance;
+      return deployer.deploy(PermissionModule, ComponentsRegistryDeployed.address, PMStorageDeployed.address, PMEStorageDeployed.address, {gas: 6600000})
     })
     .then((instance) => {
       PermissionModuleDeployed = instance;
