@@ -40,6 +40,17 @@ var CAT20TransferWithWL = artifacts.require("./registry-layer/tokens-factory/tok
 var CAT20TransferWithRE = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20REVTransferFunction.sol");
 var CAT20ClawbackWithWL = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20WLVClawbackFunction.sol");
 
+// CAT-1400 functions
+var CAT1400ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20Functions.sol");
+var BalanceOfByPartitionFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/BalanceOfByPartitionFn.sol");
+var CAT140REVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140REVClawbackFn.sol");
+var CAT140WLVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140WLVClawbackFn.sol");
+var CAT1400REVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVTransferFn.sol");
+var CAT1400WLVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
+var MintFunction = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/MintFunction.sol");
+var SetDefaultPratitionFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/SetDefaultPratitionFn.sol");
+var TransferByPartitionFunction = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/TransferByPartitionFunction.sol");
+
 function createId(signature) {
   let hash = web3.utils.keccak256(signature);
 
@@ -196,6 +207,33 @@ module.exports = function(deployer, network, accounts) {
     })
     .then(() => {
       return deployer.deploy(CAT20ClawbackWithWL, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT1400ERC20Functions, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(BalanceOfByPartitionFn, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT140REVClawbackFn, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT140WLVClawbackFn, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT1400REVTransferFn, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT1400WLVTransferFn, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(MintFunction, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(SetDefaultPratitionFn, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(TransferByPartitionFunction, {gas:1000000});
     })
     .then(() => {
       return ComponentsRegistryDeployed.initializePermissionModule(PermissionModuleDeployed.address, {gas: 120000});
