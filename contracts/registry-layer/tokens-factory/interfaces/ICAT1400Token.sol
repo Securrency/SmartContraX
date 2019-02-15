@@ -37,9 +37,27 @@ contract ICAT1400Token {
         external
         returns (bytes32);
 
+    function clawbackByPartition(
+        address from,
+        address to,
+        uint tokens,
+        bytes32 partition
+    )
+        public;
+
     // Transfer Events
     event Transfer(address indexed from, address indexed to, uint256 value);
     event TransferByPartition(
+        bytes32 indexed fromPartition,
+        address operator,
+        address indexed from,
+        address indexed to,
+        uint256 value,
+        bytes data,
+        bytes operatorData
+    );
+
+    event ClawbackByPartition(
         bytes32 indexed fromPartition,
         address operator,
         address indexed from,
