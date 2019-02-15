@@ -95,7 +95,10 @@ contract ACATRStorage is BaseARStorage, IACATRStorage {
     * @notice Push new application
     * @param app Application address
     */
-    function pushNewCATApp(address app) public {
+    function pushNewCATApp(address app) 
+        public
+        onlyApplicationRegistry(msg.sender)
+    {
         CATApps.push(app);
     }
 
