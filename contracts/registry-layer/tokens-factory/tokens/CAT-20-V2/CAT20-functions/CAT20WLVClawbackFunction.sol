@@ -144,7 +144,7 @@ contract CAT20WLVClawbackFunction {
 
         assembly {
             sstore(storageKeySender, sub(senderBal, tokens))
-            sstore(storageKeyRecipient, add(newRecipientBal, tokens))
+            sstore(storageKeyRecipient, newRecipientBal)
             
             let p := mload(0x40)
             mstore(p, tokens)
