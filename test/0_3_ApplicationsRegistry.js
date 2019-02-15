@@ -106,7 +106,7 @@ contract("Applications registry", accounts => {
         });
 
         it("Should show that application is active", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[9], "0x0000000000000000000000000000000000000000", { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[9], "0x0000000000000000000000000000000000000000", { from: accounts[0] });
             assert.equal(result, true);
         });
 
@@ -117,7 +117,7 @@ contract("Applications registry", accounts => {
         });
 
         it("Should show that application is not active", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[9], "0x0000000000000000000000000000000000000000", { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[9], "0x0000000000000000000000000000000000000000", { from: accounts[0] });
             assert.equal(result, false);
         });
 
@@ -128,7 +128,7 @@ contract("Applications registry", accounts => {
         });
 
         it("Should show that application is not registered", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[8], accounts[8], { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[8], accounts[8], { from: accounts[0] });
             assert.equal(result, false);
         });
 
@@ -147,7 +147,7 @@ contract("Applications registry", accounts => {
         });
 
         it("Should show that removed application is not registered", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[9], "0x0000000000000000000000000000000000000000", { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[9], "0x0000000000000000000000000000000000000000", { from: accounts[0] });
             assert.equal(result, false);
         });
 

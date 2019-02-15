@@ -5,7 +5,7 @@ var Command = require("../Command");
  * @fileoverview Contains command for application verification
  * @namespace coreCommands Smart contracts related commands
  */
-module.exports = class IsRegistredAppCommand extends Command {
+module.exports = class isRegisteredAppCommand extends Command {
     /**
      * Initialize command
      * @constructor
@@ -14,7 +14,7 @@ module.exports = class IsRegistredAppCommand extends Command {
     constructor() {
         super();
         
-        this.name = "isRegistredApp";
+        this.name = "isRegisteredApp";
         this.alias = "ira"
         this.description = "Verify application registration";
     }
@@ -28,7 +28,7 @@ module.exports = class IsRegistredAppCommand extends Command {
             this.initializeDetails()
             .then(() => {
                 this.contract
-                .isRegistredApp(
+                .isRegisteredApp(
                     this.application,
                     this.token,
                     this.accounts[0]

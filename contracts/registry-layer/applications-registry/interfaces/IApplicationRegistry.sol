@@ -50,5 +50,5 @@ contract IApplicationRegistry {
     * @notice Checks whether an application is registered or not
     * @param app Application address
     */
-    function isRegistredApp(address app, address token) public view returns (bool);
+    function isRegisteredApp(address app, address token) public view returns (bool);
 }

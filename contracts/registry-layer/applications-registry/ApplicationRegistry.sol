@@ -177,7 +177,7 @@ contract ApplicationRegistry is IApplicationRegistry, Protected, SystemComponent
     * @notice Checks whether an application is registered or not
     * @param app Application address
     */
-    function isRegistredApp(address app, address token) public view returns (bool) {
+    function isRegisteredApp(address app, address token) public view returns (bool) {
         IARStorage s = ARSStorage();
 
         bool result = s.getCATAppStatusByAddress(app);

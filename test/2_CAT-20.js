@@ -633,7 +633,7 @@ contract("CAT20Token", accounts => {
         });
 
         it("Should show that token application is active", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
             assert.equal(result, true);
         });
 
@@ -644,7 +644,7 @@ contract("CAT20Token", accounts => {
         });
         
         it("Should show that application is not active", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
             assert.equal(result, false);
         });
 
@@ -655,7 +655,7 @@ contract("CAT20Token", accounts => {
         });
 
         it("Should show that application is not registered", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[8], accounts[8], { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[8], accounts[8], { from: accounts[0] });
             assert.equal(result, false);
         });
 
@@ -673,7 +673,7 @@ contract("CAT20Token", accounts => {
         });
 
         it("Should show that removed application is not registered", async() => {
-            let result = await applicationsRegistry.isRegistredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
+            let result = await applicationsRegistry.isRegisteredApp(accounts[9], CAT20Token.address.valueOf(), { from: accounts[0] });
             assert.equal(result, false);
         });
 

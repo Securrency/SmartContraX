@@ -1,4 +1,4 @@
-const isRegistredApp = require("./IsRegistredAppCommand");
+const isRegisteredApp = require("./isRegisteredAppCommand");
 const createCATApp = require("./CreateCATAppCommand");
 const CommandsCollection = require("../CommandsCollection");
 
@@ -16,7 +16,7 @@ class Collection extends CommandsCollection {
     constructor() {
         super();
         this.commands = [
-            new isRegistredApp(),
+            new isRegisteredApp(),
             new createCATApp(),
         ];
     }

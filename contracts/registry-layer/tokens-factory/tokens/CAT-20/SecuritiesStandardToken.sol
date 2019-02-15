@@ -314,7 +314,7 @@ contract SecuritiesStandardToken is MultiChainToken, SecuritiesToken, StandardTo
     {
         // Verify application
         if (escrowAgent != address(0)) {
-            require(arInstance().isRegistredApp(escrowAgent, address(this)), "Escrow agent in not registred in the application registry.");
+            require(arInstance().isRegisteredApp(escrowAgent, address(this)), "Escrow agent in not registred in the application registry.");
         }
 
         return _createEscrow(
