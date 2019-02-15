@@ -33,6 +33,8 @@ var C1400SDP = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400
 var E20F = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20Functions.sol");
 var E20TFWLV = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
 var E20TFREV = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVTransferFn.sol");
+var CAT1400WLVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140WLVClawbackFn.sol");
+var CAT1400REVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT140REVClawbackFn.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteListWithIds.sol");
@@ -92,6 +94,8 @@ contract("CAT1400Token", accounts => {
     let CAT1400MintFunction;
     let CAT1400BalanceByPartitionFn;
     let CAT1400SetDefaultPartitionFn;
+    let CAT1400WLVClawbackFn;
+    let CAT1400REVClawbackFn;
     let policyRegistry;
     let rulesEngine;
     let identity;
@@ -282,6 +286,10 @@ contract("CAT1400Token", accounts => {
 
         let addToWLIdW = createId("addToWhiteList(address,address,bytes32)");
         tx = await permissionModule.addMethodToTheRole(addToWLIdW, transferAgent, { from: accounts[0] });
+
+        let CL = createId("clawbackByPartition(address,address,uint256,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(CL, transferAgent, { from: accounts[0] });
+
         let setPWID = createId("setPolicyWithId(address,bytes32,bytes32,bytes)");
         tx = await permissionModule.addMethodToTheRole(setPWID, transferAgent, { from: accounts[0] });
 
@@ -485,6 +493,20 @@ contract("CAT1400Token", accounts => {
             "Contract with ERC-20 functions with rules engine verification was not deployed"
         );
 
+        CAT1400WLVClawbackFn = await CAT1400WLVCl.new();
+        assert.notEqual(
+            CAT1400WLVClawbackFn.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-1400 clawbacl functions with whitelist verification was not deployed"
+        );
+
+        CAT1400REVClawbackFn = await CAT1400REVCl.new();
+        assert.notEqual(
+            CAT1400WLVClawbackFn.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-1400 clawbacl functions with rules engine verification was not deployed"
+        );
+
         await CAT1400Token.initializeToken(componentsRegistry.address.valueOf());
 
         let ids = [
@@ -497,6 +519,7 @@ contract("CAT1400Token", accounts => {
             "0x06a69bfc",//mintByPartition(bytes32,address,uint256)
             "0x30e82803",//balanceOfByPartition(bytes32,address)
             "0x2fb035c1",//setDefaultPartition(bytes32)
+            "0x656f029f",//clawbackByPartition(address,address,uint256,bytes32)
         ];
 
         let addrs = [
@@ -509,6 +532,7 @@ contract("CAT1400Token", accounts => {
             CAT1400MintFunction.address,
             CAT1400BalanceByPartitionFn.address,
             CAT1400SetDefaultPartitionFn.address,
+            CAT1400WLVClawbackFn.address,
         ];
 
         await CAT1400Token.setImplementations(ids, addrs);
@@ -603,6 +627,43 @@ contract("CAT1400Token", accounts => {
             await whiteList.addToWhiteList(accounts[2], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
             await whiteList.addToWhiteList(accounts[3], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
         });
+
+        it("Should fail to create clawback", async() => {
+            let errorThrown = false;
+            try {
+                await await CAT1400Token.clawbackByPartition(accounts[0], accounts[2], tokensToMint, partition1, { from: accounts[2] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail to create clawback", async() => {
+            let errorThrown = false;
+            try {
+                await await CAT1400Token.clawbackByPartition(accounts[0], accounts[9], tokensToMint, partition1, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transfer was declined.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+        
+        it("Should create clawback", async() => {
+            await CAT1400Token.mintByPartition(partition1, accounts[3], tokensToMint, { from: accounts[0] });
+
+            let tx = await CAT1400Token.clawbackByPartition(accounts[3], accounts[2], tokensToMint, partition1, { from: accounts[0] });
+
+            assert.equal(tx.logs[2].args.from, accounts[3]);
+            assert.equal(tx.logs[2].args.to, accounts[2]);
+            assert.equal(new BigNumber(tx.logs[2].args.value).valueOf(), tokensToMint.valueOf());
+
+            let balance = new BigNumber(await CAT1400Token.balanceOfByPartition(partition1, accounts[2]));
+            assert.equal(balance.valueOf(), tokensToMint.valueOf());
+        });
     });
 
     describe("Backward compatible CAT-1400 with ERC-20", async() => {
@@ -678,6 +739,57 @@ contract("CAT1400Token", accounts => {
             assert.equal(tx.logs[0].args.from, accounts[0]);
             assert.equal(tx.logs[0].args.to, accounts[1]);
             assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), tokensToMint.div(5).valueOf());
+        });
+
+        it("Should update clawback function implementation (with rules engine)", async() => {
+            let ids = [
+                "0x656f029f",//clawbackByPartition(address,address,uint256,bytes32)
+            ];
+            let addrs = [
+                CAT1400REVClawbackFn.address,
+            ];
+
+            await CAT1400Token.setImplementations(ids, addrs);
+        });
+
+        it("Should fail to create clawback with RE", async() => {
+            let errorThrown = false;
+            try {
+                await await CAT1400Token.clawbackByPartition(accounts[0], accounts[2], tokensToMint, partition1, { from: accounts[2] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should fail to create clawback with RE", async() => {
+            let errorThrown = false;
+            try {
+                await await CAT1400Token.clawbackByPartition(accounts[0], accounts[2], tokensToMint, partition1, { from: accounts[0] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transfer was declined.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+        
+        it("Should create clawback", async() => {
+            await identity.setWalletAttribute(accounts[2], countyAttr, US, { from: accounts[0] });
+            await identity.setWalletAttribute(accounts[3], countyAttr, US, { from: accounts[0] });
+
+            await CAT1400Token.mintByPartition(partition1, accounts[3], tokensToMint, { from: accounts[0] });
+
+            let tx = await CAT1400Token.clawbackByPartition(accounts[3], accounts[2], tokensToMint, partition1, { from: accounts[0] });
+
+            assert.equal(tx.logs[2].args.from, accounts[3]);
+            assert.equal(tx.logs[2].args.to, accounts[2]);
+            assert.equal(new BigNumber(tx.logs[2].args.value).valueOf(), tokensToMint.valueOf());
+
+            let balance = new BigNumber(await CAT1400Token.balanceOfByPartition(partition1, accounts[2]));
+            assert.equal(balance.valueOf(), tokensToMint.mul(2).valueOf());
         });
     });
 });
