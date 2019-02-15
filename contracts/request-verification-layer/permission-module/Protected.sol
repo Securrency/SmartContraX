@@ -37,4 +37,30 @@ contract Protected is PermissionModuleInstance {
         require(pmInstance().allowed(method, msg.sender, address(this)), "Declined by Permission Module.");
         _;
     }
+
+    /**
+    * @notice Verification of the permissions
+    * @param methodId Requested method
+    * @param sender An address which will be verified
+    * @param token Token address
+    * @param subId Additional role identifier
+    */
+    modifier allowedForTokenWithSubId(
+        bytes4 methodId,
+        address sender,
+        address token,
+        bytes32 subId
+    ) {
+        require(
+            pmInstance().allowedForTokenWithSubId(
+                methodId,
+                sender,
+                token,
+                subId
+            ),
+            "Declined by Permission Module"
+        );
+
+        _;
+    }
 }
