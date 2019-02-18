@@ -5,6 +5,8 @@ pragma solidity >0.4.99 <0.6.0;
 * @title CAT-1400 Partial fungible token
 */
 contract ICAT1400Token {
+    // ERC-165
+    function supportsInterface(bytes4 interfaceID) public view returns (bool);
     // ERC-20 backward compatibility
     function totalSupply() public view returns (uint);
     function balanceOf(address tokenOwner) public view returns (uint balance);
