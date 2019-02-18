@@ -154,7 +154,7 @@ module.exports = function(deployer, network, accounts) {
     })
     .then((instance) => {
       CAT20VerificationDeployed = instance;
-      return deployer.deploy(CAT1400Verification, WhiteListWithIds.address, {gas: 1000000});
+      return deployer.deploy(CAT1400Verification, WhiteListWithIdsDeployed.address, {gas: 1000000});
     })
     .then((instance) => {
       CAT1400VerificationDeployed = instance;
