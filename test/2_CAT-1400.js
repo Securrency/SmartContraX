@@ -21,7 +21,7 @@ var PP = artifacts.require("./request-verification-layer/transfer-verification-s
 var ID = artifacts.require('./registry-layer/identity/Identity.sol');
 var TPR = artifacts.require("./registry-layer/tokens-policy-registry/TokensPolicyRegistry.sol");
 
-var SET = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/token-setup/SetupV1.sol");
+var SET = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/token-setup/SetupCAT1400V1.sol");
 
 // CAT-1400 token methods
 var С1400TF = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/TransferByPartitionFunction.sol");

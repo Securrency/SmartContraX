@@ -26,10 +26,10 @@ contract IPM {
 }
 
 /**
-* @notice CAT-20 token setup smart contract
+* @notice CAT-1400 token setup smart contract
 * @dev Configure base token methods after token deploy
 */
-contract SetupV1 {
+contract SetupCAT1400V1 {
     /**
     * @notice Verify permission for the method and sender wallet
     * @param method Requested method

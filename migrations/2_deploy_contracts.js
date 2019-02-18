@@ -30,7 +30,7 @@ var RulesEngine = artifacts.require("./request-verification-layer/transfer-verif
 var setupV1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20-V2/token-setup/SetupV1.sol");
 var CAT20V2Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20V2Strategy.sol");
 
-var setup1400V1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-1400/token-setup/SetupV1.sol");
+var setup1400V1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-1400/token-setup/SetupCAT1400V1.sol");
 var CAT1400Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT1400Strategy.sol");
 
 // CAT-20-V2 functions
