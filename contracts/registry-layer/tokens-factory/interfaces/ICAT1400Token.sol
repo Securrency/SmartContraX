@@ -5,6 +5,10 @@ pragma solidity >0.4.99 <0.6.0;
 * @title CAT-1400 Partial fungible token
 */
 contract ICAT1400Token {
+    // Token details
+    string public name;
+    string public symbol;
+    uint8 public decimals;
     // ERC-165
     function supportsInterface(bytes4 interfaceID) public view returns (bool);
     // ERC-20 backward compatibility
@@ -71,4 +75,5 @@ contract ICAT1400Token {
 
     event Approval(address indexed owner, address indexed spender, uint tokens);
     event DefaultPartitionUpdated(bytes32 indexed partition);
+    event PartitionCreated(bytes32 indexed partition);
 }
