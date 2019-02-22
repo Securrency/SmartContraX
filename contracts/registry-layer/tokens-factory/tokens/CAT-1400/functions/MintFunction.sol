@@ -117,6 +117,7 @@ contract MintFunction {
 
         writeInfoToTheLog(partition, to, value);
         registerPartitionIfNotRegistred(partition);
+        updateTotalSupply(value);
         updatePartitionTotalSupply(partition, value);
     }
 
@@ -235,7 +236,7 @@ contract MintFunction {
 
         isRegistered = true;
         bytes32 indexKey = getPartitionIndexKey(partition);
-        bytes32 listKey = getPartitionsListKey(index);
+        bytes32 listKey = getPartitionsListKey(length);
         assembly{
             sstore(statusKey, isRegistered)
             sstore(0x3EC, index)
@@ -244,6 +245,25 @@ contract MintFunction {
         }
 
         emit PartitionCreated(partition);
+
+        return true;
+    }
+
+    /**
+    * @notice Update token total supply (all partitions)
+    * @param value Number of the tokens to be added
+    */
+    function updateTotalSupply(uint value) internal {
+        uint current;
+        assembly {
+            current := sload(0x03)
+        }
+        uint newSupply = current + value;
+        assert(newSupply > current);
+
+        assembly {
+            sstore(0x03, newSupply)
+        }
     }
 
     /**
