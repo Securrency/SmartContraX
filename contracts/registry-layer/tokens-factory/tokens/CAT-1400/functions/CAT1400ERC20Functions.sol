@@ -79,6 +79,24 @@ contract CAT1400ERC20Functions {
         
         return keccak256(buffer);
     }
+
+    /**
+    * @notice Generate storage key for the partitions list
+    * @dev The positions are found by adding an offset of keccak256(k . p)
+    * @dev Partitions list position in the storage = 0x3EC
+    * @dev bytes32[]
+    * @dev https://solidity.readthedocs.io/en/v0.5.0/miscellaneous.html#layout-of-state-variables-in-storage s
+    * @param index Partition index in the list
+    * @return hash which represents storage key
+    */
+    function getPartitionsListKey(uint index) internal pure returns (bytes32) {
+        bytes memory buffer = new bytes(0x040);
+        assembly {
+            mstore(add(buffer, 0x20), index)
+            mstore(add(buffer, 0x40), 0x3EC)
+        }
+        return keccak256(buffer);
+    }
     
     /**
     * @return Total number of tokens in existence
@@ -94,18 +112,28 @@ contract CAT1400ERC20Functions {
     * @return Token holder balance
     */
     function balanceOf(address tokenHolder) public view returns (uint256 result) {
-        bytes32 partition;
+        uint length;
         assembly {
-            partition := sload(0x3F0)
+            length := sload(0x3EC)
         }
-        require(
-            partition != bytes32(0x00),
-            "Backward compatibility with ERC-20 standard is not configured"
-        );
 
-        bytes32 storageKey = getBalanceKey(partition, tokenHolder);
-        assembly {
-            result := sload(storageKey)
+        bytes32 listKey;
+        bytes32 balanceKey;
+        bytes32 partition;
+        uint balanceByPartition = 0;
+        for (uint i = 0; i < length; i++) {
+            listKey = getPartitionsListKey(i);
+            assembly {
+                partition := sload(listKey)
+            }
+
+            balanceKey = getBalanceKey(partition, tokenHolder);
+            assembly {
+                balanceByPartition := sload(balanceKey)
+            }
+
+            assert(result + balanceByPartition >= result);
+            result += balanceByPartition;
         }
     }
     
