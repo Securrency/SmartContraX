@@ -24,7 +24,8 @@ var TPR = artifacts.require("./registry-layer/tokens-policy-registry/TokensPolic
 var SET = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/token-setup/SetupCAT1400V1.sol");
 
 // CAT-1400 token methods
-var С1400TF = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/TransferByPartitionFunction.sol");
+var С1400TF = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLTransferByPartition.sol");
+var C1400RETPF = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400RETransferByPartition.sol");
 var С1400M = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/MintFunction.sol");
 var C1400BP = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/BalanceOfByPartitionFn.sol");
 var C1400SDP = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/SetDefaultPratitionFn.sol");
@@ -91,6 +92,7 @@ contract("CAT1400Token", accounts => {
     let ERC20TransferFnWLV;
     let ERC20TransferFnREV;
     let CAT1400TransferFunction;
+    let CAT1400RETransferFunction;
     let CAT1400MintFunction;
     let CAT1400BalanceByPartitionFn;
     let CAT1400SetDefaultPartitionFn;
@@ -507,6 +509,13 @@ contract("CAT1400Token", accounts => {
             "Contract with CAT-1400 clawbacl functions with rules engine verification was not deployed"
         );
 
+        CAT1400RETransferFunction = await C1400RETPF.new();
+        assert.notEqual(
+            CAT1400RETransferFunction.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-1400 transfer by partition functions with rules engine verification was not deployed"
+        );
+
         await CAT1400Token.initializeToken(componentsRegistry.address.valueOf());
 
         let ids = [
@@ -584,12 +593,41 @@ contract("CAT1400Token", accounts => {
             assert.equal(status, true);
         });
 
+        it("Should fail to to transfer tokens, accounts are not whitelisted", async() => {
+            let errorThrown = false;
+            try {
+                await CAT1400Token.transferByPartition(partition1, accounts[1], tokensToMint.div(5), "0x00");
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transfer was declined by WhiteList`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should add accounts to the whitelist", async() => {
+            await whiteList.addToWhiteList(accounts[0], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
+            await whiteList.addToWhiteList(accounts[1], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
+            await whiteList.addToWhiteList(accounts[2], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
+            await whiteList.addToWhiteList(accounts[3], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
+        });
+
+        it("Should show that totalSupply is zero", async() => {
+            let res = await CAT1400Token.totalSupply();
+            assert.equal(new BigNumber(0).valueOf(), res.valueOf());
+        });
+
         it("Should mint tokens by partition", async() => {
             let tx = await CAT1400Token.mintByPartition(partition1, accounts[0], tokensToMint);
-            
+
             assert.equal(tx.logs[1].args.fromPartition, partition1);
             assert.equal(tx.logs[1].args.to, accounts[0]);
             assert.equal(new BigNumber(tx.logs[1].args.value).valueOf(), tokensToMint.valueOf());
+        });
+
+        it("Should show that totalSupply", async() => {
+            let res = await CAT1400Token.totalSupply();
+            assert.equal(tokensToMint.valueOf(), res.valueOf());
         });
 
         it("Should returns correct balance", async() => {
@@ -619,13 +657,6 @@ contract("CAT1400Token", accounts => {
         it("Should set default partition", async() => {
             let tx = await CAT1400Token.setDefaultPartition(partition1);
             assert.equal(tx.logs[0].args.partition, partition1);
-        });
-
-        it("Should add accounts to the whitelist", async() => {
-            await whiteList.addToWhiteList(accounts[0], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
-            await whiteList.addToWhiteList(accounts[1], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
-            await whiteList.addToWhiteList(accounts[2], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
-            await whiteList.addToWhiteList(accounts[3], CAT1400Token.address.valueOf(), partition1, { from: accounts[0] });
         });
 
         it("Should fail to create clawback", async() => {
@@ -705,13 +736,27 @@ contract("CAT1400Token", accounts => {
             let ids = [
                 "0xa9059cbb",//transfer(address,uint256)
                 "0x23b872dd",//transferFrom(address,address,uint256)
+                "0xf3d490db",//transferByPartition(bytes32,address,uint256,bytes)
             ];
             let addrs = [
                 ERC20TransferFnREV.address,
                 ERC20TransferFnREV.address,
+                CAT1400RETransferFunction.address,
             ];
 
             await CAT1400Token.setImplementations(ids, addrs);
+        });
+
+        it("Should fail to to transfer tokens by partition with updated methods", async() => {
+            let errorThrown = false;
+            try {
+                await CAT1400Token.transferByPartition(partition1, accounts[0], tokensToMint.div(5), "0x00", { from: accounts[1] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transfer was declined by WhiteList`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
         });
 
         it("Should fail to transfer tokens with updated methods", async() => {
@@ -790,6 +835,15 @@ contract("CAT1400Token", accounts => {
 
             let balance = new BigNumber(await CAT1400Token.balanceOfByPartition(partition1, accounts[2]));
             assert.equal(balance.valueOf(), tokensToMint.mul(2).valueOf());
+        });
+
+        it("Should transfer tokens by partition with rules engine verification", async() => {
+            let tx = await CAT1400Token.transferByPartition(partition1, accounts[3], tokensToMint.div(5), "0x00", { from: accounts[2] });
+
+            assert.equal(tx.logs[1].args.fromPartition, partition1);
+            assert.equal(tx.logs[1].args.from, accounts[2]);
+            assert.equal(tx.logs[1].args.to, accounts[3]);
+            assert.equal(new BigNumber(tx.logs[1].args.value).valueOf(), tokensToMint.div(5).valueOf());
         });
     });
 });
