@@ -1,10 +1,33 @@
 pragma solidity >0.4.99 <0.6.0;
 
+/**
+* @title Transfer module interface
+*/
+contract ITm {
+    /**
+    * @notice Verify tokens transfer. 
+    * @notice Selecting verification logic depending on the token standard.
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param sender Transaction initiator
+    * @param partition Partition identifier
+    * @param tokens Number of the tokens
+    */
+    function checkCAT1400TransferThroughRE(
+        address from,
+        address to,
+        address sender,
+        bytes32 partition,
+        uint tokens
+    )
+        public
+        returns (bool);
+}
 
 /**
 * @title Transfer by partition
 */
-contract TransferByPartitionFunction {
+contract CAT1400RETransferByPartition {
     /**
     * @notice Write info the log about tokens transfer
     * @param from  Sender address
@@ -37,6 +60,37 @@ contract TransferByPartitionFunction {
     );
 
     /**
+    * @notice Verify transfer
+    * @param sender Sender address
+    * @param to Recipient address
+    * @param tokens Tokens to transfer
+    */
+    modifier allowedTx(
+        address sender,
+        address to,
+        uint tokens,
+        bytes32 partition
+    ) {
+        address tm;
+        assembly {
+            tm := sload(0x0B)
+        }
+
+        // Send request to the transfer module and verify transfer
+        bool allowed = ITm(tm).checkCAT1400TransferThroughRE(
+            sender,
+            to,
+            sender,
+            partition,
+            tokens
+        );
+
+        require(allowed, "Transfer was declined by Rules Engine");
+
+        _;
+    }
+
+    /**
     * @notice Generate storage key for the balances 
     * @dev The positions are found by adding an offset of keccak256(k1 . k2 . p)
     * @dev Balances mapping position in the storage = 0x3EB
@@ -62,6 +116,7 @@ contract TransferByPartitionFunction {
     * @param partition Partition identifier
     * @param to A recipient address
     * @param value Number of the tokens to transfer
+    * @param data Additional transfer data
     * @dev https://github.com/ethereum/EIPs/issues/1411
     * @dev sig: 0xf3d490db
     */
@@ -69,15 +124,48 @@ contract TransferByPartitionFunction {
         bytes32 partition,
         address to,
         uint256 value,
-        bytes calldata //data
+        bytes calldata data
     )
         external
+        allowedTx(
+            msg.sender,
+            to,
+            value,
+            partition
+        )
         returns (bytes32)
     {
         require(partition != bytes32(0x00), "Invalid partition.");
         require(to != address(0x00), "Invalid recipient address.");
         require(value != 0x00, "Invalid number of the tokens.");
 
+        doTransfer(
+            partition,
+            to,
+            value,
+            data
+        );
+
+        writeInfoToTheLog(partition, to, value);
+    }
+
+
+    /**
+    * @notice Update balances
+    * @param partition Partition identifier
+    * @param to A recipient address
+    * @param value Number of the tokens to transfer
+    * @dev https://github.com/ethereum/EIPs/issues/1411
+    * @dev sig: 0xf3d490db
+    */
+    function doTransfer(
+        bytes32 partition,
+        address to,
+        uint256 value,
+        bytes memory //data
+    )
+        internal 
+    {
         bytes32 senderKey = getBalanceKey(partition, msg.sender);
         bytes32 recipientKey = getBalanceKey(partition, to);
 
@@ -94,8 +182,6 @@ contract TransferByPartitionFunction {
             sstore(senderKey, sub(senderBal, value))
             sstore(recipientKey, add(recipientBal, value))
         }
-
-        writeInfoToTheLog(partition, to, value);
     }
 
     /**
