@@ -12,8 +12,10 @@ var TCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/
 var FCStorage = artifacts.require("./transfer-layer/cross-chain/eternal-storage/FCStorage.sol");
 var WhiteList = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-service/WhiteList.sol");
 var WhiteListWithIds = artifacts.require("./request-verification-layer/transfer-verification-system/transfer-service/WhiteListWithIds.sol");
+
 var CAT721Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT721Verification.sol");
 var CAT20Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT20Verification.sol");
+var CAT1400Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT1400Verification.sol");
 
 var PermissionModule = artifacts.require("./request-verification-layer/permission-module/PermissionModule.sol");
 var PMStorage = artifacts.require("./request-verification-layer/permission-module/eternal-storages/PMStorage.sol");
@@ -24,16 +26,17 @@ var AppRegistryStorage = artifacts.require("./registry-layer/application-registr
 
 var Identity = artifacts.require("./registry-layer/identity/Identity.sol");
 var TokensPolicyRegistry = artifacts.require("./registry-layer/tokens-policy-registry/TokensPolicyRegistry.sol");
-var CAT20TransferAction = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/actions/CAT20TransferAction.sol");
 var PolicyParser = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/core/PolicyParser.sol");
 var RulesEngine = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/RulesEngine.sol");
+
+var CAT20TransferAction = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/actions/CAT20TransferAction.sol");
+var CAT1400TransferAction = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/actions/CAT1400TransferAction.sol");
 
 var setupV1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-20-V2/token-setup/SetupV1.sol");
 var CAT20V2Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT20V2Strategy.sol");
 
 var setup1400V1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-1400/token-setup/SetupCAT1400V1.sol");
 var CAT1400Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT1400Strategy.sol");
-var CAT1400Verification = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/CAT1400Verification.sol");
 
 // CAT-20-V2 functions
 var ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/ERC20Functions.sol");
@@ -51,7 +54,9 @@ var CAT1400REVTransferFn = artifacts.require("./registry-layer/tokens-factory/to
 var CAT1400WLVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
 var MintFunction = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/MintFunction.sol");
 var SetDefaultPratitionFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/SetDefaultPratitionFn.sol");
-var TransferByPartitionFunction = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/TransferByPartitionFunction.sol");
+var CAT1400WLTransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLTransferByPartition.sol");
+var CAT1400RETransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400RETransferByPartition.sol");
+
 
 function createId(signature) {
   let hash = web3.utils.keccak256(signature);
@@ -65,6 +70,7 @@ module.exports = function(deployer, network, accounts) {
   var CAT721StrategyDeployed;
   var CAT1400StrategyDeployed;
   var CAT1400VerificationDeployed;
+  var CAT1400TransferActionDeployed;
   var setup1400V1Deployed;
   var ERC20StrategyDeployed;
   var SymbolRegistryDeployed;
@@ -209,6 +215,10 @@ module.exports = function(deployer, network, accounts) {
       return deployer.deploy(ERC20Functions, {gas:1000000});
     })
     .then(() => {
+      return deployer.deploy(CAT1400TransferAction, PolicyRegistryDeployed.address, PolicyParserDeployed.address, ComponentsRegistryDeployed.address, {gas: 4000000});
+    })
+    .then((instance) => {
+      CAT1400TransferActionDeployed = instance;
       return deployer.deploy(CAT20Mint, {gas:1000000});
     })
     .then(() => {
@@ -245,7 +255,10 @@ module.exports = function(deployer, network, accounts) {
       return deployer.deploy(SetDefaultPratitionFn, {gas:1000000});
     })
     .then(() => {
-      return deployer.deploy(TransferByPartitionFunction, {gas:1000000});
+      return deployer.deploy(CAT1400WLTransferByPartition, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT1400RETransferByPartition, {gas:1000000});
     })
     .then(() => {
       return ComponentsRegistryDeployed.initializePermissionModule(PermissionModuleDeployed.address, {gas: 120000});
@@ -320,15 +333,6 @@ module.exports = function(deployer, network, accounts) {
       return TransferModuleDeployed.addVerificationLogic(CAT20VerificationDeployed.address, standard, {gas: 120000});
     })
     .then(() => {
-      return CAT1400StrategyDeployed.getTokenStandard();
-    })
-    .then((standard) => {
-      return TransferModuleDeployed.addVerificationLogic(CAT1400VerificationDeployed.address, standard, {gas: 120000});
-    })
-    .then(() => {
-      return TransferModuleDeployed.addVerificationLogic(CAT1400VerificationDeployed.address, "0x4341542d", {gas: 120000});
-    })
-    .then(() => {
       return TransferModuleDeployed.addVerificationLogic(CAT20TransferActionDeployed.address, "0x6a770c78", {gas: 120000});
     })
     .then(() => {
@@ -338,6 +342,15 @@ module.exports = function(deployer, network, accounts) {
       return TransferModuleDeployed.addVerificationLogic(CAT721VerificationDeployed.address, standard, {gas: 120000});
     })
     .then(() => {
+      return CAT1400StrategyDeployed.getTokenStandard();
+    })
+    .then((standard) => {
+      return TransferModuleDeployed.addVerificationLogic(CAT1400VerificationDeployed.address, standard, {gas: 120000});
+    })
+    .then(() => {
+      return TransferModuleDeployed.addVerificationLogic(CAT1400TransferActionDeployed.address, "0x4341542d", {gas: 120000});
+    })
+    .then(() => {
       return TransferModuleDeployed.addNewChain("0x476f436861696e", {gas: 180000});
     })
     .then(() => {
@@ -345,8 +358,3 @@ module.exports = function(deployer, network, accounts) {
     });
   });
 };
-
-/**
- * await transferModule.addVerificationLogic(CAT1400Verification.address.valueOf(), standard);
-        await transferModule.addVerificationLogic(CAT1400TransferAction.address.valueOf(), "0x4341542d");
- */
