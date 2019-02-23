@@ -69,7 +69,7 @@ class Action {
             .then(() => {
                 this.estimateGasPrice(web3)
                 .then(() => {
-                    this.sendTx(sender, message)
+                    this.sendTx(web3, sender, message)
                     .then(result => {
                         resolve(result);
                     }).catch(error => {
@@ -86,28 +86,39 @@ class Action {
 
     /**
      * Send transaction
+     * @param {object} web3 Web3 provider
      * @param {string} sender Transaction initiator address
      * @param {string} message Custom message
      * @private
      */
-    sendTx(sender, message) {
+    sendTx(web3, sender, message) {
         return new Promise((resolve, reject) => {
-            this.action.send({ from:sender, gas:this.gas, gasPrice:this.gasPrice})
-            .on('transactionHash', (hash) => {
-                console.log(`
-                    ${message}
-                    TxHash: ${hash}`
-                );
-            })
-            .on('receipt', (receipt) => {
-                console.log(`
-                    Congratulations! The transaction was successfully completed.
-                `);
-                resolve(receipt);
-            })
-            .on('error', (error) => {
-                console.error("Trasaction failed!");
-                reject(error);
+            web3.eth.getTransactionCount(sender, (error, nonce) => {
+                if (error) {
+                    reject(error);
+                }
+                this.action.send({
+                    from: sender, 
+                    gas: this.gas,
+                    gasPrice: this.gasPrice,
+                    nonce: nonce
+                })
+                .on('transactionHash', (hash) => {
+                    console.log(`
+                        ${message}
+                        TxHash: ${hash}`
+                    );
+                })
+                .on('receipt', (receipt) => {
+                    console.log(`
+                        Congratulations! The transaction was successfully completed.
+                    `);
+                    resolve(receipt);
+                })
+                .on('error', (error) => {
+                    console.error("Trasaction failed!");
+                    reject(error);
+                });
             });
         });
     }
