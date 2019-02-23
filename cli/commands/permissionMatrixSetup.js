@@ -120,6 +120,14 @@ async function run(netowrk) {
         "deleteWalletAttribute(address,bytes32)",
         // tokens policy registry
         "setPolicy(address,bytes32,bytes)",
+        "setPolicyWithId(address,bytes32,bytes32,bytes)",
+        // CAT-1400
+        "clawbackByPartition(address,address,uint256,bytes32)",
+        "setDefaultPartition(bytes32)",
+        "mintByPartition(bytes32,address,uint256)",
+        "addToWhiteList(address,address,bytes32)",
+        "addArrayToWhiteList(address[],address,bytes32)",
+        "removeFromWhiteList(address,address,bytes32)",
     ];
 
     let rolesData = [
