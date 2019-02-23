@@ -1,4 +1,5 @@
 const setPolicy = require("./SetPolicyCommand");
+const setPolicyWithId = require("./SetPolicyWithIdCommand");
 const getPolicy = require("./GetPolicyCommand");
 const CommandsCollection = require("../CommandsCollection");
 
@@ -18,6 +19,7 @@ class Collection extends CommandsCollection {
         this.commands = [
             new setPolicy(),
             new getPolicy(),
+            new setPolicyWithId(),
         ];
     }
 }

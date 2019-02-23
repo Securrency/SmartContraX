@@ -69,6 +69,40 @@ class TokensPolicyRegistry extends Component {
             });
         });
     }
+
+    /**
+     * Set token policy for specific action and identifier
+     * @param {string} tranche Tranche id (partition)
+     * @param {string} token Token address
+     * @param {string} tokenAction Action
+     * @param {string} policy Converted policy to the Rules Engine Protocol
+     * @param {string} from Account from which transcation will be executed
+     * @public
+     */
+    setPolicyWithId(tranche, token, tokenAction, policy, from) {
+        if (!this.web3.utils.isAddress(token)) throw new Error("Invalid token address.");
+        if (!this.web3.utils.isAddress(from)) throw new Error("Invalid sender address.");
+        if (!tokenAction) throw new Error("Invalid action.");
+        if (!policy) throw new Error("Invalid policy value.");
+        if (!tranche) throw new Error("Tranche id is required.");
+
+        return new Promise((resolve, reject) => {
+            let hexTranche = this.web3.utils.toHex(tranche);
+            let setP = this.getInstance().methods.setPolicyWithId(token, tokenAction, hexTranche, policy);
+
+            let message = `Set policy for the token: ${token}, ${tranche} Please wait...`;
+
+            action
+            .setAction(setP)
+            .execute(from, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
 }
 
 module.exports = new TokensPolicyRegistry();
