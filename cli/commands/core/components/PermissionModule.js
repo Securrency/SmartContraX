@@ -50,6 +50,44 @@ class PermissionModule extends Component {
             });
         });
     }
+
+    /**
+     * Add role for specific token
+     * @param {string} tranche Tranche identifier
+     * @param {string} role Role
+     * @param {string} account Account for which will be added role
+     * @param {string} token Token address
+     * @param {string} from Account from which will be initiated transaction
+     * @public
+     */
+    addRoleForTheTokenByTranche(tranche, role, account, token, from) {
+        if (!role) throw new Error("Invalid role.");
+        if (!this.web3.utils.isAddress(account)) throw new Error("Invalid account address.");
+        if (!this.web3.utils.isAddress(token)) throw new Error("Invalid token address.");
+        if (!this.web3.utils.isAddress(from)) throw new Error("Invalid sender address.");
+        if (!tranche) throw new Error("Tranche id is required.");
+
+        return new Promise((resolve, reject) => {
+            let addRole = this.getInstance().methods.addRoleForSpecificTokenWithSubId(
+                account,
+                token,
+                this.web3.utils.toHex(role),
+                this.web3.utils.toHex(tranche)
+            );
+
+            let message = `Adding "${role}" role. Please wait...`;
+    
+            action
+            .setAction(addRole)
+            .execute(from, this.web3, message)
+            .then(receipt => {
+                resolve(receipt);
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
 }
 
 module.exports = new PermissionModule();

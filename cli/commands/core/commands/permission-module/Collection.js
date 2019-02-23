@@ -1,4 +1,5 @@
 const AddRoleForTheToken = require("./AddRoleForTheTokenCommand")
+const AddRoleForTheTokenByTranche = require("./AddRoleForTheTokenByTrancheCommand")
 const CommandsCollection = require("../CommandsCollection");
 
 
@@ -16,6 +17,7 @@ class Collection extends CommandsCollection {
         super();
         this.commands = [
             new AddRoleForTheToken(),
+            new AddRoleForTheTokenByTranche(),
         ];
     }
 }
