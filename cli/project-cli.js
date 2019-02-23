@@ -6,6 +6,7 @@ var tokensGenerator = require('./commands/TokensFactoryApp.js');
 var tokenInteraction = require('./commands/TokenInteractionApp.js');
 var symbolRegistry = require('./commands/symbolRegistry.js');
 var whiteList = require('./commands/whiteList.js');
+var whiteListWithIds = require('./commands/whiteListWithIdsApp.js');
 var permissionModule = require("./commands/permissionModule.js");
 var crossChainListener = require("./commands/crossChainListener.js");
 var applicationRegistry = require("./commands/ApplicationsRegistryApp.js");
@@ -70,6 +71,14 @@ program
   .description('Functions for interaction with whitelist')
   .action(() => {
     whiteList.run();
+  });
+
+program
+  .command('whiteListWithIds')
+  .alias('WLwithIds')
+  .description('Functions for interaction with whitelist')
+  .action(() => {
+    whiteListWithIds.run();
   });
 
 program
