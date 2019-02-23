@@ -81,6 +81,26 @@ class TokenInteractionApp extends App {
                             this.intitializeToken();
                         });
                         break;
+                    case "CAT-1400":
+                        let CAT1400Token = require("./core/components/tokens/CAT-1400");
+                        CAT1400Token.address = token;
+                        this.commandsCollection = require("./core/commands/tokens/CAT-1400/Collection");
+                        this.initializeApp(CAT1400Token);
+                        CAT1400Token.getTokenDetails()
+                        .then(() => {
+                            let totalSupply = 0;
+                            console.log(`
+                                Token name:  ${CAT1400Token.tokenName}
+                                Symbol:      ${CAT1400Token.symbol}
+                                TotalSypply: ${totalSupply}
+                            `);
+                            this.question();
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            this.intitializeToken();
+                        });
+                        break;
                 }
             })
             .catch((error) => {

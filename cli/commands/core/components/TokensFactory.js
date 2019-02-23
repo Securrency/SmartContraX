@@ -56,7 +56,10 @@ class TokensFactory extends Component {
             .execute(issuer, this.web3, message)
             .then(receipt => {
                 let tokenAddress = receipt.events['2'].raw.topics[1];
-                if (tokenStandard != '0x4341542d373231' && tokenStandard != '0x4341542d32302d5632') {
+                if (tokenStandard != '0x4341542d373231' 
+                    && tokenStandard != '0x4341542d32302d5632'
+                    && tokenStandard != '0x4341542d31343030') 
+                {
                     tokenAddress = receipt.events['3'].raw.topics[1];
                 }
     
