@@ -62,8 +62,6 @@ module.exports = class SetWalletAttributeCommand extends Command {
                     this.attribute = attribute;
 
                     this.rl.question("Value: ", value => {
-                        value = value === true ? "true" : value;
-                        value = value === false ? "false" : value;
                         if (!value) return reject("An value can not be empty.");
                         this.value = value;
 

@@ -55,8 +55,15 @@ class Identity extends Component {
 
         return new Promise((resolve, reject) => {
             let hexAttribute = this.web3.utils.toHex(attribute);
-            let hexValue = this.web3.utils.toHex(value);
 
+            let hexValue;
+            if (value == "true" || value == "false") {
+                hexValue = value == "true" ? "0x0100000000000000000000000000000000000000000000000000000000000000":
+                "0x0200000000000000000000000000000000000000000000000000000000000000";
+            } else {
+                hexValue = this.web3.utils.toHex(value);    
+            }
+            
             console.log(`
                 Hex values:
                 Attributes: ${hexAttribute},
