@@ -52,7 +52,8 @@ var CAT1400REVClawbackFn = artifacts.require("./registry-layer/tokens-factory/to
 var CAT1400WLVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVClawbackFn.sol");
 var CAT1400REVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVTransferFn.sol");
 var CAT1400WLVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
-var MintFunction = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/MintFunction.sol");
+var CAT1400WLMint = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLMint.sol");
+var CAT1400REMint = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REMint.sol");
 var SetDefaultPratitionFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/SetDefaultPratitionFn.sol");
 var CAT1400WLTransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLTransferByPartition.sol");
 var CAT1400RETransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400RETransferByPartition.sol");
@@ -249,7 +250,10 @@ module.exports = function(deployer, network, accounts) {
       return deployer.deploy(CAT1400WLVTransferFn, {gas:1000000});
     })
     .then(() => {
-      return deployer.deploy(MintFunction, {gas:1000000});
+      return deployer.deploy(CAT1400WLMint, {gas:1000000});
+    })
+    .then(() => {
+      return deployer.deploy(CAT1400REMint, {gas:1000000});
     })
     .then(() => {
       return deployer.deploy(SetDefaultPratitionFn, {gas:1000000});
