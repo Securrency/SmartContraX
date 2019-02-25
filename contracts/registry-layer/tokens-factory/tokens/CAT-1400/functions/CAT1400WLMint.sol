@@ -24,33 +24,34 @@ contract IPM {
 }
 
 /**
-* @title CAT-1400 mint function
+* @title Transfer module interface
 */
-contract MintFunction {
+contract ITm {
     /**
-    * @notice Verify permission for the method and sender wallet
-    * @param method Requested method
-    * @param sender Transaction sender address
-    * @param partition Partition identitfier
+    * @notice Verify tokens transfer. 
+    * @notice Selecting verification logic depending on the token standard.
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param sender Transaction initiator
+    * @param id Additional identifier
+    * @param tokenAddress Address of the token
     */
-    modifier verifyPermission(bytes4 method, address sender, bytes32 partition) {
-        address pm;
-        assembly {
-            pm := sload(0x0A)
-        }
-        require(
-            IPM(pm).allowedForTokenWithSubId(
-                method,
-                sender,
-                address(this),
-                partition
-            ),
-            "Declined by Permission Module"
-        );
+    function verifyTransferWithId(
+        address from,
+        address to,
+        address sender,
+        address tokenAddress,
+        bytes32 id
+    )
+        public
+        view
+        returns (bool);
+}
 
-        _;
-    }
-
+/**
+* @title CAT-1400 mint function with whiteList verification
+*/
+contract CAT1400WLMint {
     /**
     * @notice Write info the log about tokens transfer
     * @param from Sender address
@@ -89,6 +90,58 @@ contract MintFunction {
     event PartitionCreated(bytes32 indexed partition);
 
     /**
+    * @notice Verify permission for the method and sender wallet
+    * @param method Requested method
+    * @param sender Transaction sender address
+    * @param partition Partition identitfier
+    */
+    modifier verifyPermission(bytes4 method, address sender, bytes32 partition) {
+        address pm;
+        assembly {
+            pm := sload(0x0A)
+        }
+        require(
+            IPM(pm).allowedForTokenWithSubId(
+                method,
+                sender,
+                address(this),
+                partition
+            ),
+            "Declined by Permission Module"
+        );
+
+        _;
+    }
+
+    /**
+    * @notice Verify transfer
+    * @param to Recipient address
+    * @param partition Partition identifier
+    */
+    modifier allowedTx(
+        address to,
+        bytes32 partition
+    ) {
+        address tm;
+        assembly {
+            tm := sload(0x0B)
+        }
+
+        //Send request to the transfer module and verify transfer
+        bool allowed = ITm(tm).verifyTransferWithId(
+            to,
+            to,
+            to,
+            address(this),
+            partition
+        );
+
+        require(allowed, "Transfer was declined by WhiteList");
+
+        _;
+    }
+
+    /**
     * @notice Mint tokens to the partition
     * @param partition Partition identifier
     * @param to A recipient address
@@ -98,6 +151,7 @@ contract MintFunction {
     function mintByPartition(bytes32 partition, address to, uint256 value) 
         external
         verifyPermission(msg.sig, msg.sender, partition)
+        allowedTx(to, partition)
     {
         require(partition != bytes32(0x00), "Invalid partition");
         require(to != address(0x00), "Invalid recipient address");
@@ -290,6 +344,8 @@ contract MintFunction {
     * @param partition Partition identifier
     * @param to A recipient address
     * @param value Number of the tokens
+    * @dev https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+    * @dev https://github.com/ethereum/EIPs/issues/1400
     */
     function writeInfoToTheLog(bytes32 partition, address to, uint256 value) internal {
         // ERC-20 transfer event
@@ -298,7 +354,7 @@ contract MintFunction {
         bytes memory data = new bytes(0x00);
         bytes memory operatorData = new bytes(0x00);
 
-        // ERC-14000 transfer event
+        // ERC-1400 transfer event
         emit TransferByPartition(
             partition,
             address(0x00),
