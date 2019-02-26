@@ -66,8 +66,10 @@ contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
 
         require(idOld == idNew, "Component identifiers must be the same.");
 
-        removeComponent(oldAddress);
-        registerNewComponent(newAddress);
+        components[idNew].componentAddress = newAddress;
+        componentsIds[newAddress] = idNew;
+
+        delete componentsIds[oldAddress];
 
         emit ComponentUpdated(oldAddress, newAddress);
     }
