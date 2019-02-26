@@ -181,8 +181,8 @@ contract("Components registry", accounts => {
 
             let tx = await componentsRegistry.updateComponent(oldAddress, newAddress);
 
-            assert.equal(tx.logs[2].args.oldAddress, oldAddress);
-            assert.equal(tx.logs[2].args.newAddress, newAddress);
+            assert.equal(tx.logs[0].args.oldAddress, oldAddress);
+            assert.equal(tx.logs[0].args.newAddress, newAddress);
         });
 
         it("Should return component details after update", async() => {
