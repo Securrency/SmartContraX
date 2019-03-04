@@ -32,6 +32,7 @@ module.exports = class ClawbackCommand extends Command {
                     this.from,
                     this.to,
                     this.value,
+                    this.tranche,
                     this.account
                 )
                 .then((result) => {
@@ -74,11 +75,16 @@ module.exports = class ClawbackCommand extends Command {
                         }
                         if (!this.web3.utils.isAddress(this.to)) return reject("Invalid recipient address.");
 
-                        this.rl.question("Value: ", (value) => {
-                            this.value = value;
-                            if (this.value == 0) return reject("Invalid number of the tokens.");
+                        this.rl.question("Tranche id: ", (tranche) => {
+                            this.tranche = tranche;
+                            if (!this.tranche) return reject("Tranche id is required.");
                             
-                            resolve();
+                            this.rl.question("Value: ", (value) => {
+                                this.value = value;
+                                if (this.value == 0) return reject("Invalid number of the tokens.");
+                                
+                                resolve();
+                            });
                         });
 
                     });
