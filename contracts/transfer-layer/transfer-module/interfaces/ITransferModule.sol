@@ -86,4 +86,38 @@ contract ITransferModule {
     * @param standard Token standard related to this logic
     */
     function addVerificationLogic(address logic, bytes32 standard) public;
+
+    /**
+    * @notice Verify CAT-20 tokens transfer by the rules engine
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param sender Transaction initiator
+    * @param tokens The amount of tokens to be transferred
+    */
+    function checkCAT20TransferThroughRE(
+        address from,
+        address to,
+        address sender,
+        uint tokens
+    )
+        public
+        returns (bool);
+
+    /**
+    * @notice Verify CAT-1400 tokens transfer by the rules engine
+    * @param from The address transfer from
+    * @param to The address transfer to
+    * @param sender Transaction initiator
+    * @param partition Partition identifier
+    * @param tokens The amount of tokens to be transferred
+    */
+    function checkCAT1400TransferThroughRE(
+        address from,
+        address to,
+        address sender,
+        bytes32 partition,
+        uint tokens
+    )
+        public
+        returns (bool);
 }
