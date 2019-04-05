@@ -1,4 +1,5 @@
 const fs = require("fs");
+const sleep = require('sleep');
 const BigNumber = require("bignumber.js");
 
 var AR = artifacts.require("./registry-layer/application-registry/ApplicationRegistry.sol");
@@ -21,14 +22,18 @@ var PP = artifacts.require("./request-verification-layer/transfer-verification-s
 var ID = artifacts.require('./registry-layer/identity/Identity.sol');
 var TPR = artifacts.require("./registry-layer/tokens-policy-registry/TokensPolicyRegistry.sol");
 
-var SET = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/token-setup/SetupV1.sol");
+var SET = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT20Setup.sol");
 
 // CAT-20 token methods
-var E20F = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/ERC20Functions.sol");
-var C20MF = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20MintFunction.sol");
-var C20TF = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20WLVTransferFunction.sol");
-var C20RETF = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20REVTransferFunction.sol");
-var C20CBF = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/CAT-20-functions/CAT20WLVClawbackFunction.sol");
+var CAT20ERC20 = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20ERC20.sol");
+var CAT20Mint = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20Mint.sol");
+var CAT20Clawback = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20Clawback.sol");
+var CAT20Pause = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20Pause.sol");
+var CAT20Burnable = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20Burnable.sol");
+var CAT20Rollback = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20Rollback.sol");
+var CAT20TxCheckpoint = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20TxCheckpoint.sol");
+var CAT20REVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/verify-transfer/CAT20REVerifyTransfer.sol");
+var CAT20WLVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/verify-transfer/CAT20WLVerifyTransfer.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");
@@ -82,11 +87,6 @@ contract("CAT20Token (V2)", accounts => {
     let FCStorage;
     let EscrowClient;
     let setupSM;
-    let ERC20Functions;
-    let CAT20MintFunction;
-    let CAT20WLVTransferFunction;
-    let CAT20REVTransferFunction
-    let CAT20WLVClawbackFunction;
     let policyRegistry;
     let rulesEngine;
     let identity;
@@ -229,6 +229,9 @@ contract("CAT20Token (V2)", accounts => {
 
         let enRoll = createId("toggleRollbacksStatus()");
         tx = await permissionModule.addMethodToTheRole(enRoll, complianceRoleName, { from: accounts[0] });
+
+        let upExpT = createId("updateExpirationTime(uint256)");
+        tx = await permissionModule.addMethodToTheRole(upExpT, complianceRoleName, { from: accounts[0] });
 
         let p = createId("pause()");
         tx = await permissionModule.addMethodToTheRole(p, complianceRoleName, { from: accounts[0] });
@@ -418,41 +421,68 @@ contract("CAT20Token (V2)", accounts => {
         await permissionModule.addRoleForSpecificToken(token_owner, CAT20Token.address.valueOf(), complianceRoleName, { from: accounts[0] });
         await policyRegistry.setPolicy(CAT20Token.address, action, policy, { from: accounts[0] });
         await rulesEngine.setActionExecutor(action, CAT20TransferAction.address.valueOf(), { from: accounts[0] });
-
-        // Deploy token functions
-        ERC20Functions = await E20F.new();
+        
+        CAT20ERC20 = await CAT20ERC20.new();
         assert.notEqual(
-            ERC20Functions.address.valueOf(),
+            CAT20ERC20.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "Contract with ERC-20 functions was not deployed"
         );
 
-        CAT20MintFunction = await C20MF.new();
+        CAT20Mint = await CAT20Mint.new();
         assert.notEqual(
-            ERC20Functions.address.valueOf(),
+            CAT20Mint.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "Contract with CAT-20 mint function was not deployed"
         );
 
-        CAT20WLVTransferFunction = await C20TF.new();
+        CAT20WLVerifyTransfer = await CAT20WLVerifyTransfer.new();
         assert.notEqual(
-            CAT20WLVTransferFunction.address.valueOf(),
+            CAT20WLVerifyTransfer.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-20 transfer functions was not deployed"
+            "Contract with CAT-20 whitelist verification was not deployed"
         );
 
-        CAT20REVTransferFunction = await C20RETF.new();
+        CAT20REVerifyTransfer = await CAT20REVerifyTransfer.new();
         assert.notEqual(
-            CAT20WLVTransferFunction.address.valueOf(),
+            CAT20REVerifyTransfer.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-20 transfer functions with rules engine was not deployed"
+            "Contract with CAT-20 rules engine verification was not deoloyed"
         );
 
-        CAT20WLVClawbackFunction = await C20CBF.new();
+        CAT20Clawback = await CAT20Clawback.new();
         assert.notEqual(
-            CAT20WLVClawbackFunction.address.valueOf(),
+            CAT20Clawback.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "Contract with CAT-20 clawback functions was not deployed"
+        );
+
+        CAT20Rollback = await CAT20Rollback.new();
+        assert.notEqual(
+            CAT20Rollback.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-20 rollback function was not deployed"
+        );
+
+        CAT20TxCheckpoint = await CAT20TxCheckpoint.new();
+        assert.notEqual(
+            CAT20TxCheckpoint.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-20 transaction checkpoints functions was not deployed"
+        );
+
+        CAT20Burnable = await CAT20Burnable.new();
+        assert.notEqual(
+            CAT20Burnable.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-20 burn functions was not deployed"
+        );
+
+        CAT20Pause = await CAT20Pause.new();
+        assert.notEqual(
+            CAT20Pause.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-20 pause functions was not deployed"
         );
 
         await CAT20Token.initializeToken(componentsRegistry.address.valueOf());
@@ -464,42 +494,48 @@ contract("CAT20Token (V2)", accounts => {
             "0xa9059cbb",//transfer(address,uint256)
             "0x23b872dd",//transferFrom(address,address,uint256)
             "0x40c10f19",//mint(address,uint256)
-            "0x0cfbfcde"//clawback(address,address,uint256)
+            "0x0cfbfcde",//clawback(address,address,uint256)
+            "0xcb43067b",//verifyTransfer(address,address,address,uint256)
+            "0x8456cb59",//pause()
+            "0x3f4ba83a",//unpause()
+            "0x42966c68",//burn(uint256)
+            "0xe0f3832a",//transferAgentBurn(address,uint256,bytes32)
+
+            "0x577b4008",//toggleRollbacksStatus()
+            "0xde6df036",//createRollbackTransaction(address,address,address,uint256,uint256,string)
+            "0x1b2bfea1",//generateCheckpoint(address,address,uint256,address)
+            "0x9dd6e43a",//getCheckpointKey(uint256)
+            "0x33d1bbd2",//updateExpirationTime(uint256)
+            "0x1ebc9578",//isActiveCheckpoint(uint256)
+
+            "0x88d695b2",//batchTransfer(address[],uint256[])
         ];
 
         let addrs = [
-            ERC20Functions.address,
-            ERC20Functions.address,
-            ERC20Functions.address,
-            CAT20WLVTransferFunction.address,
-            CAT20WLVTransferFunction.address,
-            CAT20MintFunction.address,
-            CAT20WLVClawbackFunction.address
+            CAT20ERC20.address,
+            CAT20ERC20.address,
+            CAT20ERC20.address,
+            CAT20ERC20.address,
+            CAT20ERC20.address,
+            CAT20Mint.address,
+            CAT20Clawback.address,
+            CAT20WLVerifyTransfer.address,
+            CAT20Pause.address,
+            CAT20Pause.address,
+            CAT20Burnable.address,
+            CAT20Burnable.address,
+
+            CAT20Rollback.address,
+            CAT20Rollback.address,
+            CAT20TxCheckpoint.address,
+            CAT20TxCheckpoint.address,
+            CAT20TxCheckpoint.address,
+            CAT20TxCheckpoint.address,
+            
+            CAT20ERC20.address,
         ];
 
         await CAT20Token.setImplementations(ids, addrs);
-
-        // Printing all the contract addresses
-        console.log(`
-            Core smart contracts:\n
-            ComponentsRegistry: ${componentsRegistry.address}
-            SRStorage: ${SRStorage.address}
-            TFStorage: ${TFStorage.address}
-            PMStorage: ${PMStorage.address}
-            PermissionModule: ${permissionModule.address}
-            TokensFactory: ${TokensFactory.address}
-            CAT20Strategy: ${CAT20Strategy.address}
-            CAT20Token: ${CAT20Token.address}
-            CAT20Setup: ${setupSM.address}
-            ERC20Functions: ${ERC20Functions.address}
-            CAT20WLVTransferFunction: ${CAT20WLVTransferFunction}
-            WhiteList: ${whiteList.address}
-            CAT20Vierification: ${CAT20Verification.address}
-            TransferModule: ${transferModule.address}
-            TCStorage: ${TCStorage.address}
-            FCStorage: ${FCStorage.address}
-            EscrowClient: ${EscrowClient.address}\n
-        `);
     });
 
     describe("Testing CAT-20-V2 token", async() => {
@@ -601,6 +637,78 @@ contract("CAT20Token (V2)", accounts => {
             assert.equal(tx.logs[0].args.to, token_owner);
         });
 
+        it("Should burn tokens", async() => {
+            let toMint = new BigNumber(20).mul(precision);
+            await CAT20Token.mint(token_holder_2, toMint);
+
+            let tx = await CAT20Token.burn(toMint, { from: token_holder_2 });
+
+            assert.equal(tx.logs[0].args.from, token_holder_2);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toMint.valueOf());
+        });
+
+        it("A transfer agent should burn tokens", async() => {
+            let toMint = new BigNumber(20).mul(precision);
+            await CAT20Token.mint(token_holder_2, toMint);
+
+            let tx = await CAT20Token.transferAgentBurn(token_holder_2, toMint, emptyBytes, { from: token_owner });
+
+            assert.equal(tx.logs[0].args.from, token_holder_2);
+            assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toMint.valueOf());
+        });
+
+        it("Should set token on pause", async() => {
+            let tx = await CAT20Token.pause({ from: token_owner });
+
+            assert.notEqual(tx.logs[0], "undefined");
+        });
+
+        it("Should be failed to transfer tokens", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.transfer(token_holder_1, toTransfer, { from: token_owner });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transactions are stoped by an issuer.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should be failed to transfer approved tokens", async() => {
+            let toApprove = new BigNumber(1).mul(precision);
+            await CAT20Token.approve(token_holder_1, toApprove, {from: token_owner});
+
+            let errorThrown = false;
+            try {
+                await CAT20Token.transferFrom(token_owner, token_holder_1, toApprove, { from: token_holder_1 });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Transactions are stoped by an issuer.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Must take off the pause", async() => {
+            let tx = await CAT20Token.unpause({ from: token_owner });
+
+            assert.notEqual(tx.logs[0], "undefined");
+        });
+
+        it("Should fialed to set token on pause", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.pause({ from: accounts[9] });
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Declined by Permission Module.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+
+        });
+
         it("Should fail to create clawback", async() => {
             let errorThrown = false;
             try {
@@ -615,12 +723,10 @@ contract("CAT20Token (V2)", accounts => {
 
         it("Should update transfer functions implementations (with rules engine)", async() => {
             let ids = [
-                "0xa9059cbb",//transfer(address,uint256)
-                "0x23b872dd",//transferFrom(address,address,uint256)
+                "0xcb43067b",//verifyTransfer(address,address,address,uint256)
             ];
             let addrs = [
-                CAT20REVTransferFunction.address,
-                CAT20REVTransferFunction.address,
+                CAT20REVerifyTransfer.address
             ];
 
             await CAT20Token.setImplementations(ids, addrs);
@@ -647,6 +753,109 @@ contract("CAT20Token (V2)", accounts => {
             assert.equal(tx.logs[0].args.from, token_owner);
             assert.equal(tx.logs[0].args.to, token_holder_1);
             assert.equal(new BigNumber(tx.logs[0].args.value).valueOf(), toTransfer.valueOf());
+        });
+    });
+
+    describe("Rollback", async() => {
+        let txForRollback;
+        it("Fail rollback transaction (rollback disabled)", async() => {
+            try {
+                let receipt = web3.eth.getTransactionReceipt(txForRollback);
+                let transaction = web3.eth.getTransaction(txForRollback);
+                let checkpointId = parseInt(receipt.logs[0].topics[2]);
+                await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, transaction["from"], toTransfer, checkpointId, txForRollback);
+            } catch (error) {
+
+            }
+        });
+
+        it("Should enable rollbacks", async() => {
+            let tx = await CAT20Token.toggleRollbacksStatus();
+
+            assert.equal(tx.logs[0].args.newStatus, true);
+        });
+
+        it("Should transfer tokens with enabled rollbacks", async() => {
+            let tx = await CAT20Token.transfer(accounts[1], toTransfer, {from: accounts[0]});
+            
+            assert.equal(tx.logs[1].args.from, accounts[0]);
+            assert.equal(tx.logs[1].args.to, accounts[1]);
+            assert.equal(new BigNumber(tx.logs[1].args.value).valueOf(), toTransfer.valueOf());
+
+            txForRollback = tx.tx;
+        });
+
+        it("Should disable rollbacks", async() => {
+            let tx = await CAT20Token.toggleRollbacksStatus();
+
+            assert.equal(tx.logs[0].args.newStatus, false);
+        });
+
+        it("Should enable rollbacks", async() => {
+            let tx = await CAT20Token.toggleRollbacksStatus();
+
+            assert.equal(tx.logs[0].args.newStatus, true);
+        });
+    });
+
+    describe("Transactions checkpoints", async() => {
+        it("Should change checkpoint expiration time", async() => {
+            let newExpirationTime = 1;
+            let expirationTime = await CAT20Token.txCheckpointexpirationInterval();
+            expirationTime = expirationTime.toNumber();
+
+            await CAT20Token.updateExpirationTime(newExpirationTime);
+            let updatedTime = await CAT20Token.txCheckpointexpirationInterval();
+            updatedTime = updatedTime.toNumber();
+            
+            assert.equal(updatedTime, newExpirationTime);
+        });
+
+        it("Should fial to create rollback transaction, checkpoint is expired", async() => {
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
+            
+            assert.equal(tx.logs[1].args.from, token_owner);
+            assert.equal(tx.logs[1].args.to, token_holder_1);
+            assert.equal(new BigNumber(tx.logs[1].args.value).valueOf(), toTransfer.valueOf());
+            
+            let checkpointId = tx.logs[0].args.checkpointId.toNumber();
+
+            sleep.msleep(1001);
+
+            let errorThrown = false;
+            try {
+                await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, token_holder_1, toTransfer, checkpointId, tx.tx);
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Checkpoint is already used or expired.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Should update checkpoint expiration time and create rollback transaction", async() => {
+            let newExpirationTime = 600;
+            let expirationTime = await CAT20Token.txCheckpointexpirationInterval();
+            expirationTime = expirationTime.toNumber();
+
+            await CAT20Token.updateExpirationTime(newExpirationTime);
+            let updatedTime = await CAT20Token.txCheckpointexpirationInterval();
+            updatedTime = updatedTime.toNumber();
+            
+            assert.equal(updatedTime, newExpirationTime);
+
+            let tx = await CAT20Token.transfer(token_holder_1, toTransfer, {from: token_owner});
+            
+            assert.equal(tx.logs[1].args.from, token_owner);
+            assert.equal(tx.logs[1].args.to, token_holder_1);
+            assert.equal(new BigNumber(tx.logs[1].args.value).valueOf(), toTransfer.valueOf());
+            
+            let checkpointId = tx.logs[0].args.checkpointId.toNumber();
+
+            await CAT20Token.createRollbackTransaction(token_holder_1, token_owner, token_owner, toTransfer, checkpointId, tx.tx);
+
+            let status = await CAT20Token.isActiveCheckpoint(checkpointId);
+            assert.ok(!status, "Checkpoint not activated!");
         });
     });
 });
