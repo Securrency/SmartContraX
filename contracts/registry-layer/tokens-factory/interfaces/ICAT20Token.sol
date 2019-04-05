@@ -8,7 +8,25 @@ contract ICAT20Token {
     // Token details
     string public name;
     string public symbol;
+    string public tokenStandard;
     uint8 public decimals;
+
+    // Transfer module address
+    address public transferModuleAddress;
+    // Permission module address
+    address public permissionModuleAddress;
+    // Components registry address
+    address public componentsRegistryAddress;
+    // msg.sig => implementation address
+    mapping(bytes4 => address) public methodsImplementations;
+    // Transfers status (paused || not paused)
+    bool public paused;
+    // Stores number of the tokens that are on escrow
+    uint public totalOnEscrow;
+    // Declares variable that stores expiration interval (seconds)
+    uint public txCheckpointexpirationInterval;
+    // Rollback status (Enabled/Disabled)
+    bool public rollbackEnabled;
     
     // ERC-20 backward compatibility
     function totalSupply() public view returns (uint);
@@ -23,7 +41,17 @@ contract ICAT20Token {
 
     // CAT-20 Methods
     function mint(address to, uint tokens) public;
-    function clawback(address from, address to, uint tokens) public;
+    function clawback(address from, address to, uint tokens) public;   
+    function pause() external;
+    function unpause() external;
+    function burn(uint value) public;
+    function transferAgentBurn(address from, uint value, bytes32 data) external;
+    function toggleRollbacksStatus() external;
+    function getCheckpointKey(uint checkpointId) public view returns (bytes32);
+    function updateExpirationTime(uint newExpirationInterval) public;
+    function isActiveCheckpoint(uint checkpointId) public view returns (bool);
+    function generateCheckpoint(address from, address to, uint value, address sender) public pure returns (bytes32);
+    function createRollbackTransaction(address from, address to, address sender, uint tokens, uint checkpointId, string memory originalTxHash) public returns (bool);
     
     // Temporary methods
     function initializeToken(address componentsRegistry) public;
@@ -36,4 +64,12 @@ contract ICAT20Token {
     event Approval(address indexed owner, address indexed spender, uint tokens);
     event Clawback(address indexed from, address indexed to, uint tokens);
     event Mint(address indexed to, uint256 amount);
+    event Pause();
+    event Unpause();
+    event Burn(address indexed from, uint256 value);
+    event BurnedByTransferAgent(address indexed from, address indexed burnedBy, uint256 value, bytes32 data);
+    event RollbacksStatusChanged(bool newStatus);
+    event CheckpointWasUsed(uint indexed checkpointId, string originalTxHash);
+    event CheckpointCreated(bytes32 indexed checkpointKey, uint indexed checkpointId);
+    event CheckointExpireInteravalUpdated(uint oldValue, uint newValue);
 }
