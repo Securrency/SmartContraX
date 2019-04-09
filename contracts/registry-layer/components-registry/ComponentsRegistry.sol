@@ -60,6 +60,7 @@ contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
         verifyPermission(msg.sender, msg.sig) 
     {
         require(oldAddress != newAddress, "Invalid addresses.");
+        require(componentsIds[oldAddress] != bytes4(0), "Can't update unregistered component");
 
         bytes4 idOld = IComponent(oldAddress).getComponentId();
         bytes4 idNew = IComponent(newAddress).getComponentId();
