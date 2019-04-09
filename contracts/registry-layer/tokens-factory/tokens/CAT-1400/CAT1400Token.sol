@@ -1,19 +1,12 @@
 pragma solidity >0.4.99 <0.6.0;
 
+import "./CAT1400TokenStorage.sol";
+
 
 /**
- * @title Compliance Aware Token (CAT-1400 partial fungible)
- */
-contract CAT1400Token {
-    // Stores token name
-    string public name;
-    // Stores token symbol
-    string public symbol;
-    // Stores number of the token decimals
-    uint8 public decimals;
-    // Stores total tokens sypply
-    uint256 public totalSupply_;
-    
+* @title Compliance Aware Token (CAT-1400 partial fungible)
+*/
+contract CAT1400Token is CAT1400TokenStorage {
     /**
     * @notice Initialize token default parameters
     * @param _name Token name
@@ -31,11 +24,8 @@ contract CAT1400Token {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
-        
-        bytes32 key = getImplKey(0x234a6ed8);
-        assembly {
-            sstore(key, _setup)
-        }
+
+        methodsImplementations[bytes4(keccak256("initializeToken(address)"))] = _setup;
     }
 
     /**
@@ -43,13 +33,13 @@ contract CAT1400Token {
     * @notice This function will return whatever the implementation call returns
     */
     function () payable external {
-        address _impl = implementation();
-        require(_impl != address(0x00), "Method not found. 404 ((");
+        address impl = methodsImplementations[msg.sig];
+        require(impl != address(0x00), "Method not found. 404");
         
         assembly {
             let p := mload(0x40)
             calldatacopy(p, 0x00, calldatasize)
-            let result := delegatecall(gas, _impl, p, calldatasize, 0x00, 0x00)
+            let result := delegatecall(gas, impl, p, calldatasize, 0x00, 0x00)
             let size := returndatasize
             returndatacopy(p, 0x00, size)
             
@@ -67,50 +57,6 @@ contract CAT1400Token {
     * @return `true` if the contract implements `interfaceID` and `interfaceID` is not 0xffffffff, `false` otherwise
     */
     function supportsInterface(bytes4 interfaceID) public view returns (bool) {
-        if (interfaceID == 0xffffffff) {
-            return false;
-        }
-        
-        address impl;
-        bytes32 key = getImplKey(interfaceID);
-        assembly {
-            impl := sload(key)
-        }
-        return impl != address(0x00);
-    }
-    
-    /**
-    * @notice Generate storage key for methods implementations
-    * @dev The positions are found by adding an offset of keccak256(k . p)
-    * @dev Mapping of the methods implementations position in the storage = 0x3E9
-    * @dev mapping(bytes4=>address)
-    * @dev https://solidity.readthedocs.io/en/v0.5.0/miscellaneous.html#layout-of-state-variables-in-storage
-    * @param sig Requested method signature
-    * @return hash which represents storage key
-    */
-    function getImplKey(bytes4 sig) internal pure returns (bytes32) {
-        bytes memory buffer = new bytes(0x40);
-        assembly {
-            mstore(add(buffer, 0x20), sig)
-            mstore(add(buffer, 0x40), 0x3E9)
-        }
-        
-        return keccak256(buffer);
-    }
-    
-    /**
-    * @notice Returns the address of the implementation where the call will be delegated.
-    */
-    function implementation() internal view returns (address impl) {
-        bytes4 sig;
-        assembly {
-            calldatacopy(0x00, 0x00, 0x04)
-            sig := mload(0x00)
-        }
-        
-        bytes32 key = getImplKey(sig);
-        assembly {
-            impl := sload(key)
-        }
+        return interfaceID == 0xffffffff ? false : methodsImplementations[interfaceID] != address(0x00);
     }
 }
