@@ -21,22 +21,17 @@ var PP = artifacts.require("./request-verification-layer/transfer-verification-s
 var ID = artifacts.require('./registry-layer/identity/Identity.sol');
 var TPR = artifacts.require("./registry-layer/tokens-policy-registry/TokensPolicyRegistry.sol");
 
-var SET = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/token-setup/SetupCAT1400V1.sol");
+var SET = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/token-setup/CAT1400Setup.sol");
 
 // CAT-1400 token methods
-var С1400TF = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLTransferByPartition.sol");
-var C1400RETPF = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400RETransferByPartition.sol");
-var С1400WLM = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLMint.sol");
-var С1400REM = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REMint.sol");
-var C1400BP = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/BalanceOfByPartitionFn.sol");
-var C1400SDP = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/SetDefaultPratitionFn.sol");
+var CAT1400ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20.sol");
+var BalanceOfByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400BalanceOfByPartition.sol");
+var CAT1400Clawback = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400Clawback.sol");
+var CAT1400Mint = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400Mint.sol");
+var CAT1400TransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400TransferByPartition.sol");
+var CAT1400REVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVerifyTransfer.sol");
+var CAT1400WLVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVerifyTransfer.sol");
 
-// ERC-20
-var E20F = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20Functions.sol");
-var E20TFWLV = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
-var E20TFREV = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVTransferFn.sol");
-var CAT1400WLVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVClawbackFn.sol");
-var CAT1400REVCl = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVClawbackFn.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteListWithIds.sol");
@@ -89,17 +84,6 @@ contract("CAT1400Token", accounts => {
     let FCStorage;
     let EscrowClient;
     let setupSM;
-    let ERC20Functions;
-    let ERC20TransferFnWLV;
-    let ERC20TransferFnREV;
-    let CAT1400TransferFunction;
-    let CAT1400RETransferFunction;
-    let CAT1400WLMintFunction;
-    let CAT1400REMintFunction;
-    let CAT1400BalanceByPartitionFn;
-    let CAT1400SetDefaultPartitionFn;
-    let CAT1400WLVClawbackFn;
-    let CAT1400REVClawbackFn;
     let policyRegistry;
     let rulesEngine;
     let identity;
@@ -448,81 +432,53 @@ contract("CAT1400Token", accounts => {
         await rulesEngine.setActionExecutor(action, CAT1400TransferAction.address.valueOf(), { from: accounts[0] });
 
         // Deploy token functions
-        CAT1400TransferFunction = await С1400TF.new();
+        CAT1400Mint = await CAT1400Mint.new();
         assert.notEqual(
-            CAT1400TransferFunction.address.valueOf(),
+            CAT1400Mint.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-1400 transfer function was not deployed"
+            "Contract with CAT-1400 mint function was not deployed"
         );
 
-        CAT1400WLMintFunction = await С1400WLM.new();
+        BalanceOfByPartition = await BalanceOfByPartition.new();
         assert.notEqual(
-            CAT1400WLMintFunction.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-1400 mint function with whitelist verification was not deployed"
-        );
-
-        CAT1400REMintFunction = await С1400REM.new();
-        assert.notEqual(
-            CAT1400REMintFunction.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-1400 mint function with rules engine verification was not deployed"
-        );
-
-        CAT1400BalanceByPartitionFn = await C1400BP.new();
-        assert.notEqual(
-            CAT1400BalanceByPartitionFn.address.valueOf(),
+            BalanceOfByPartition.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "Contract with CAT-1400 balanceOfByPartition function was not deployed"
         );
 
-        CAT1400SetDefaultPartitionFn = await C1400SDP.new();
+        CAT1400ERC20Functions = await CAT1400ERC20Functions.new();
         assert.notEqual(
-            CAT1400SetDefaultPartitionFn.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-1400 setDefaultPartition function was not deployed"
-        );
-
-        ERC20Functions = await E20F.new();
-        assert.notEqual(
-            ERC20Functions.address.valueOf(),
+            CAT1400ERC20Functions.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
             "Contract with ERC-20 functions was not deployed"
         );
 
-        ERC20TransferFnWLV = await E20TFWLV.new();
+        CAT1400Clawback = await CAT1400Clawback.new();
         assert.notEqual(
-            ERC20TransferFnWLV.address.valueOf(),
+            CAT1400Clawback.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "Contract with ERC-20 functions with whitelist verification was not deployed"
+            "Contract with CAT-1400 clawback functions was not deployed"
         );
 
-        ERC20TransferFnREV = await E20TFREV.new();
+        CAT1400TransferByPartition = await CAT1400TransferByPartition.new();
         assert.notEqual(
-            ERC20TransferFnREV.address.valueOf(),
+            CAT1400TransferByPartition.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "Contract with ERC-20 functions with rules engine verification was not deployed"
+            "Contract with CAT-1400 transfer by partition function was not deployed"
         );
 
-        CAT1400WLVClawbackFn = await CAT1400WLVCl.new();
+        CAT1400REVerifyTransfer = await CAT1400REVerifyTransfer.new();
         assert.notEqual(
-            CAT1400WLVClawbackFn.address.valueOf(),
+            CAT1400REVerifyTransfer.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-1400 clawbacl functions with whitelist verification was not deployed"
+            "Contract with CAT-1400 transfer transfer verification by rules engine was not deployed"
         );
 
-        CAT1400REVClawbackFn = await CAT1400REVCl.new();
+        CAT1400WLVerifyTransfer = await CAT1400WLVerifyTransfer.new();
         assert.notEqual(
-            CAT1400WLVClawbackFn.address.valueOf(),
+            CAT1400WLVerifyTransfer.address.valueOf(),
             "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-1400 clawbacl functions with rules engine verification was not deployed"
-        );
-
-        CAT1400RETransferFunction = await C1400RETPF.new();
-        assert.notEqual(
-            CAT1400RETransferFunction.address.valueOf(),
-            "0x0000000000000000000000000000000000000000",
-            "Contract with CAT-1400 transfer by partition functions with rules engine verification was not deployed"
+            "Contract with CAT-1400 transfer transfer verification by white list was not deployed"
         );
 
         await CAT1400Token.initializeToken(componentsRegistry.address.valueOf());
@@ -536,49 +492,24 @@ contract("CAT1400Token", accounts => {
             "0xf3d490db",//transferByPartition(bytes32,address,uint256,bytes)
             "0x06a69bfc",//mintByPartition(bytes32,address,uint256)
             "0x30e82803",//balanceOfByPartition(bytes32,address)
-            "0x2fb035c1",//setDefaultPartition(bytes32)
             "0x656f029f",//clawbackByPartition(address,address,uint256,bytes32)
+            "0x484a5c54",//verifyTransfer(address,address,address,bytes32,uint256)
         ];
 
         let addrs = [
-            ERC20Functions.address,
-            ERC20Functions.address,
-            ERC20Functions.address,
-            ERC20TransferFnWLV.address,
-            ERC20TransferFnWLV.address,
-            CAT1400TransferFunction.address,
-            CAT1400WLMintFunction.address,
-            CAT1400BalanceByPartitionFn.address,
-            CAT1400SetDefaultPartitionFn.address,
-            CAT1400WLVClawbackFn.address,
+            CAT1400ERC20Functions.address,
+            CAT1400ERC20Functions.address,
+            CAT1400ERC20Functions.address,
+            CAT1400ERC20Functions.address,
+            CAT1400ERC20Functions.address,
+            CAT1400TransferByPartition.address,
+            CAT1400Mint.address,
+            BalanceOfByPartition.address,
+            CAT1400Clawback.address,
+            CAT1400WLVerifyTransfer.address,
         ];
 
         await CAT1400Token.setImplementations(ids, addrs);
-
-        // Printing all the contract addresses
-        console.log(`
-            Core smart contracts:\n
-            ComponentsRegistry: ${componentsRegistry.address}
-            SRStorage: ${SRStorage.address}
-            TFStorage: ${TFStorage.address}
-            PMStorage: ${PMStorage.address}
-            PermissionModule: ${permissionModule.address}
-            TokensFactory: ${TokensFactory.address}
-            CAT1400Strategy: ${CAT1400Strategy.address}
-            CAT1400Token: ${CAT1400Token.address}
-            CAT1400Setup: ${setupSM.address}
-            CAT1400TransferFunction: ${CAT1400TransferFunction.address}
-            CAT1400BalnceOfByPartitionFunction: ${CAT1400BalanceByPartitionFn.address}
-            CAT1400SetDefaultPartitionFn: ${CAT1400SetDefaultPartitionFn.address}
-            CAT1400WLMintFunction: ${CAT1400WLMintFunction.address}
-            CAT1400REMintFunction: ${CAT1400REMintFunction.address}
-            WhiteList: ${whiteList.address}
-            CAT1400Vierification: ${CAT1400Verification.address}
-            TransferModule: ${transferModule.address}
-            TCStorage: ${TCStorage.address}
-            FCStorage: ${FCStorage.address}
-            EscrowClient: ${EscrowClient.address}\n
-        `);
     });
 
     var partition1 = "0x536563757272656e63792e536d617274436f6e74726163747300000000000000";
@@ -643,9 +574,9 @@ contract("CAT1400Token", accounts => {
         it("Should mint tokens by partition", async() => {
             let tx = await CAT1400Token.mintByPartition(partition1, accounts[0], tokensToMint);
 
-            assert.equal(tx.logs[1].args.fromPartition, partition1);
-            assert.equal(tx.logs[1].args.to, accounts[0]);
-            assert.equal(new BigNumber(tx.logs[1].args.value).valueOf(), tokensToMint.valueOf());
+            assert.equal(tx.logs[2].args.fromPartition, partition1);
+            assert.equal(tx.logs[2].args.to, accounts[0]);
+            assert.equal(new BigNumber(tx.logs[2].args.value).valueOf(), tokensToMint.valueOf());
         });
 
         it("Should show that totalSupply", async() => {
@@ -675,11 +606,6 @@ contract("CAT1400Token", accounts => {
         it("Should returns correct balance for the second token holder", async() => {
             let bal = new BigNumber(await CAT1400Token.balanceOfByPartition(partition1, accounts[1]));
             assert.equal(bal.valueOf(), tokensToMint.div(5).valueOf());
-        });
-
-        it("Should set default partition", async() => {
-            let tx = await CAT1400Token.setDefaultPartition(partition1);
-            assert.equal(tx.logs[0].args.partition, partition1);
         });
 
         it("Should fail to create clawback", async() => {
@@ -757,14 +683,10 @@ contract("CAT1400Token", accounts => {
     describe("CAT-1400 upgradabilbity and rules engine", async() => {
         it("Should update transfer functions implementations (with rules engine)", async() => {
             let ids = [
-                "0xa9059cbb",//transfer(address,uint256)
-                "0x23b872dd",//transferFrom(address,address,uint256)
-                "0xf3d490db",//transferByPartition(bytes32,address,uint256,bytes)
+                "0x484a5c54",//verifyTransfer(address,address,address,bytes32,uint256)
             ];
             let addrs = [
-                ERC20TransferFnREV.address,
-                ERC20TransferFnREV.address,
-                CAT1400RETransferFunction.address,
+                CAT1400REVerifyTransfer.address,
             ];
 
             await CAT1400Token.setImplementations(ids, addrs);
@@ -792,17 +714,6 @@ contract("CAT1400Token", accounts => {
                 assert(isException(error), error.toString());
             }
             assert.ok(errorThrown, "Transaction should fail!");
-        });
-
-        it("Should update mint function implementation (with rules engine)", async() => {
-            let ids = [
-                "0x06a69bfc",//mintByPartition(bytes32,address,uint256)
-            ];
-            let addrs = [
-                CAT1400REMintFunction.address,
-            ];
-
-            await CAT1400Token.setImplementations(ids, addrs);
         });
 
         it("Should fail to to mint tokens with Rules Engine", async() => {
@@ -840,17 +751,6 @@ contract("CAT1400Token", accounts => {
             assert.equal(tx.logs[1].args.fromPartition, partition1);
             assert.equal(tx.logs[1].args.to, accounts[3]);
             assert.equal(new BigNumber(tx.logs[1].args.value).valueOf(), tokensToMint.valueOf());
-        });
-
-        it("Should update clawback function implementation (with rules engine)", async() => {
-            let ids = [
-                "0x656f029f",//clawbackByPartition(address,address,uint256,bytes32)
-            ];
-            let addrs = [
-                CAT1400REVClawbackFn.address,
-            ];
-
-            await CAT1400Token.setImplementations(ids, addrs);
         });
 
         it("Should fail to create clawback with RE", async() => {
