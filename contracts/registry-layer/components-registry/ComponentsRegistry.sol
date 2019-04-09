@@ -117,6 +117,7 @@ contract ComponentsRegistry is IComponentsRegistry, PermissionModuleMetadata {
 
         delete componentsIds[componentAddress];
         delete components[id];
+        componentsList.length = componentsList.length.sub(1);
 
         emit ComponentRemoved(componentAddress);
     }
