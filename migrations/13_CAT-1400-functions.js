@@ -1,26 +1,20 @@
 // CAT-1400 functions
-var CAT1400ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20Functions.sol");
-var BalanceOfByPartitionFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/BalanceOfByPartitionFn.sol");
-var CAT1400REVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVClawbackFn.sol");
-var CAT1400WLVClawbackFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVClawbackFn.sol");
-var CAT1400REVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVTransferFn.sol");
-var CAT1400WLVTransferFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVTransferFn.sol");
-var CAT1400WLMint = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLMint.sol");
-var CAT1400REMint = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REMint.sol");
-var SetDefaultPratitionFn = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/SetDefaultPratitionFn.sol");
-var CAT1400WLTransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLTransferByPartition.sol");
-var CAT1400RETransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400RETransferByPartition.sol");
+var CAT1400ERC20Functions = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400ERC20.sol");
+var BalanceOfByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400BalanceOfByPartition.sol");
+var CAT1400Clawback = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400Clawback.sol");
+var CAT1400Mint = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400Mint.sol");
+var CAT1400TransferByPartition = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400TransferByPartition.sol");
+var CAT1400TransferWithoutVerification = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400TransferWithoutVerification.sol");
+var CAT1400REVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400REVerifyTransfer.sol");
+var CAT1400WLVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-1400/functions/CAT1400WLVerifyTransfer.sol");
 
 module.exports = async function(deployer) {
-  await deployer.deploy(CAT1400ERC20Functions, {gas:800000});
-  await deployer.deploy(BalanceOfByPartitionFn, {gas:200000});
-  await deployer.deploy(CAT1400REVClawbackFn, {gas:600000});
-  await deployer.deploy(CAT1400WLVClawbackFn, {gas:600000});
-  await deployer.deploy(CAT1400REVTransferFn, {gas:600000});
-  await deployer.deploy(CAT1400WLVTransferFn, {gas:1000000});
-  await deployer.deploy(CAT1400WLMint, {gas:900000});
-  await deployer.deploy(CAT1400REMint, {gas:900000});
-  await deployer.deploy(SetDefaultPratitionFn, {gas:200000});
-  await deployer.deploy(CAT1400WLTransferByPartition, {gas:500000});
-  await deployer.deploy(CAT1400RETransferByPartition, {gas:500000});
+  await deployer.deploy(CAT1400ERC20Functions, {gas:1200000});
+  await deployer.deploy(BalanceOfByPartition, {gas:800000});
+  await deployer.deploy(CAT1400Clawback, {gas:1200000});
+  await deployer.deploy(CAT1400Mint, {gas:800000});
+  await deployer.deploy(CAT1400TransferByPartition, {gas:800000});
+  await deployer.deploy(CAT1400TransferWithoutVerification, {gas:800000});
+  await deployer.deploy(CAT1400REVerifyTransfer, {gas:800000});
+  await deployer.deploy(CAT1400WLVerifyTransfer, {gas:800000});
 };

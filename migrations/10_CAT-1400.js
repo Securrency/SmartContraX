@@ -4,7 +4,7 @@ var CAT1400Verification = artifacts.require("./request-verification-layer/transf
 var TokensPolicyRegistry = artifacts.require("./registry-layer/tokens-policy-registry/TokensPolicyRegistry.sol");
 var PolicyParser = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/core/PolicyParser.sol");
 var CAT1400TransferAction = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/rules-engine/actions/CAT1400TransferAction.sol");
-var setup1400V1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-1400/token-setup/SetupCAT1400V1.sol");
+var setup1400V1 = artifacts.require("./registry-layer/tokens-factory/tokens/CAT-1400/token-setup/CAT1400Setup.sol");
 var CAT1400Strategy = artifacts.require("./registry-layer/tokens-factory/deployment-strategies/CAT1400Strategy.sol");
 
 module.exports = async function(deployer) {
