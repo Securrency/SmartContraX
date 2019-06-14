@@ -34,6 +34,7 @@ var CAT20Rollback = artifacts.require("./registry-layer/tokens-factory/token/CAT
 var CAT20TxCheckpoint = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20TxCheckpoint.sol");
 var CAT20REVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/verify-transfer/CAT20REVerifyTransfer.sol");
 var CAT20WLVerifyTransfer = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/verify-transfer/CAT20WLVerifyTransfer.sol");
+var CAT20Documents = artifacts.require("./registry-layer/tokens-factory/token/CAT-20-V2/functions/CAT20Documents.sol");
 
 var TM = artifacts.require("./transfer-layer/transfer-module/TransferModule.sol");
 var WL = artifacts.require("./request-verification-layer/transfer-verification-system/verification-service/WhiteList.sol");
@@ -262,6 +263,12 @@ contract("CAT20Token (V2)", accounts => {
 
         let setImpl = createId("setImplementations(bytes4[],address[])");
         tx = await permissionModule.addMethodToTheRole(setImpl, complianceRoleName, { from: accounts[0] });
+        
+        let setDoc = createId("setDocument(bytes32,string,bytes32)");
+        tx = await permissionModule.addMethodToTheRole(setDoc, complianceRoleName, { from: accounts[0] });
+
+        let rmDoc = createId("removeDocument(bytes32)");
+        tx = await permissionModule.addMethodToTheRole(rmDoc, complianceRoleName, { from: accounts[0] });
 
         let setP = createId("setPolicy(address,bytes32,bytes)");
         await permissionModule.addMethodToTheRole(setP, complianceRoleName, { from: accounts[0] });
@@ -436,6 +443,13 @@ contract("CAT20Token (V2)", accounts => {
             "Contract with CAT-20 mint function was not deployed"
         );
 
+        CAT20Documents = await CAT20Documents.new();
+        assert.notEqual(
+            CAT20Documents.address.valueOf(),
+            "0x0000000000000000000000000000000000000000",
+            "Contract with CAT-20 documents functions  was not deployed"
+        );
+
         CAT20WLVerifyTransfer = await CAT20WLVerifyTransfer.new();
         assert.notEqual(
             CAT20WLVerifyTransfer.address.valueOf(),
@@ -509,6 +523,11 @@ contract("CAT20Token (V2)", accounts => {
             "0x1ebc9578",//isActiveCheckpoint(uint256)
 
             "0x88d695b2",//batchTransfer(address[],uint256[])
+
+            "0x010648ca",//setDocument(bytes32,string,bytes32)
+            "0xb10d6b41",//getDocument(bytes32)
+            "0xc3501848",//removeDocument(bytes32)
+            "0x9fa5f50b",//getAllDocuments()
         ];
 
         let addrs = [
@@ -533,6 +552,11 @@ contract("CAT20Token (V2)", accounts => {
             CAT20TxCheckpoint.address,
             
             CAT20ERC20.address,
+
+            CAT20Documents.address,
+            CAT20Documents.address,
+            CAT20Documents.address,
+            CAT20Documents.address
         ];
 
         await CAT20Token.setImplementations(ids, addrs);
@@ -856,6 +880,194 @@ contract("CAT20Token (V2)", accounts => {
 
             let status = await CAT20Token.isActiveCheckpoint(checkpointId);
             assert.ok(!status, "Checkpoint not activated!");
+        });
+    });
+
+    describe("Documents", async() => {
+        let documents = [
+            {
+                name: web3.utils.toHex("Test document 1"),
+                hash: web3.utils.keccak256("Test document 1"),
+                uri: "https://examle-test-document-1.com"
+            },
+            {
+                name: web3.utils.toHex("Test document 2"),
+                hash: web3.utils.keccak256("Test document 2"),
+                uri: "https://examle-test-document-2.com"
+            },
+            {
+                name: web3.utils.toHex("Test document 3"),
+                hash: web3.utils.keccak256("Test document 3"),
+                uri: "https://examle-test-document-3.com"
+            }
+        ];
+
+        it("Must fail to add a document with an empty name", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.setDocument("0x00", documents[0].uri, documents[0].hash);
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Invalid document name.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Must fail to add a document with empty URI", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.setDocument(documents[0].name, "", documents[0].hash);
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Invalid uri.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Must fail to add a document with empty document hash", async() => {
+            let errorThrown = false;
+            try {
+                await CAT20Token.setDocument(documents[0].name, documents[0].uri, "0x00");
+            } catch (error) {
+                errorThrown = true;
+                console.log(`         tx revert -> Invalid document hash.`.grey);
+                assert(isException(error), error.toString());
+            }
+            assert.ok(errorThrown, "Transaction should fail!");
+        });
+
+        it("Must add documents to the token", async() => {
+            let tx;
+            for (let i = 0; i < documents.length; i++) {
+                tx = await CAT20Token.setDocument(documents[i].name, documents[i].uri, documents[i].hash);
+
+                let name = tx.logs[0].args._name;
+                let j = name.length - 1;
+                while(name[j] == 0) {
+                    j--;
+                }
+
+                name = name.substring(0, j+1);
+
+                assert.equal(name, documents[i].name);
+                assert.equal(tx.logs[0].args._uri, documents[i].uri);
+                assert.equal(tx.logs[0].args._documentHash, documents[i].hash);
+            }
+        });
+
+        it("Should returns list of all documents", async() => {
+            let documentsList = await CAT20Token.getAllDocuments();
+
+            let document;
+            for (let i = 0; i < documentsList.length; i++) {
+                document = await CAT20Token.getDocument(documentsList[i]);
+                
+                let name = documentsList[i];
+                let j = name.length - 1;
+                while(name[j] == 0) {
+                    j--;
+                }
+
+                name = name.substring(0, j+1);
+
+                assert.equal(name, documents[i].name);
+                assert.equal(document[0], documents[i].uri);
+                assert.equal(document[1], documents[i].hash);
+            }
+        });
+
+        it("Should update document", async() => {
+            let newHash = web3.utils.keccak256("Document updated");
+
+            let tx = await CAT20Token.setDocument(documents[1].name, documents[1].uri, newHash);
+
+            let name = tx.logs[0].args._name;
+            let j = name.length - 1;
+            while(name[j] == 0) {
+                j--;
+            }
+
+            name = name.substring(0, j+1);
+
+            assert.equal(name, documents[1].name);
+            assert.equal(tx.logs[0].args._uri, documents[1].uri);
+            assert.equal(tx.logs[0].args._documentHash, newHash);
+        });
+
+        let newHash = web3.utils.keccak256("Document updated one more time");
+        it("Should update lastModified field after document update", async() => {
+            let beforeUpdate = await CAT20Token.getDocument(documents[1].name);
+            sleep.sleep(1);
+            await CAT20Token.setDocument(documents[1].name, documents[1].uri, newHash);
+            let afterUpdate = await CAT20Token.getDocument(documents[1].name);
+
+            assert.notEqual(beforeUpdate[2].toString(), afterUpdate[2].toString());
+        });
+
+        it("Should remove a document from the token documents list", async() => {
+            let tx = await CAT20Token.removeDocument(documents[0].name);
+
+            let documentsList = await CAT20Token.getAllDocuments();
+
+            let name = tx.logs[0].args._name;
+            let j = name.length - 1;
+            while(name[j] == 0) {
+                j--;
+            }
+
+            name = name.substring(0, j+1);
+
+            assert.equal(name, documents[0].name);
+            assert.equal(tx.logs[0].args._uri, documents[0].uri);
+            assert.equal(tx.logs[0].args._documentHash, documents[0].hash);
+
+            let document = await CAT20Token.getDocument(documentsList[0]);
+                
+            name = documentsList[0];
+            j = name.length - 1;
+            while(name[j] == 0) {
+                j--;
+            }
+
+            name = name.substring(0, j+1);
+
+            assert.equal(name, documents[2].name);
+            assert.equal(document[0], documents[2].uri);
+            assert.equal(document[1], documents[2].hash);
+        });
+
+        it("Should remove the last document from the token documents list", async() => {
+            let tx = await CAT20Token.removeDocument(documents[1].name);
+
+            let documentsList = await CAT20Token.getAllDocuments();
+
+            let name = tx.logs[0].args._name;
+            let j = name.length - 1;
+            while(name[j] == 0) {
+                j--;
+            }
+
+            name = name.substring(0, j+1);
+
+            assert.equal(name, documents[1].name);
+            assert.equal(tx.logs[0].args._uri, documents[1].uri);
+            assert.equal(tx.logs[0].args._documentHash, newHash);
+
+            let document = await CAT20Token.getDocument(documentsList[0]);
+                
+            name = documentsList[0];
+            j = name.length - 1;
+            while(name[j] == 0) {
+                j--;
+            }
+
+            name = name.substring(0, j+1);
+
+            assert.equal(name, documents[2].name);
+            assert.equal(document[0], documents[2].uri);
+            assert.equal(document[1], documents[2].hash);
         });
     });
 });
