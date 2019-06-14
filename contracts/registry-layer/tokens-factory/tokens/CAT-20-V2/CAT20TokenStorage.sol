@@ -11,6 +11,13 @@ contract CAT20TokenStorage {
         uint expireDate;
         bool used;
     }
+    // Document struct
+    struct Document {
+        bytes32 documentHash;
+        string uri;
+        uint lastModified;
+        uint index;
+    }
     // Stores token name
     string public name;
     // Stores token symbol
@@ -45,4 +52,11 @@ contract CAT20TokenStorage {
     bool public rollbackEnabled;
     // holder -> number of tokens on escrow
     mapping(address => uint) tokensOnEscrow;
+    // Documents ERC-1643
+    // documents list
+    bytes32[] documents;
+    // document name -> document struct
+    mapping(bytes32 => Document) documentDetails;
+    // document index in the lits -> document name
+    mapping(uint => bytes32) documentNameByIndex;
 }

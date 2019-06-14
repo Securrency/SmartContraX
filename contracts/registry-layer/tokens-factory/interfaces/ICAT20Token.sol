@@ -58,6 +58,12 @@ contract ICAT20Token {
 
     // System methods
     function setImplementations(bytes4[] memory sig, address[] memory impls) public;
+
+    // Document Management
+    function getDocument(bytes32 _name) external view returns (string memory, bytes32, uint256);
+    function setDocument(bytes32 _name, string calldata _uri, bytes32 _documentHash) external;
+    function removeDocument(bytes32 _name) external;
+    function getAllDocuments() external view returns (bytes32[] memory);
     
     // List of the events
     event Transfer(address indexed from, address indexed to, uint value);
@@ -72,4 +78,7 @@ contract ICAT20Token {
     event CheckpointWasUsed(uint indexed checkpointId, string originalTxHash);
     event CheckpointCreated(bytes32 indexed checkpointKey, uint indexed checkpointId);
     event CheckointExpireInteravalUpdated(uint oldValue, uint newValue);
+    // Document Events
+    event DocumentRemoved(bytes32 indexed _name, string _uri, bytes32 _documentHash);
+    event DocumentUpdated(bytes32 indexed _name, string _uri, bytes32 _documentHash);
 }
